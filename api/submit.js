@@ -29,25 +29,28 @@ module.exports = async function handler(req, res) {
     const fileName = `Fettig-Estimate-${(jobInfo.customerName || 'Draft').replace(/\s+/g, '-')}.pdf`
 
     // Step 1: Get a signed upload URL from JobTread
+    // Use a fixed max size — the signed header value must match exactly
+    const MAX_SIZE = 10485760 // 10MB
     const uploadRes = await pave({
       '$': { grantKey },
       createUploadRequest: {
-        '$': { size: pdfSize, type: 'application/pdf' },
+        '$': { size: MAX_SIZE, type: 'application/pdf' },
         createdUploadRequest: { id: {}, url: {}, method: {} }
       }
     })
 
     const uploadRequest = uploadRes?.createUploadRequest?.createdUploadRequest
     if (!uploadRequest?.id || !uploadRequest?.url) {
-      throw new Error('Failed to get upload URL from JobTread')
+      throw new Error('Failed to get upload URL from JobTread: ' + JSON.stringify(uploadRes))
     }
 
     // Step 2: PUT the PDF to Google Cloud Storage
+    // x-goog-content-length-range must match exactly what was signed (0,MAX_SIZE)
     const uploadRes2 = await fetch(uploadRequest.url, {
       method: uploadRequest.method || 'PUT',
       headers: {
         'Content-Type': 'application/pdf',
-        'x-goog-content-length-range': '0,' + pdfSize
+        'x-goog-content-length-range': '0,' + MAX_SIZE
       },
       body: pdfBuffer
     })
