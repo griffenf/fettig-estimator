@@ -1,14 +1,20 @@
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(500).json({ error: 'JOBTREAD_API_KEY not configured in Vercel.' })
 
-  const jobId = req.body?.jobId
-  const jobInfo = req.body?.jobInfo || {}
-  const windows = Array.isArray(req.body?.windows) ? req.body.windows : []
+  const jobId = req.body && req.body.jobId
+  const jobInfo = (req.body && req.body.jobInfo) || {}
+  const windows = (req.body && Array.isArray(req.body.windows)) ? req.body.windows : []
 
-  if (!jobId) return res.status(400).json({ error: 'No job selected. Please select a job from the search on Step 1.' })
+  // Send back what we received so we can debug
+  if (!jobId) {
+    return res.status(400).json({ 
+      error: 'No job selected.',
+      debug_received: { jobId, jobInfo, windows, raw: JSON.stringify(req.body) }
+    })
+  }
 
   async function pave(query) {
     const r = await fetch('https://api.jobtread.com/pave', {
