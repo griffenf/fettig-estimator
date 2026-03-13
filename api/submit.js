@@ -43,11 +43,11 @@ module.exports = async function handler(req, res) {
     }
 
     // Step 2: PUT the PDF to Google Cloud Storage
+    // Only Content-Type header — extra headers break the GCS signature
     const uploadRes2 = await fetch(uploadRequest.url, {
       method: uploadRequest.method || 'PUT',
       headers: {
-        'Content-Type': 'application/pdf',
-        'x-goog-content-length-range': `0,${pdfSize}`
+        'Content-Type': 'application/pdf'
       },
       body: pdfBuffer
     })
