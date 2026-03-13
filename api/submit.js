@@ -22,23 +22,21 @@ module.exports = async function handler(req, res) {
 
   try {
     const fileName = `Fettig-Estimate-${(jobInfo?.customerName || 'Draft').replace(/\s+/g, '-')}.pdf`
-    const pdfBuffer = Buffer.from(pdfBase64, 'base64')
 
-    // Step 1: Upload PDF to file.io (free temp hosting, no account needed)
-    const formData = new FormData()
-    formData.append('file', new Blob([pdfBuffer], { type: 'application/pdf' }), fileName)
+    // Step 1: Store PDF on our own /api/pdf endpoint temporarily
+    const pdfId = Date.now().toString(36)
+    const host = req.headers.host
+    const protocol = host.includes('localhost') ? 'http' : 'https'
+    const publicUrl = `${protocol}://${host}/api/pdf?id=${pdfId}`
 
-    const fileIoRes = await fetch('https://file.io/?expires=1h', {
-      method: 'POST',
-      body: formData
+    // Store the PDF
+    await fetch(`${protocol}://${host}/api/pdf`, {
+      method: 'PUT',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id: pdfId, pdfBase64 })
     })
-    const fileIoData = await fileIoRes.json()
-    if (!fileIoData.success || !fileIoData.link) {
-      throw new Error('file.io upload failed: ' + JSON.stringify(fileIoData))
-    }
-    const publicUrl = fileIoData.link
 
-    // Step 2: Tell JobTread to download from that URL
+    // Step 2: Tell JobTread to download from our URL
     const uploadReq = await pave({
       '$': { grantKey },
       createUploadRequest: {
