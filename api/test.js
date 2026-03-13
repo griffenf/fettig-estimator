@@ -14,19 +14,31 @@ export default async function handler(req, res) {
 
   const results = {}
 
-  // Try each field individually to find what's valid
-  const fields = ['url', 'id', 'fields', 'uploadUrl', 'method', 'name', 'bucket', 'token', 'path', 'uri', 'link']
-  for (const field of fields) {
+  // Try different input param names for the type
+  const paramNames = ['type', 'pdfType', 'category', 'section', 'for', 'target', 'kind']
+  for (const param of paramNames) {
     const r = await pave({
       '$': { grantKey },
       createUploadRequest: {
         '$': { contentType: 'application/pdf', name: 'test.pdf' },
-        pdf: { '$': { type: 'document' }, [field]: {} }
+        pdf: { '$': { [param]: 'document' }, url: {}, id: {} }
       }
     })
     const txt = r?.raw || JSON.stringify(r)
-    results[field] = txt.includes('does not exist') ? '❌' : '✅ ' + txt.slice(0, 120)
+    results[param] = txt.includes('does not resolve') ? '❌ still wrong' 
+                   : txt.includes('does not exist') ? '❌ bad field'
+                   : '✅ ' + txt.slice(0, 150)
   }
+
+  // Also try with no $ at all on pdf
+  const r2 = await pave({
+    '$': { grantKey },
+    createUploadRequest: {
+      '$': { contentType: 'application/pdf', name: 'test.pdf' },
+      pdf: { url: {}, id: {} }
+    }
+  })
+  results.no_input = r2?.raw || JSON.stringify(r2)
 
   return res.status(200).json({ results })
 }
