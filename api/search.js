@@ -8,12 +8,12 @@ export default async function handler(req, res) {
   if (!q || q.trim().length < 2) return res.json({ customers: [] })
 
   async function pave(query) {
-    const res = await fetch('https://api.jobtread.com/pave', {
+    const r = await fetch('https://api.jobtread.com/pave', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ query })
     })
-    const text = await res.text()
+    const text = await r.text()
     try { return JSON.parse(text) } catch { throw new Error(`Pave returned: ${text.slice(0, 300)}`) }
   }
 
@@ -35,7 +35,7 @@ export default async function handler(req, res) {
     const orgId = orgRes?.currentGrant?.user?.memberships?.nodes?.[0]?.organization?.id
     if (!orgId) return res.status(400).json({ error: 'Could not get organization ID. Check your grant key.' })
 
-    // Step 2: Search accounts (customers) by name
+    // Step 2: Search customers by name and get their jobs
     const searchRes = await pave({
       '$': { grantKey },
       organization: {
@@ -54,19 +54,15 @@ export default async function handler(req, res) {
           nodes: {
             id: {},
             name: {},
-            type: {},
             jobs: {
               '$': { size: 20 },
               nodes: {
                 id: {},
                 name: {},
                 status: {},
-                locations: {
-                  '$': { size: 1 },
-                  nodes: {
-                    id: {},
-                    address: {}
-                  }
+                location: {
+                  id: {},
+                  address: {}
                 }
               }
             }
@@ -79,7 +75,6 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: searchRes.errors[0]?.message || 'Query error' })
     }
 
-    // Map to the shape the frontend expects
     const rawAccounts = searchRes?.organization?.accounts?.nodes || []
     const customers = rawAccounts.map(a => ({
       id: a.id,
@@ -89,9 +84,7 @@ export default async function handler(req, res) {
           id: j.id,
           name: j.name,
           status: j.status,
-          address: j.locations?.nodes?.[0]
-            ? { street: j.locations.nodes[0].address }
-            : null
+          address: j.location?.address ? { street: j.location.address } : null
         }))
       }
     }))
