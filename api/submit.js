@@ -4,12 +4,7 @@ const { URL } = require('url')
 function httpsRequest(urlStr, method, headers, body) {
   return new Promise((resolve, reject) => {
     const u = new URL(urlStr)
-    const options = {
-      hostname: u.hostname,
-      path: u.pathname + u.search,
-      method,
-      headers
-    }
+    const options = { hostname: u.hostname, path: u.pathname + u.search, method, headers }
     const req = https.request(options, (res) => {
       let data = ''
       res.on('data', chunk => data += chunk)
@@ -77,17 +72,6 @@ module.exports = async function handler(req, res) {
     const pdfBuffer = Buffer.from(pdfBase64, 'base64')
     const pdfSize = pdfBuffer.length
 
-    const result = await pave({
-      '$': { grantKey },
-      createUploadRequest: {
-        '$': { size: pdfSize, type: 'application/pdf' },
-        createdUploadRequest: { id: {}, url: {}, method: {} }
-      }
-    })
-    const ur = result?.createUploadRequest?.createdUploadRequest
-    if (!ur?.id) throw new Error('No upload URL: ' + JSON.stringify(result))
-
-    // Try all 4 header variations to find which one works
     const variations = [
       { 'content-type': 'application/pdf', 'x-goog-content-length-range': `0,${pdfSize}` },
       { 'content-type': 'application/pdf', 'x-goog-content-length-range': `${pdfSize},${pdfSize}` },
@@ -110,9 +94,10 @@ module.exports = async function handler(req, res) {
 
       const uploadResult = await httpsRequest(ur2.url, ur2.method || 'PUT', variations[i], pdfBuffer)
       if (uploadResult.status === 200) {
+        // Return the ID that matches the successful upload
         return res.status(200).json({ uploadRequestId: ur2.id, uploadOk: true, variation: i })
       }
-      lastError = `variation ${i}: ${uploadResult.status} ${uploadResult.body.slice(0, 100)}`
+      lastError = `v${i}: ${uploadResult.status} ${uploadResult.body.slice(0, 80)}`
     }
 
     throw new Error('All upload variations failed. Last: ' + lastError)
