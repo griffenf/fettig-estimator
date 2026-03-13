@@ -14,56 +14,51 @@ export default async function handler(req, res) {
 
   const results = {}
 
-  // Try POSTing a multipart file directly to /upload endpoint
-  try {
-    const blob = new Blob(['%PDF-1.0 test'], { type: 'application/pdf' })
-    const form = new FormData()
-    form.append('file', blob, 'test.pdf')
-    form.append('grantKey', grantKey)
+  // Probe root-level field names related to uploads
+  const guesses = ['createUpload', 'upload', 'fileUpload', 'createFileUpload', 
+                   'signedUpload', 'presignedUpload', 'getUploadUrl', 'uploadRequest',
+                   'createAttachment', 'attachment']
 
-    const r = await fetch('https://api.jobtread.com/upload', { method: 'POST', body: form })
-    results.upload_endpoint_status = r.status
-    results.upload_endpoint_body = await r.text()
-  } catch(e) {
-    results.upload_endpoint_error = e.message
+  for (const name of guesses) {
+    const q = { '$': { grantKey } }
+    q[name] = { id: {} }
+    const t = await pave(q)
+    const msg = t?.raw || JSON.stringify(t)
+    // Only show ones that don't say "does not exist"
+    if (!msg.includes('does not exist')) {
+      results[name] = msg
+    }
   }
 
-  // Try /files endpoint
-  try {
-    const blob = new Blob(['%PDF-1.0 test'], { type: 'application/pdf' })
-    const form = new FormData()
-    form.append('file', blob, 'test.pdf')
-    form.append('grantKey', grantKey)
+  // Also try createFile with "uploadRequestId" field explicitly
+  const t2 = await pave({
+    '$': { grantKey },
+    createFile: {
+      '$': { 
+        name: 'test.pdf', 
+        targetId: '22MsvgnqcwLK', 
+        targetType: 'job',
+        uploadRequestId: 'test'
+      },
+      createdFile: { id: {}, name: {} }
+    }
+  })
+  results.createFile_uploadRequestId = t2?.raw || JSON.stringify(t2)
 
-    const r = await fetch('https://api.jobtread.com/files', { method: 'POST', body: form })
-    results.files_endpoint_status = r.status
-    results.files_endpoint_body = await r.text()
-  } catch(e) {
-    results.files_endpoint_error = e.message
-  }
-
-  // Try requestFileUpload pave query
+  // Try with "existingFileId"
   const t3 = await pave({
     '$': { grantKey },
-    requestFileUpload: {
-      '$': { contentType: 'application/pdf', name: 'test.pdf' },
-      id: {},
-      url: {},
-      fields: {}
+    createFile: {
+      '$': { 
+        name: 'test.pdf', 
+        targetId: '22MsvgnqcwLK', 
+        targetType: 'job',
+        existingFileId: 'test'
+      },
+      createdFile: { id: {}, name: {} }
     }
   })
-  results.requestFileUpload = t3?.raw || JSON.stringify(t3)
-
-  // Try uploadFile pave query
-  const t4 = await pave({
-    '$': { grantKey },
-    uploadFile: {
-      '$': { contentType: 'application/pdf', name: 'test.pdf' },
-      id: {},
-      url: {}
-    }
-  })
-  results.uploadFile = t4?.raw || JSON.stringify(t4)
+  results.createFile_existingFileId = t3?.raw || JSON.stringify(t3)
 
   return res.status(200).json({ results })
 }
