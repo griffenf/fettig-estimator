@@ -397,10 +397,13 @@ export default function App() {
   const handleSubmitToJobTread = async () => {
     setSubmitting(true)
     try {
+      const doc = generatePDF(jobInfo, windows)
+      const pdfBase64 = doc.output('datauristring').split(',')[1]
+
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId: jobInfo.jobId, jobInfo, windows })
+        body: JSON.stringify({ jobId: jobInfo.jobId, jobInfo, windows, pdfBase64 })
       })
 
       const data = await res.json()
