@@ -14,17 +14,35 @@ export default async function handler(req, res) {
 
   const results = {}
 
-  // Step 1: Request an upload URL from JobTread
-  const uploadReq = await pave({
+  // Test 1: createUploadRequest with pdf field
+  const t1 = await pave({
     '$': { grantKey },
     createUploadRequest: {
       '$': { contentType: 'application/pdf' },
-      id: {},
-      url: {},
-      fields: {}
+      pdf: {}
     }
   })
-  results.createUploadRequest = uploadReq?.raw || JSON.stringify(uploadReq)
+  results.t1_pdf_field = t1?.raw || JSON.stringify(t1)
+
+  // Test 2: Try without any input
+  const t2 = await pave({
+    '$': { grantKey },
+    createUploadRequest: {
+      pdf: {}
+    }
+  })
+  results.t2_no_input = t2?.raw || JSON.stringify(t2)
+
+  // Test 3: Try requestUpload instead
+  const t3 = await pave({
+    '$': { grantKey },
+    requestUpload: {
+      '$': { contentType: 'application/pdf' },
+      id: {},
+      url: {}
+    }
+  })
+  results.t3_requestUpload = t3?.raw || JSON.stringify(t3)
 
   return res.status(200).json({ results })
 }
