@@ -17,22 +17,6 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // Action 1: Get a signed upload URL
-    if (action === 'getUploadUrl') {
-      const size = req.body.size || 5242880
-      const result = await pave({
-        '$': { grantKey },
-        createUploadRequest: {
-          '$': { size, type: 'application/pdf' },
-          createdUploadRequest: { id: {}, url: {}, method: {} }
-        }
-      })
-      const ur = result?.createUploadRequest?.createdUploadRequest
-      if (!ur?.id) throw new Error('No upload URL returned: ' + JSON.stringify(result))
-      return res.status(200).json({ uploadRequestId: ur.id, uploadUrl: ur.url, method: ur.method, size })
-    }
-
-    // Action 2: Finalize — attach file to job and post comment
     if (action === 'finalize') {
       if (!jobId || !uploadRequestId) throw new Error('Missing jobId or uploadRequestId')
       const fileName = `Fettig-Estimate-${(jobInfo?.customerName || 'Draft').replace(/\s+/g, '-')}.pdf`
@@ -65,7 +49,54 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ success: true })
     }
 
-    return res.status(400).json({ error: 'Unknown action' })
+    // Default action: get upload URL AND do the upload server-side
+    if (!pdfBase64) return res.status(400).json({ error: 'No PDF data received.' })
+
+    const pdfBuffer = Buffer.from(pdfBase64, 'base64')
+    const pdfSize = pdfBuffer.length
+
+    // Get signed URL
+    const result = await pave({
+      '$': { grantKey },
+      createUploadRequest: {
+        '$': { size: pdfSize, type: 'application/pdf' },
+        createdUploadRequest: { id: {}, url: {}, method: {} }
+      }
+    })
+    const ur = result?.createUploadRequest?.createdUploadRequest
+    if (!ur?.id) throw new Error('No upload URL: ' + JSON.stringify(result))
+
+    // Parse what headers are required from the signed URL
+    const signedUrl = ur.url
+    const signedHeaders = decodeURIComponent(signedUrl.match(/X-Goog-SignedHeaders=([^&]+)/)?.[1] || '')
+
+    // Build headers object with only what's signed
+    const headers = {}
+    if (signedHeaders.includes('content-type')) headers['Content-Type'] = 'application/pdf'
+    if (signedHeaders.includes('x-goog-content-length-range')) {
+      headers['x-goog-content-length-range'] = `0,${pdfSize}`
+    }
+
+    const uploadResult = await fetch(signedUrl, {
+      method: ur.method || 'PUT',
+      headers,
+      body: pdfBuffer
+    })
+
+    if (!uploadResult.ok) {
+      const errText = await uploadResult.text()
+      // Return debug info so we can see exactly what happened
+      return res.status(200).json({ 
+        debug: true,
+        status: uploadResult.status,
+        signedHeaders,
+        headersSent: headers,
+        error: errText.slice(0, 500)
+      })
+    }
+
+    return res.status(200).json({ uploadRequestId: ur.id, uploadOk: true })
+
   } catch (err) {
     return res.status(500).json({ error: err.message })
   }
