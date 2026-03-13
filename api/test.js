@@ -1,26 +1,9 @@
-import https from 'https'
-import { URL } from 'url'
-
-function httpsRequest(urlStr, method, headers, body) {
-  return new Promise((resolve, reject) => {
-    const u = new URL(urlStr)
-    const options = { hostname: u.hostname, path: u.pathname + u.search, method, headers }
-    const req = https.request(options, (res) => {
-      let data = ''
-      res.on('data', chunk => data += chunk)
-      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: data }))
-    })
-    req.on('error', reject)
-    if (body) req.write(body)
-    req.end()
-  })
-}
-
 export default async function handler(req, res) {
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(200).json({ status: 'NO_API_KEY' })
 
   const jobId = '22MsvgnqcwLK'
+  const orgId = '22MsEHuFtmri'
 
   async function pave(query) {
     const r = await fetch('https://api.jobtread.com/pave', {
@@ -32,55 +15,44 @@ export default async function handler(req, res) {
     try { return JSON.parse(text) } catch { return { raw: text } }
   }
 
-  const testBuffer = Buffer.from('%PDF-1.4 test content')
-  const pdfSize = testBuffer.length
-  const results = { pdfSize }
+  const results = {}
 
-  // Get upload request
-  const uploadReq = await pave({
+  // Probe createFile for "existing file" input fields
+  const existingFileFields = ['fileId', 'existingFileId', 'sourceFileId', 'url', 'fileUrl', 
+    'sourceUrl', 'externalUrl', 'copyFromId', 'fromFileId', 'originalFileId']
+  for (const field of existingFileFields) {
+    const r = await pave({
+      '$': { grantKey },
+      createFile: {
+        '$': { name: 'test.pdf', targetId: jobId, targetType: 'job', [field]: 'test' },
+        createdFile: { id: {} }
+      }
+    })
+    const txt = r?.raw || JSON.stringify(r)
+    results['createFile_' + field] = txt.includes('no value is ever expected') ? '❌' 
+      : txt.includes('valid upload request') ? '⚠️ same error'
+      : '✅ ' + txt.slice(0, 120)
+  }
+
+  // Try createUploadRequest with organizationId + a real public PDF URL
+  const t2 = await pave({
     '$': { grantKey },
     createUploadRequest: {
-      '$': { size: pdfSize, type: 'application/pdf' },
+      '$': { organizationId: orgId, url: 'https://www.w3.org/WAI/WCAG21/wcag21.pdf' },
       createdUploadRequest: { id: {}, url: {}, method: {} }
     }
   })
-  const ur = uploadReq?.createUploadRequest?.createdUploadRequest
-  results.uploadRequestId = ur?.id
+  results.orgId_publicUrl = t2?.raw || JSON.stringify(t2)
 
-  // Upload with Content-Length included
-  const gcsResult = await httpsRequest(
-    ur.url, ur.method || 'PUT',
-    {
-      'content-type': 'application/pdf',
-      'x-goog-content-length-range': `${pdfSize},${pdfSize}`,
-      'content-length': String(pdfSize)
-    },
-    testBuffer
-  )
-  results.gcsStatus = gcsResult.status
-  results.gcsResponseHeaders = gcsResult.headers
-  results.gcsBody = gcsResult.body.slice(0, 200)
-
-  // Try createFile with no delay
-  const fileRes1 = await pave({
+  // Try createUploadRequest with organizationId + url, then createFile
+  const t3 = await pave({
     '$': { grantKey },
-    createFile: {
-      '$': { name: 'test.pdf', targetId: jobId, targetType: 'job', uploadRequestId: ur.id },
-      createdFile: { id: {}, name: {} }
+    createUploadRequest: {
+      '$': { organizationId: orgId, url: 'https://pdfobject.com/pdf/sample.pdf' },
+      createdUploadRequest: { id: {}, url: {}, method: {} }
     }
   })
-  results.createFileImmediate = fileRes1?.raw || JSON.stringify(fileRes1)
-
-  // Try after 3 second delay
-  await new Promise(r => setTimeout(r, 3000))
-  const fileRes2 = await pave({
-    '$': { grantKey },
-    createFile: {
-      '$': { name: 'test.pdf', targetId: jobId, targetType: 'job', uploadRequestId: ur.id },
-      createdFile: { id: {}, name: {} }
-    }
-  })
-  results.createFileAfter3s = fileRes2?.raw || JSON.stringify(fileRes2)
+  results.orgId_samplePdf = t3?.raw || JSON.stringify(t3)
 
   return res.status(200).json({ results })
 }
