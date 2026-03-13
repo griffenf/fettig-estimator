@@ -6,12 +6,27 @@ import { join } from 'path'
 
 const execFileAsync = promisify(execFile)
 
+// Minimal valid PDF
+const VALID_PDF = `%PDF-1.0
+1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj
+2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj
+3 0 obj<</Type/Page/MediaBox[0 0 3 3]>>endobj
+xref
+0 4
+0000000000 65535 f
+0000000009 00000 n
+0000000058 00000 n
+0000000115 00000 n
+trailer<</Size 4/Root 1 0 R>>
+startxref
+190
+%%EOF`
+
 export default async function handler(req, res) {
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(200).json({ status: 'NO_API_KEY' })
 
   const jobId = '22MsvgnqcwLK'
-  const orgId = '22MsEHuFtmri'
 
   async function pave(query) {
     const r = await fetch('https://api.jobtread.com/pave', {
@@ -23,55 +38,57 @@ export default async function handler(req, res) {
     try { return JSON.parse(text) } catch { return { raw: text } }
   }
 
-  const testBuffer = Buffer.from('%PDF-1.4 test content')
-  const pdfSize = testBuffer.length
-  const results = {}
+  const pdfBuffer = Buffer.from(VALID_PDF)
+  const pdfSize = pdfBuffer.length
+  const results = { pdfSize }
 
   const tmpFile = join(tmpdir(), 'test.pdf')
-  writeFileSync(tmpFile, testBuffer)
+  writeFileSync(tmpFile, pdfBuffer)
 
-  // Get files/ bucket URL via orgId+url
+  // Get upload URL
   const uploadReq = await pave({
     '$': { grantKey },
     createUploadRequest: {
-      '$': { organizationId: orgId, url: 'https://pdfobject.com/pdf/sample.pdf' },
+      '$': { size: pdfSize, type: 'application/pdf' },
       createdUploadRequest: { id: {}, url: {}, method: {} }
     }
   })
   const ur = uploadReq?.createUploadRequest?.createdUploadRequest
   if (!ur?.id) return res.status(200).json({ error: 'No upload request' })
-
   results.uploadRequestId = ur.id
-  results.bucket = ur.url?.includes('files/') ? 'files' : 'dropbox'
 
-  // Parse signed headers so we send exactly what's required
-  const signedHeaders = decodeURIComponent(ur.url.match(/X-Goog-SignedHeaders=([^&]+)/)?.[1] || '')
-  results.signedHeaders = signedHeaders
-
-  // Build curl args with only the signed headers
-  const curlArgs = ['-X', ur.method || 'PUT', '-s', '-w', '\n%{http_code}']
-  if (signedHeaders.includes('content-type')) curlArgs.push('-H', 'content-type: application/pdf')
-  if (signedHeaders.includes('x-goog-content-length-range')) curlArgs.push('-H', `x-goog-content-length-range: ${pdfSize},${pdfSize}`)
-  curlArgs.push('--data-binary', `@${tmpFile}`, ur.url)
-
-  const { stdout } = await execFileAsync('curl', curlArgs)
+  // Upload via curl
+  const { stdout } = await execFileAsync('curl', [
+    '-X', ur.method || 'PUT', '-s', '-w', '\n%{http_code}',
+    '-H', 'content-type: application/pdf',
+    '-H', `x-goog-content-length-range: ${pdfSize},${pdfSize}`,
+    '--data-binary', `@${tmpFile}`,
+    ur.url
+  ])
   const lines = stdout.trim().split('\n')
   results.gcsStatus = parseInt(lines[lines.length - 1])
-  results.gcsBody = lines.slice(0, -1).join('').slice(0, 150)
-
   unlinkSync(tmpFile)
 
-  if (results.gcsStatus !== 200) return res.status(200).json({ results })
+  if (results.gcsStatus !== 200) return res.status(200).json({ results, error: 'GCS upload failed' })
 
-  await new Promise(r => setTimeout(r, 1000))
-  const fileRes = await pave({
-    '$': { grantKey },
-    createFile: {
-      '$': { name: 'test.pdf', targetId: jobId, targetType: 'job', uploadRequestId: ur.id },
-      createdFile: { id: {}, name: {} }
+  // Poll createFile every 2 seconds for up to 20 seconds
+  results.attempts = []
+  for (let i = 0; i < 10; i++) {
+    await new Promise(r => setTimeout(r, 2000))
+    const fileRes = await pave({
+      '$': { grantKey },
+      createFile: {
+        '$': { name: 'test.pdf', targetId: jobId, targetType: 'job', uploadRequestId: ur.id },
+        createdFile: { id: {}, name: {} }
+      }
+    })
+    const txt = fileRes?.raw || JSON.stringify(fileRes)
+    results.attempts.push({ attempt: i + 1, seconds: (i + 1) * 2, result: txt.slice(0, 80) })
+    if (!txt.includes('valid upload request')) {
+      results.SUCCESS = txt
+      break
     }
-  })
-  results.createFile = fileRes?.raw || JSON.stringify(fileRes)
+  }
 
   return res.status(200).json({ results })
 }
