@@ -1,25 +1,12 @@
-export const config = { api: { bodyParser: false } }
-
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(500).json({ error: 'JOBTREAD_API_KEY not configured in Vercel.' })
 
-  // Manually read and parse the raw body
-  const rawBody = await new Promise((resolve, reject) => {
-    let data = ''
-    req.on('data', chunk => data += chunk)
-    req.on('end', () => resolve(data))
-    req.on('error', reject)
-  })
-
-  let body
-  try { body = JSON.parse(rawBody) } catch { return res.status(400).json({ error: 'Invalid JSON body' }) }
-
-  const jobId = body?.jobId
-  const jobInfo = body?.jobInfo || {}
-  const windows = Array.isArray(body?.windows) ? body.windows : []
+  const jobId = req.body?.jobId
+  const jobInfo = req.body?.jobInfo || {}
+  const windows = Array.isArray(req.body?.windows) ? req.body.windows : []
 
   if (!jobId) return res.status(400).json({ error: 'No job selected. Please select a job from the search on Step 1.' })
 
