@@ -14,35 +14,19 @@ export default async function handler(req, res) {
 
   const results = {}
 
-  // Try pdf with type=document and probe subfields
-  const t1 = await pave({
-    '$': { grantKey },
-    createUploadRequest: {
-      '$': { contentType: 'application/pdf', name: 'test.pdf' },
-      pdf: { '$': { type: 'document' }, url: {}, id: {}, key: {}, fields: {}, uploadUrl: {}, method: {} }
-    }
-  })
-  results.t1_document_type = t1?.raw || JSON.stringify(t1)
-
-  // Try with type=specifications
-  const t2 = await pave({
-    '$': { grantKey },
-    createUploadRequest: {
-      '$': { contentType: 'application/pdf', name: 'test.pdf' },
-      pdf: { '$': { type: 'specifications' }, url: {}, id: {}, key: {}, fields: {} }
-    }
-  })
-  results.t2_specifications_type = t2?.raw || JSON.stringify(t2)
-
-  // Try pdf with document type, just id
-  const t3 = await pave({
-    '$': { grantKey },
-    createUploadRequest: {
-      '$': { contentType: 'application/pdf', name: 'test.pdf' },
-      pdf: { '$': { type: 'document' }, id: {} }
-    }
-  })
-  results.t3_document_id_only = t3?.raw || JSON.stringify(t3)
+  // Try each field individually to find what's valid
+  const fields = ['url', 'id', 'fields', 'uploadUrl', 'method', 'name', 'bucket', 'token', 'path', 'uri', 'link']
+  for (const field of fields) {
+    const r = await pave({
+      '$': { grantKey },
+      createUploadRequest: {
+        '$': { contentType: 'application/pdf', name: 'test.pdf' },
+        pdf: { '$': { type: 'document' }, [field]: {} }
+      }
+    })
+    const txt = r?.raw || JSON.stringify(r)
+    results[field] = txt.includes('does not exist') ? '❌' : '✅ ' + txt.slice(0, 120)
+  }
 
   return res.status(200).json({ results })
 }
