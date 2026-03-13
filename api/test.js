@@ -15,35 +15,44 @@ export default async function handler(req, res) {
   const jobId = '22MsvgnqcwLK'
   const results = {}
 
-  // Try creating a note on the job
+  // Probe createComment output fields
   const t1 = await pave({
-    '$': { grantKey },
-    createNote: {
-      '$': { targetId: jobId, targetType: 'job', content: 'Test note from API' },
-      createdNote: { id: {}, content: {} }
-    }
-  })
-  results.createNote = t1?.raw || JSON.stringify(t1)
-
-  // Try createMessage
-  const t2 = await pave({
-    '$': { grantKey },
-    createMessage: {
-      '$': { jobId, content: 'Test message from API' },
-      createdMessage: { id: {} }
-    }
-  })
-  results.createMessage = t2?.raw || JSON.stringify(t2)
-
-  // Try createComment  
-  const t3 = await pave({
     '$': { grantKey },
     createComment: {
       '$': { targetId: jobId, targetType: 'job', content: 'Test comment from API' },
-      createdComment: { id: {}, content: {} }
+      createdComment: { id: {}, message: {}, text: {}, body: {}, createdAt: {} }
     }
   })
-  results.createComment = t3?.raw || JSON.stringify(t3)
+  results.t1_output_fields = t1?.raw || JSON.stringify(t1)
+
+  // Try with just id
+  const t2 = await pave({
+    '$': { grantKey },
+    createComment: {
+      '$': { targetId: jobId, targetType: 'job', content: 'Test comment from API' },
+      createdComment: { id: {} }
+    }
+  })
+  results.t2_id_only = t2?.raw || JSON.stringify(t2)
+
+  // Try different input field names
+  const t3 = await pave({
+    '$': { grantKey },
+    createComment: {
+      '$': { targetId: jobId, targetType: 'job', message: 'Test comment from API' },
+      createdComment: { id: {} }
+    }
+  })
+  results.t3_message_input = t3?.raw || JSON.stringify(t3)
+
+  const t4 = await pave({
+    '$': { grantKey },
+    createComment: {
+      '$': { targetId: jobId, targetType: 'job', text: 'Test comment from API' },
+      createdComment: { id: {} }
+    }
+  })
+  results.t4_text_input = t4?.raw || JSON.stringify(t4)
 
   return res.status(200).json({ results })
 }
