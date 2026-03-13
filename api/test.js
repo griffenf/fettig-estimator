@@ -6,7 +6,6 @@ import { join } from 'path'
 
 const execFileAsync = promisify(execFile)
 
-// Minimal valid PDF
 const VALID_PDF = `%PDF-1.0
 1 0 obj<</Type/Catalog/Pages 2 0 R>>endobj
 2 0 obj<</Type/Pages/Kids[3 0 R]/Count 1>>endobj
@@ -38,57 +37,57 @@ export default async function handler(req, res) {
     try { return JSON.parse(text) } catch { return { raw: text } }
   }
 
-  const pdfBuffer = Buffer.from(VALID_PDF)
-  const pdfSize = pdfBuffer.length
-  const results = { pdfSize }
-
-  const tmpFile = join(tmpdir(), 'test.pdf')
-  writeFileSync(tmpFile, pdfBuffer)
-
-  // Get upload URL
-  const uploadReq = await pave({
-    '$': { grantKey },
-    createUploadRequest: {
-      '$': { size: pdfSize, type: 'application/pdf' },
-      createdUploadRequest: { id: {}, url: {}, method: {} }
-    }
-  })
-  const ur = uploadReq?.createUploadRequest?.createdUploadRequest
-  if (!ur?.id) return res.status(200).json({ error: 'No upload request' })
-  results.uploadRequestId = ur.id
-
-  // Upload via curl
-  const { stdout } = await execFileAsync('curl', [
-    '-X', ur.method || 'PUT', '-s', '-w', '\n%{http_code}',
-    '-H', 'content-type: application/pdf',
-    '-H', `x-goog-content-length-range: ${pdfSize},${pdfSize}`,
-    '--data-binary', `@${tmpFile}`,
-    ur.url
-  ])
-  const lines = stdout.trim().split('\n')
-  results.gcsStatus = parseInt(lines[lines.length - 1])
-  unlinkSync(tmpFile)
-
-  if (results.gcsStatus !== 200) return res.status(200).json({ results, error: 'GCS upload failed' })
-
-  // Poll createFile every 2 seconds for up to 20 seconds
-  results.attempts = []
-  for (let i = 0; i < 10; i++) {
-    await new Promise(r => setTimeout(r, 2000))
-    const fileRes = await pave({
+  async function uploadAndGetId() {
+    const pdfBuffer = Buffer.from(VALID_PDF)
+    const pdfSize = pdfBuffer.length
+    const tmpFile = join(tmpdir(), `test-${Date.now()}.pdf`)
+    writeFileSync(tmpFile, pdfBuffer)
+    const uploadReq = await pave({
       '$': { grantKey },
-      createFile: {
-        '$': { name: 'test.pdf', targetId: jobId, targetType: 'job', uploadRequestId: ur.id },
-        createdFile: { id: {}, name: {} }
+      createUploadRequest: {
+        '$': { size: pdfSize, type: 'application/pdf' },
+        createdUploadRequest: { id: {}, url: {}, method: {} }
       }
     })
-    const txt = fileRes?.raw || JSON.stringify(fileRes)
-    results.attempts.push({ attempt: i + 1, seconds: (i + 1) * 2, result: txt.slice(0, 80) })
-    if (!txt.includes('valid upload request')) {
-      results.SUCCESS = txt
-      break
-    }
+    const ur = uploadReq?.createUploadRequest?.createdUploadRequest
+    await execFileAsync('curl', [
+      '-X', ur.method || 'PUT', '-s',
+      '-H', 'content-type: application/pdf',
+      '-H', `x-goog-content-length-range: ${pdfSize},${pdfSize}`,
+      '--data-binary', `@${tmpFile}`, ur.url
+    ])
+    unlinkSync(tmpFile)
+    return ur.id
   }
+
+  const results = {}
+
+  // Try different targetType values
+  for (const targetType of ['job', 'Job', 'JOB', 'account', 'organization', 'project']) {
+    const id = await uploadAndGetId()
+    const r = await pave({
+      '$': { grantKey },
+      createFile: {
+        '$': { name: 'test.pdf', targetId: jobId, targetType, uploadRequestId: id },
+        createdFile: { id: {} }
+      }
+    })
+    const txt = r?.raw || JSON.stringify(r)
+    results['targetType_' + targetType] = txt.includes('valid upload request') ? '⚠️ same error'
+      : txt.includes('no value is ever expected') ? '❌ invalid'
+      : '✅ ' + txt.slice(0, 120)
+  }
+
+  // Try without targetId/targetType at all
+  const id2 = await uploadAndGetId()
+  const r2 = await pave({
+    '$': { grantKey },
+    createFile: {
+      '$': { name: 'test.pdf', uploadRequestId: id2 },
+      createdFile: { id: {} }
+    }
+  })
+  results.noTarget = (r2?.raw || JSON.stringify(r2)).slice(0, 120)
 
   return res.status(200).json({ results })
 }
