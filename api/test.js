@@ -37,7 +37,7 @@ export default async function handler(req, res) {
   const pdfSize = testBuffer.length
   const results = {}
 
-  // Get upload URL via organizationId+url path (jobtread/files/ bucket)
+  // Get upload URL via organizationId+url path (files bucket)
   const uploadReq = await pave({
     '$': { grantKey },
     createUploadRequest: {
@@ -46,27 +46,26 @@ export default async function handler(req, res) {
     }
   })
   const ur = uploadReq?.createUploadRequest?.createdUploadRequest
-  results.uploadRequestId = ur?.id
-  results.urlPath = ur?.url?.includes('files/') ? 'files bucket ✅' : ur?.url?.includes('dropbox/') ? 'dropbox bucket' : ur?.url?.slice(0, 50)
+  if (!ur?.id) return res.status(200).json({ error: 'No upload request', raw: JSON.stringify(uploadReq) })
 
-  if (!ur?.id) return res.status(200).json({ results, error: 'No upload request' })
+  // Parse signed headers from URL to know exactly what to send
+  const signedHeaders = decodeURIComponent(ur.url.match(/X-Goog-SignedHeaders=([^&]+)/)?.[1] || '')
+  results.signedHeaders = signedHeaders
+  results.uploadRequestId = ur.id
 
-  // Upload to this URL
-  const gcsResult = await httpsRequest(
-    ur.url, ur.method || 'PUT',
-    {
-      'content-type': 'application/pdf',
-      'x-goog-content-length-range': `${pdfSize},${pdfSize}`,
-      'content-length': String(pdfSize)
-    },
-    testBuffer
-  )
+  // Only send exactly what's signed
+  const headers = {}
+  if (signedHeaders.includes('content-type')) headers['content-type'] = 'application/pdf'
+  if (signedHeaders.includes('x-goog-content-length-range')) headers['x-goog-content-length-range'] = `${pdfSize},${pdfSize}`
+  if (signedHeaders.includes('content-length')) headers['content-length'] = String(pdfSize)
+  results.headersSent = headers
+
+  const gcsResult = await httpsRequest(ur.url, ur.method || 'PUT', headers, testBuffer)
   results.gcsStatus = gcsResult.status
   results.gcsError = gcsResult.status !== 200 ? gcsResult.body.slice(0, 150) : null
 
   if (gcsResult.status !== 200) return res.status(200).json({ results })
 
-  // Try createFile with this ID
   await new Promise(r => setTimeout(r, 1000))
   const fileRes = await pave({
     '$': { grantKey },
