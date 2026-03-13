@@ -16,35 +16,22 @@ export default async function handler(req, res) {
 
   const results = {}
 
-  // Query folders on the job
+  // What fields does job.folders have?
   const t1 = await pave({
     '$': { grantKey },
-    job: {
-      '$': { id: jobId },
-      folders: { nodes: { id: {}, name: {} } }
-    }
+    job: { '$': { id: jobId }, folders: { id: {}, name: {} } }
   })
-  results.jobFolders = t1?.raw || JSON.stringify(t1)
+  results.folders_id_name = t1?.raw || JSON.stringify(t1)
 
-  // Query fileFolder
-  const t2 = await pave({
-    '$': { grantKey },
-    job: {
-      '$': { id: jobId },
-      fileFolders: { nodes: { id: {}, name: {} } }
-    }
-  })
-  results.fileFolders = t2?.raw || JSON.stringify(t2)
-
-  // Query files with folder info
-  const t3 = await pave({
-    '$': { grantKey },
-    job: {
-      '$': { id: jobId },
-      files: { nodes: { id: {}, name: {}, folder: { id: {}, name: {} } } }
-    }
-  })
-  results.filesWithFolders = t3?.raw || JSON.stringify(t3)
+  // What scalar fields does folder have on files?
+  for (const f of ['id', 'name', 'folderId', 'folderName']) {
+    const r = await pave({
+      '$': { grantKey },
+      job: { '$': { id: jobId }, files: { nodes: { [f]: {} } } }
+    })
+    const txt = r?.raw || JSON.stringify(r)
+    results['file_field_' + f] = txt.includes('does not exist') ? '❌' : '✅ ' + txt.slice(0, 150)
+  }
 
   return res.status(200).json({ results })
 }
