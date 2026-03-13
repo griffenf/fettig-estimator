@@ -14,38 +14,41 @@ export default async function handler(req, res) {
 
   const results = {}
 
-  // Step 1: Get a valid upload request ID - try with contentType only, see what fields come back
+  // createUploadRequest - probe every possible output field
   const t1 = await pave({
     '$': { grantKey },
-    uploadRequest: {
-      '$': { contentType: 'application/pdf' },
+    createUploadRequest: {
+      '$': { contentType: 'application/pdf', name: 'test.pdf' },
+      id: {},
+      url: {},
+      uploadUrl: {},
+      uploadId: {},
+      key: {},
+      bucket: {},
+      createdUploadRequest: { id: {}, url: {} }
+    }
+  })
+  results.t1_all_fields = t1?.raw || JSON.stringify(t1)
+
+  // Try with no inputs at all to see what it says
+  const t2 = await pave({
+    '$': { grantKey },
+    createUploadRequest: {
       id: {},
       url: {}
     }
   })
-  results.t1_with_url = t1?.raw || JSON.stringify(t1)
+  results.t2_no_inputs = t2?.raw || JSON.stringify(t2)
 
-  // Step 2: Try without url field
-  const t2 = await pave({
+  // Try createUploadRequest with just id output
+  const t3 = await pave({
     '$': { grantKey },
-    uploadRequest: {
+    createUploadRequest: {
       '$': { contentType: 'application/pdf' },
       id: {}
     }
   })
-  results.t2_id_only = t2?.raw || JSON.stringify(t2)
-
-  // Step 3: What does uploadRequest with an actual id look like? 
-  // Maybe "id" is an input not an output - it creates an upload slot with a given id
-  const t3 = await pave({
-    '$': { grantKey },
-    uploadRequest: {
-      '$': { id: 'test-upload-1', contentType: 'application/pdf' },
-      url: {},
-      method: {}
-    }
-  })
-  results.t3_id_as_input = t3?.raw || JSON.stringify(t3)
+  results.t3_contentType_id = t3?.raw || JSON.stringify(t3)
 
   return res.status(200).json({ results })
 }
