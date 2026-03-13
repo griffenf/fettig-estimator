@@ -14,58 +14,38 @@ export default async function handler(req, res) {
 
   const results = {}
 
-  // Probe uploadRequest - try various inputs to see what it needs
+  // Step 1: Get a valid upload request ID - try with contentType only, see what fields come back
   const t1 = await pave({
     '$': { grantKey },
     uploadRequest: {
       '$': { contentType: 'application/pdf' },
       id: {},
-      url: {},
-      fields: {}
+      url: {}
     }
   })
-  results.t1_contentType = t1?.raw || JSON.stringify(t1)
+  results.t1_with_url = t1?.raw || JSON.stringify(t1)
 
+  // Step 2: Try without url field
   const t2 = await pave({
     '$': { grantKey },
     uploadRequest: {
-      '$': { type: 'application/pdf' },
-      id: {},
-      url: {}
+      '$': { contentType: 'application/pdf' },
+      id: {}
     }
   })
-  results.t2_type = t2?.raw || JSON.stringify(t2)
+  results.t2_id_only = t2?.raw || JSON.stringify(t2)
 
+  // Step 3: What does uploadRequest with an actual id look like? 
+  // Maybe "id" is an input not an output - it creates an upload slot with a given id
   const t3 = await pave({
     '$': { grantKey },
     uploadRequest: {
-      '$': { mimeType: 'application/pdf' },
-      id: {},
-      url: {}
-    }
-  })
-  results.t3_mimeType = t3?.raw || JSON.stringify(t3)
-
-  const t4 = await pave({
-    '$': { grantKey },
-    uploadRequest: {
-      '$': { filename: 'test.pdf' },
-      id: {},
-      url: {}
-    }
-  })
-  results.t4_filename = t4?.raw || JSON.stringify(t4)
-
-  const t5 = await pave({
-    '$': { grantKey },
-    uploadRequest: {
-      '$': { name: 'test.pdf', contentType: 'application/pdf' },
-      id: {},
+      '$': { id: 'test-upload-1', contentType: 'application/pdf' },
       url: {},
-      fields: {}
+      method: {}
     }
   })
-  results.t5_name_and_contentType = t5?.raw || JSON.stringify(t5)
+  results.t3_id_as_input = t3?.raw || JSON.stringify(t3)
 
   return res.status(200).json({ results })
 }
