@@ -1,12 +1,22 @@
+export const config = { api: { bodyParser: true } }
+
 export default async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(500).json({ error: 'JOBTREAD_API_KEY not configured in Vercel.' })
 
-  const { jobId, jobInfo, windows = [] } = req.body
+  let body = req.body
+  // If body came in as a string (unparsed), parse it manually
+  if (typeof body === 'string') {
+    try { body = JSON.parse(body) } catch { return res.status(400).json({ error: 'Invalid JSON body' }) }
+  }
+
+  const jobId = body?.jobId
+  const jobInfo = body?.jobInfo || {}
+  const windows = Array.isArray(body?.windows) ? body.windows : []
+
   if (!jobId) return res.status(400).json({ error: 'No job selected. Please select a job from the search on Step 1.' })
-  const safeWindows = Array.isArray(windows) ? windows : []
 
   async function pave(query) {
     const r = await fetch('https://api.jobtread.com/pave', {
@@ -19,18 +29,17 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Build a nicely formatted comment with all the estimate details
     const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    const totalUnits = safeWindows.reduce((sum, w) => sum + parseInt(w.qty || 1), 0)
+    const totalUnits = windows.reduce((sum, w) => sum + parseInt(w.qty || 1), 0)
 
     let message = `📋 WINDOW ESTIMATE — ${date}\n`
     message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
-    message += `Customer: ${jobInfo.customerName}\n`
+    message += `Customer: ${jobInfo.customerName || 'N/A'}\n`
     if (jobInfo.estimator) message += `Estimator: ${jobInfo.estimator}\n`
-    message += `Total: ${safeWindows.length} line item(s), ${totalUnits} unit(s)\n`
+    message += `Total: ${windows.length} line item(s), ${totalUnits} unit(s)\n`
     message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`
 
-    safeWindows.forEach((w, i) => {
+    windows.forEach((w, i) => {
       message += `#${i + 1} — ${w.style || 'Window'} × ${w.qty}\n`
       if (w.width && w.height) message += `  Size: ${w.width}" × ${w.height}"\n`
       if (w.exteriorColor) message += `  Ext Color: ${w.exteriorColor}\n`
