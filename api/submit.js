@@ -45,7 +45,8 @@ export default async function handler(req, res) {
           name: fileName,
           content: pdfBase64,
           contentType: 'application/pdf',
-          targetId: jobId
+          targetId: jobId,
+          targetType: "job"
         },
         createdFile: {
           id: {},
