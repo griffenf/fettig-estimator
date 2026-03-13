@@ -14,22 +14,41 @@ export default async function handler(req, res) {
 
   const results = {}
 
-  // Probe top-level output fields of createUploadRequest (not pdf subfields)
-  const fields = ['id', 'uploadId', 'requestId', 'createdUploadRequest', 'uploadRequest', 
-                  'url', 'uploadUrl', 'token', 'key', 'name', 'status', 'createdAt']
-  for (const field of fields) {
-    const r = await pave({
-      '$': { grantKey },
-      createUploadRequest: {
-        '$': { contentType: 'application/pdf', name: 'test.pdf' },
-        [field]: {}
-      }
-    })
-    const txt = r?.raw || JSON.stringify(r)
-    results[field] = txt.includes('does not exist') ? '❌' 
-                   : txt.includes('Did you mean') ? '❌ (meant: ' + (txt.match(/Did you mean "(.+?)"/)?.[1] || '?') + ')'
-                   : '✅ ' + txt.slice(0, 150)
-  }
+  // createdUploadRequest - try with no inputs
+  const t1 = await pave({
+    '$': { grantKey },
+    createUploadRequest: {
+      createdUploadRequest: { id: {}, url: {}, uploadUrl: {}, key: {}, fields: {}, method: {} }
+    }
+  })
+  results.t1_createdUploadRequest_subfields = t1?.raw || JSON.stringify(t1)
+
+  // createdUploadRequest with just id
+  const t2 = await pave({
+    '$': { grantKey },
+    createUploadRequest: {
+      createdUploadRequest: { id: {} }
+    }
+  })
+  results.t2_createdUploadRequest_id = t2?.raw || JSON.stringify(t2)
+
+  // uploadRequest - probe its $ inputs
+  const t3 = await pave({
+    '$': { grantKey },
+    createUploadRequest: {
+      uploadRequest: { '$': { contentType: 'application/pdf', name: 'test.pdf' }, id: {}, url: {}, method: {} }
+    }
+  })
+  results.t3_uploadRequest_inputs = t3?.raw || JSON.stringify(t3)
+
+  // uploadRequest with just id
+  const t4 = await pave({
+    '$': { grantKey },
+    createUploadRequest: {
+      uploadRequest: { '$': { contentType: 'application/pdf' }, id: {} }
+    }
+  })
+  results.t4_uploadRequest_id = t4?.raw || JSON.stringify(t4)
 
   return res.status(200).json({ results })
 }
