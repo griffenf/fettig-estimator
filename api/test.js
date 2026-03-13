@@ -8,7 +8,7 @@ function httpsRequest(urlStr, method, headers, body) {
     const req = https.request(options, (res) => {
       let data = ''
       res.on('data', chunk => data += chunk)
-      res.on('end', () => resolve({ status: res.statusCode, body: data }))
+      res.on('end', () => resolve({ status: res.statusCode, headers: res.headers, body: data }))
     })
     req.on('error', reject)
     if (body) req.write(body)
@@ -34,43 +34,53 @@ export default async function handler(req, res) {
 
   const testBuffer = Buffer.from('%PDF-1.4 test content')
   const pdfSize = testBuffer.length
-  const results = {}
+  const results = { pdfSize }
 
-  // Try both range formats and report GCS status + createFile result for each
-  for (const [label, range] of [['0_to_size', `0,${pdfSize}`], ['size_to_size', `${pdfSize},${pdfSize}`]]) {
-    const uploadReq = await pave({
-      '$': { grantKey },
-      createUploadRequest: {
-        '$': { size: pdfSize, type: 'application/pdf' },
-        createdUploadRequest: { id: {}, url: {}, method: {} }
-      }
-    })
-    const ur = uploadReq?.createUploadRequest?.createdUploadRequest
-    if (!ur?.id) { results[label] = 'no upload request'; continue }
-
-    const gcsResult = await httpsRequest(
-      ur.url, ur.method || 'PUT',
-      { 'content-type': 'application/pdf', 'x-goog-content-length-range': range },
-      testBuffer
-    )
-    
-    await new Promise(r => setTimeout(r, 1000))
-
-    const fileRes = await pave({
-      '$': { grantKey },
-      createFile: {
-        '$': { name: 'test.pdf', targetId: jobId, targetType: 'job', uploadRequestId: ur.id },
-        createdFile: { id: {}, name: {} }
-      }
-    })
-    const fileText = fileRes?.raw || JSON.stringify(fileRes)
-
-    results[label] = {
-      gcsStatus: gcsResult.status,
-      gcsError: gcsResult.status !== 200 ? gcsResult.body.slice(0, 100) : null,
-      createFile: fileText.slice(0, 150)
+  // Get upload request
+  const uploadReq = await pave({
+    '$': { grantKey },
+    createUploadRequest: {
+      '$': { size: pdfSize, type: 'application/pdf' },
+      createdUploadRequest: { id: {}, url: {}, method: {} }
     }
-  }
+  })
+  const ur = uploadReq?.createUploadRequest?.createdUploadRequest
+  results.uploadRequestId = ur?.id
+
+  // Upload with Content-Length included
+  const gcsResult = await httpsRequest(
+    ur.url, ur.method || 'PUT',
+    {
+      'content-type': 'application/pdf',
+      'x-goog-content-length-range': `${pdfSize},${pdfSize}`,
+      'content-length': String(pdfSize)
+    },
+    testBuffer
+  )
+  results.gcsStatus = gcsResult.status
+  results.gcsResponseHeaders = gcsResult.headers
+  results.gcsBody = gcsResult.body.slice(0, 200)
+
+  // Try createFile with no delay
+  const fileRes1 = await pave({
+    '$': { grantKey },
+    createFile: {
+      '$': { name: 'test.pdf', targetId: jobId, targetType: 'job', uploadRequestId: ur.id },
+      createdFile: { id: {}, name: {} }
+    }
+  })
+  results.createFileImmediate = fileRes1?.raw || JSON.stringify(fileRes1)
+
+  // Try after 3 second delay
+  await new Promise(r => setTimeout(r, 3000))
+  const fileRes2 = await pave({
+    '$': { grantKey },
+    createFile: {
+      '$': { name: 'test.pdf', targetId: jobId, targetType: 'job', uploadRequestId: ur.id },
+      createdFile: { id: {}, name: {} }
+    }
+  })
+  results.createFileAfter3s = fileRes2?.raw || JSON.stringify(fileRes2)
 
   return res.status(200).json({ results })
 }
