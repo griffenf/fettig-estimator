@@ -14,8 +14,9 @@ export default async function handler(req, res) {
 
   const results = {}
 
-  // Try $ as a string value directly
-  for (const val of ['document', 'specifications', 'budget', 'selections', 'dailyLogs', 'tasks']) {
+  // Try different casings and formats
+  const vals = ['Document', 'DOCUMENT', 'Specifications', 'SPECIFICATIONS', 'Budget', 'BUDGET', 'Selections', 'DailyLogs', 'DAILY_LOGS', 'daily_logs', 'Tasks', 'TASKS']
+  for (const val of vals) {
     const r = await pave({
       '$': { grantKey },
       createUploadRequest: {
@@ -24,7 +25,7 @@ export default async function handler(req, res) {
       }
     })
     const txt = r?.raw || JSON.stringify(r)
-    results[val] = txt.includes('does not resolve') || txt.includes('does not exist') ? '❌ ' + txt.slice(0, 80) : '✅ ' + txt.slice(0, 200)
+    results[val] = txt.includes('does not resolve') || txt.includes('does not exist') ? '❌' : '✅ ' + txt.slice(0, 200)
   }
 
   return res.status(200).json({ results })
