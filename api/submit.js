@@ -6,6 +6,7 @@ export default async function handler(req, res) {
 
   const { pdfBase64, fileName, jobId } = req.body
   if (!pdfBase64 || !fileName) return res.status(400).json({ error: 'Missing PDF data or file name.' })
+  if (!jobId) return res.status(400).json({ error: 'No job selected. Please select a job from the search on Step 1.' })
 
   async function pave(query) {
     const r = await fetch('https://api.jobtread.com/pave', {
@@ -35,8 +36,8 @@ export default async function handler(req, res) {
     const organizationId = orgRes?.currentGrant?.user?.memberships?.nodes?.[0]?.organization?.id
     if (!organizationId) return res.status(400).json({ error: 'Could not get organization ID. Check your grant key.' })
 
-    // Step 2: Upload file
-    const uploadQuery = {
+    // Step 2: Upload file using targetId (JobTread's field name for the job)
+    const uploadRes = await pave({
       '$': { grantKey },
       createFile: {
         '$': {
@@ -44,16 +45,14 @@ export default async function handler(req, res) {
           name: fileName,
           content: pdfBase64,
           contentType: 'application/pdf',
-          ...(jobId ? { jobId } : {})
+          targetId: jobId
         },
         createdFile: {
           id: {},
           name: {}
         }
       }
-    }
-
-    const uploadRes = await pave(uploadQuery)
+    })
 
     if (uploadRes?.errors) {
       return res.status(400).json({ error: uploadRes.errors[0]?.message || 'Upload error' })
