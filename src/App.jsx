@@ -400,25 +400,13 @@ export default function App() {
       const doc = generatePDF(jobInfo, windows)
       const pdfBase64 = doc.output('datauristring').split(',')[1]
 
-      // Step 1: Upload PDF server-side and get uploadRequestId
-      const uploadRes = await fetch('/api/submit', {
+      const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ jobId: jobInfo.jobId, pdfBase64 })
+        body: JSON.stringify({ jobId: jobInfo.jobId, jobInfo, windows, pdfBase64 })
       })
-      const uploadData = await uploadRes.json()
-      if (uploadData.debug) throw new Error('Debug: ' + JSON.stringify(uploadData))
-      if (!uploadRes.ok) throw new Error(uploadData.error || 'Upload failed')
-
-      // Step 2: Finalize — attach file to job and post comment
-      const finalRes = await fetch('/api/submit', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'finalize', jobId: jobInfo.jobId, jobInfo, windows, uploadRequestId: uploadData.uploadRequestId })
-      })
-      const finalData = await finalRes.json()
-      if (!finalRes.ok) throw new Error(finalData.error || 'Finalize failed')
-
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error || 'Unknown error')
       setSubmitted(true)
     } catch (err) {
       alert('JobTread error: ' + err.message)
