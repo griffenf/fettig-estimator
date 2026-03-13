@@ -14,51 +14,58 @@ export default async function handler(req, res) {
 
   const results = {}
 
-  // Probe root-level field names related to uploads
-  const guesses = ['createUpload', 'upload', 'fileUpload', 'createFileUpload', 
-                   'signedUpload', 'presignedUpload', 'getUploadUrl', 'uploadRequest',
-                   'createAttachment', 'attachment']
-
-  for (const name of guesses) {
-    const q = { '$': { grantKey } }
-    q[name] = { id: {} }
-    const t = await pave(q)
-    const msg = t?.raw || JSON.stringify(t)
-    // Only show ones that don't say "does not exist"
-    if (!msg.includes('does not exist')) {
-      results[name] = msg
+  // Probe uploadRequest - try various inputs to see what it needs
+  const t1 = await pave({
+    '$': { grantKey },
+    uploadRequest: {
+      '$': { contentType: 'application/pdf' },
+      id: {},
+      url: {},
+      fields: {}
     }
-  }
+  })
+  results.t1_contentType = t1?.raw || JSON.stringify(t1)
 
-  // Also try createFile with "uploadRequestId" field explicitly
   const t2 = await pave({
     '$': { grantKey },
-    createFile: {
-      '$': { 
-        name: 'test.pdf', 
-        targetId: '22MsvgnqcwLK', 
-        targetType: 'job',
-        uploadRequestId: 'test'
-      },
-      createdFile: { id: {}, name: {} }
+    uploadRequest: {
+      '$': { type: 'application/pdf' },
+      id: {},
+      url: {}
     }
   })
-  results.createFile_uploadRequestId = t2?.raw || JSON.stringify(t2)
+  results.t2_type = t2?.raw || JSON.stringify(t2)
 
-  // Try with "existingFileId"
   const t3 = await pave({
     '$': { grantKey },
-    createFile: {
-      '$': { 
-        name: 'test.pdf', 
-        targetId: '22MsvgnqcwLK', 
-        targetType: 'job',
-        existingFileId: 'test'
-      },
-      createdFile: { id: {}, name: {} }
+    uploadRequest: {
+      '$': { mimeType: 'application/pdf' },
+      id: {},
+      url: {}
     }
   })
-  results.createFile_existingFileId = t3?.raw || JSON.stringify(t3)
+  results.t3_mimeType = t3?.raw || JSON.stringify(t3)
+
+  const t4 = await pave({
+    '$': { grantKey },
+    uploadRequest: {
+      '$': { filename: 'test.pdf' },
+      id: {},
+      url: {}
+    }
+  })
+  results.t4_filename = t4?.raw || JSON.stringify(t4)
+
+  const t5 = await pave({
+    '$': { grantKey },
+    uploadRequest: {
+      '$': { name: 'test.pdf', contentType: 'application/pdf' },
+      id: {},
+      url: {},
+      fields: {}
+    }
+  })
+  results.t5_name_and_contentType = t5?.raw || JSON.stringify(t5)
 
   return res.status(200).json({ results })
 }
