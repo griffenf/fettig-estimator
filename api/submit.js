@@ -1,3 +1,27 @@
+const https = require('https')
+const { URL } = require('url')
+
+// Raw HTTPS request that won't have Vercel headers injected
+function httpsRequest(url, method, headers, body) {
+  return new Promise((resolve, reject) => {
+    const u = new URL(url)
+    const options = {
+      hostname: u.hostname,
+      path: u.pathname + u.search,
+      method,
+      headers
+    }
+    const req = https.request(options, (res) => {
+      let data = ''
+      res.on('data', chunk => data += chunk)
+      res.on('end', () => resolve({ status: res.statusCode, body: data }))
+    })
+    req.on('error', reject)
+    if (body) req.write(body)
+    req.end()
+  })
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
@@ -17,6 +41,7 @@ module.exports = async function handler(req, res) {
   }
 
   try {
+    // Action: finalize after upload
     if (action === 'finalize') {
       if (!jobId || !uploadRequestId) throw new Error('Missing jobId or uploadRequestId')
       const fileName = `Fettig-Estimate-${(jobInfo?.customerName || 'Draft').replace(/\s+/g, '-')}.pdf`
@@ -49,13 +74,12 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ success: true })
     }
 
-    // Default action: get upload URL AND do the upload server-side
+    // Default: get upload URL and upload PDF via raw https (no Vercel header injection)
     if (!pdfBase64) return res.status(400).json({ error: 'No PDF data received.' })
 
     const pdfBuffer = Buffer.from(pdfBase64, 'base64')
     const pdfSize = pdfBuffer.length
 
-    // Get signed URL
     const result = await pave({
       '$': { grantKey },
       createUploadRequest: {
@@ -66,33 +90,20 @@ module.exports = async function handler(req, res) {
     const ur = result?.createUploadRequest?.createdUploadRequest
     if (!ur?.id) throw new Error('No upload URL: ' + JSON.stringify(result))
 
-    // Parse what headers are required from the signed URL
-    const signedUrl = ur.url
-    const signedHeaders = decodeURIComponent(signedUrl.match(/X-Goog-SignedHeaders=([^&]+)/)?.[1] || '')
+    // Use raw https to avoid Vercel injecting extra headers that break GCS signature
+    const uploadResult = await httpsRequest(
+      ur.url,
+      ur.method || 'PUT',
+      {
+        'Content-Type': 'application/pdf',
+        'x-goog-content-length-range': `0,${pdfSize}`,
+        'Content-Length': pdfSize
+      },
+      pdfBuffer
+    )
 
-    // Build headers object with only what's signed
-    const headers = {}
-    if (signedHeaders.includes('content-type')) headers['Content-Type'] = 'application/pdf'
-    if (signedHeaders.includes('x-goog-content-length-range')) {
-      headers['x-goog-content-length-range'] = `0,${pdfSize}`
-    }
-
-    const uploadResult = await fetch(signedUrl, {
-      method: ur.method || 'PUT',
-      headers,
-      body: pdfBuffer
-    })
-
-    if (!uploadResult.ok) {
-      const errText = await uploadResult.text()
-      // Return debug info so we can see exactly what happened
-      return res.status(200).json({ 
-        debug: true,
-        status: uploadResult.status,
-        signedHeaders,
-        headersSent: headers,
-        error: errText.slice(0, 500)
-      })
+    if (uploadResult.status !== 200) {
+      throw new Error(`GCS upload failed: ${uploadResult.status} ${uploadResult.body.slice(0, 300)}`)
     }
 
     return res.status(200).json({ uploadRequestId: ur.id, uploadOk: true })
