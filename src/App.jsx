@@ -397,14 +397,10 @@ export default function App() {
   const handleSubmitToJobTread = async () => {
     setSubmitting(true)
     try {
-      const doc = generatePDF(jobInfo, windows)
-      const pdfBase64 = doc.output('datauristring').split(',')[1]
-      const fileName = `Fettig-Estimate-${jobInfo.customerName.replace(/\s+/g, '-') || 'Draft'}.pdf`
-
       const res = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ pdfBase64, fileName, jobId: jobInfo.jobId || null })
+        body: JSON.stringify({ jobId: jobInfo.jobId, jobInfo, windows })
       })
 
       const data = await res.json()
@@ -548,13 +544,13 @@ export default function App() {
               {!submitted ? (
                 <button className="btn-gold" style={{ width: '100%', fontSize: 16, padding: 14 }}
                   onClick={handleSubmitToJobTread} disabled={submitting}>
-                  {submitting ? '⏳ Sending to JobTread...' : `🔗 Send PDF to ${jobInfo.jobName || 'JobTread Job'}`}
+                  {submitting ? '⏳ Posting to JobTread...' : `🔗 Post Estimate to ${jobInfo.jobName || 'JobTread Job'}`}
                 </button>
               ) : (
                 <div style={{ background: 'rgba(39,174,96,0.15)', border: '1.5px solid var(--green)', borderRadius: 8, padding: 16, textAlign: 'center' }}>
                   <div style={{ fontSize: 24, marginBottom: 6 }}>✅</div>
                   <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>Sent to JobTread!</div>
-                  <div style={{ color: 'var(--gray)', fontSize: 13, marginTop: 4 }}>The PDF is now attached to <strong>{jobInfo.jobName}</strong>.</div>
+                  <div style={{ color: 'var(--gray)', fontSize: 13, marginTop: 4 }}>The estimate has been posted as a comment on <strong>{jobInfo.jobName}</strong> in JobTread.</div>
                 </div>
               )}
 
