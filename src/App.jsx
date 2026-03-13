@@ -397,42 +397,27 @@ export default function App() {
   const handleSubmitToJobTread = async () => {
     setSubmitting(true)
     try {
-      // Generate PDF as binary blob
       const doc = generatePDF(jobInfo, windows)
-      const pdfBlob = doc.output('blob')
-      const pdfSize = pdfBlob.size
+      const pdfBase64 = doc.output('datauristring').split(',')[1]
 
-      // Step 1: Get signed upload URL from server
-      const urlRes = await fetch('/api/submit', {
+      // Step 1: Upload PDF server-side and get uploadRequestId
+      const uploadRes = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'getUploadUrl', size: pdfSize })
+        body: JSON.stringify({ jobId: jobInfo.jobId, pdfBase64 })
       })
-      const urlData = await urlRes.json()
-      if (!urlRes.ok) throw new Error(urlData.error || 'Failed to get upload URL')
+      const uploadData = await uploadRes.json()
+      if (uploadData.debug) throw new Error('Debug: ' + JSON.stringify(uploadData))
+      if (!uploadRes.ok) throw new Error(uploadData.error || 'Upload failed')
 
-      // Step 2: Upload PDF directly to GCS from browser
-      const gcsRes = await fetch(urlData.uploadUrl, {
-        method: urlData.method || 'PUT',
-        headers: {
-          'Content-Type': 'application/pdf',
-          'x-goog-content-length-range': '0,' + urlData.size
-        },
-        body: pdfBlob
-      })
-      if (!gcsRes.ok) {
-        const errText = await gcsRes.text()
-        throw new Error('GCS upload failed: ' + gcsRes.status + ' ' + errText.slice(0, 200))
-      }
-
-      // Step 3: Finalize — attach file to job and post comment
+      // Step 2: Finalize — attach file to job and post comment
       const finalRes = await fetch('/api/submit', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ action: 'finalize', jobId: jobInfo.jobId, jobInfo, windows, uploadRequestId: urlData.uploadRequestId })
+        body: JSON.stringify({ action: 'finalize', jobId: jobInfo.jobId, jobInfo, windows, uploadRequestId: uploadData.uploadRequestId })
       })
       const finalData = await finalRes.json()
-      if (!finalRes.ok) throw new Error(finalData.error || 'Failed to finalize')
+      if (!finalRes.ok) throw new Error(finalData.error || 'Finalize failed')
 
       setSubmitted(true)
     } catch (err) {
