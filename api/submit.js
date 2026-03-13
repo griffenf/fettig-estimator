@@ -7,8 +7,10 @@ module.exports = async function handler(req, res) {
   const jobId = req.body && req.body.jobId
   const jobInfo = (req.body && req.body.jobInfo) || {}
   const windows = (req.body && Array.isArray(req.body.windows)) ? req.body.windows : []
+  const pdfBase64 = req.body && req.body.pdfBase64
 
-  if (!jobId) return res.status(400).json({ error: 'No job selected. Please select a job from the search on Step 1.' })
+  if (!jobId) return res.status(400).json({ error: 'No job selected.' })
+  if (!pdfBase64) return res.status(400).json({ error: 'No PDF data received.' })
 
   async function pave(query) {
     const r = await fetch('https://api.jobtread.com/pave', {
@@ -21,38 +23,68 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    const totalUnits = windows.reduce((sum, w) => sum + parseInt(w.qty || 1), 0)
+    // Convert base64 PDF to binary buffer
+    const pdfBuffer = Buffer.from(pdfBase64, 'base64')
+    const pdfSize = pdfBuffer.length
+    const fileName = `Fettig-Estimate-${(jobInfo.customerName || 'Draft').replace(/\s+/g, '-')}.pdf`
 
-    let message = `📋 WINDOW ESTIMATE — ${date}\n`
-    message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
-    message += `Customer: ${jobInfo.customerName || 'N/A'}\n`
-    if (jobInfo.estimator) message += `Estimator: ${jobInfo.estimator}\n`
-    if (jobInfo.jobName) message += `Job: ${jobInfo.jobName}\n`
-    if (jobInfo.address) message += `Address: ${jobInfo.address}\n`
-    message += `Total: ${windows.length} line item(s), ${totalUnits} unit(s)\n`
-    message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`
-
-    windows.forEach((w, i) => {
-      message += `#${i + 1} — ${w.style || 'Window'} × ${w.qty}\n`
-      if (w.width && w.height) message += `  Size: ${w.width}" × ${w.height}"\n`
-      if (w.exteriorColor) message += `  Ext Color: ${w.exteriorColor}\n`
-      if (w.interiorColor) message += `  Int Color: ${w.interiorColor}\n`
-      if (w.glass) message += `  Glass: ${w.glass}\n`
-      if (w.grid && w.grid !== 'No Grid') message += `  Grid: ${w.grid}\n`
-      if (w.notes) message += `  Notes: ${w.notes}\n`
-      message += '\n'
+    // Step 1: Get a signed upload URL from JobTread
+    const uploadRes = await pave({
+      '$': { grantKey },
+      createUploadRequest: {
+        '$': { size: pdfSize, type: 'application/pdf' },
+        createdUploadRequest: { id: {}, url: {}, method: {} }
+      }
     })
 
-    if (jobInfo.notes) {
-      message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
-      message += `Job Notes: ${jobInfo.notes}\n`
+    const uploadRequest = uploadRes?.createUploadRequest?.createdUploadRequest
+    if (!uploadRequest?.id || !uploadRequest?.url) {
+      throw new Error('Failed to get upload URL from JobTread')
     }
 
-    message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
-    message += `Submitted via Fettig Estimator App`
+    // Step 2: PUT the PDF to Google Cloud Storage
+    const uploadRes2 = await fetch(uploadRequest.url, {
+      method: uploadRequest.method || 'PUT',
+      headers: {
+        'Content-Type': 'application/pdf',
+        'x-goog-content-length-range': `0,${pdfSize}`
+      },
+      body: pdfBuffer
+    })
 
-    const result = await pave({
+    if (!uploadRes2.ok) {
+      const errText = await uploadRes2.text()
+      throw new Error(`GCS upload failed: ${uploadRes2.status} ${errText.slice(0, 200)}`)
+    }
+
+    // Step 3: Register the file on the JobTread job
+    const fileRes = await pave({
+      '$': { grantKey },
+      createFile: {
+        '$': { 
+          name: fileName,
+          targetId: jobId,
+          targetType: 'job',
+          uploadRequestId: uploadRequest.id
+        },
+        createdFile: { id: {}, name: {} }
+      }
+    })
+
+    if (fileRes?.errors) {
+      throw new Error(fileRes.errors[0]?.message || 'createFile error')
+    }
+
+    const fileId = fileRes?.createFile?.createdFile?.id
+
+    // Step 4: Post a comment linking to the file
+    const totalUnits = windows.reduce((sum, w) => sum + parseInt(w.qty || 1), 0)
+    let message = `📋 Window Estimate submitted by ${jobInfo.estimator || 'estimator'}\n`
+    message += `Customer: ${jobInfo.customerName}\n`
+    message += `${windows.length} line item(s), ${totalUnits} unit(s)\n`
+    message += `See attached PDF: ${fileName}`
+
+    await pave({
       '$': { grantKey },
       createComment: {
         '$': { targetId: jobId, targetType: 'job', message },
@@ -60,11 +92,7 @@ module.exports = async function handler(req, res) {
       }
     })
 
-    if (result?.errors) {
-      return res.status(400).json({ error: result.errors[0]?.message || 'Comment error' })
-    }
-
-    return res.status(200).json({ success: true, commentId: result?.createComment?.createdComment?.id })
+    return res.status(200).json({ success: true, fileId })
 
   } catch (err) {
     return res.status(500).json({ error: err.message })
