@@ -12,47 +12,37 @@ export default async function handler(req, res) {
     try { return JSON.parse(text) } catch { return { raw: text } }
   }
 
-  const jobId = '22MsvgnqcwLK'
   const results = {}
 
-  // Probe createComment output fields
+  // Try createUploadRequest with pdf output field
   const t1 = await pave({
     '$': { grantKey },
-    createComment: {
-      '$': { targetId: jobId, targetType: 'job', content: 'Test comment from API' },
-      createdComment: { id: {}, message: {}, text: {}, body: {}, createdAt: {} }
+    createUploadRequest: {
+      '$': { contentType: 'application/pdf', name: 'test.pdf' },
+      pdf: {}
     }
   })
-  results.t1_output_fields = t1?.raw || JSON.stringify(t1)
+  results.t1_pdf_field = t1?.raw || JSON.stringify(t1)
 
-  // Try with just id
+  // Try pdf subfields
   const t2 = await pave({
     '$': { grantKey },
-    createComment: {
-      '$': { targetId: jobId, targetType: 'job', content: 'Test comment from API' },
-      createdComment: { id: {} }
+    createUploadRequest: {
+      '$': { contentType: 'application/pdf', name: 'test.pdf' },
+      pdf: { url: {}, id: {}, uploadUrl: {}, key: {}, fields: {} }
     }
   })
-  results.t2_id_only = t2?.raw || JSON.stringify(t2)
+  results.t2_pdf_subfields = t2?.raw || JSON.stringify(t2)
 
-  // Try different input field names
+  // Try without name input
   const t3 = await pave({
     '$': { grantKey },
-    createComment: {
-      '$': { targetId: jobId, targetType: 'job', message: 'Test comment from API' },
-      createdComment: { id: {} }
+    createUploadRequest: {
+      '$': { contentType: 'application/pdf' },
+      pdf: { url: {}, id: {}, uploadUrl: {}, key: {} }
     }
   })
-  results.t3_message_input = t3?.raw || JSON.stringify(t3)
-
-  const t4 = await pave({
-    '$': { grantKey },
-    createComment: {
-      '$': { targetId: jobId, targetType: 'job', text: 'Test comment from API' },
-      createdComment: { id: {} }
-    }
-  })
-  results.t4_text_input = t4?.raw || JSON.stringify(t4)
+  results.t3_no_name = t3?.raw || JSON.stringify(t3)
 
   return res.status(200).json({ results })
 }
