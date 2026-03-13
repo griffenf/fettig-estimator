@@ -4,8 +4,7 @@ export default async function handler(req, res) {
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(500).json({ error: 'JOBTREAD_API_KEY not configured in Vercel.' })
 
-  const { pdfBase64, fileName, jobId } = req.body
-  if (!pdfBase64 || !fileName) return res.status(400).json({ error: 'Missing PDF data or file name.' })
+  const { jobId, jobInfo, windows } = req.body
   if (!jobId) return res.status(400).json({ error: 'No job selected. Please select a job from the search on Step 1.' })
 
   async function pave(query) {
@@ -19,28 +18,49 @@ export default async function handler(req, res) {
   }
 
   try {
-    const uploadRes = await pave({
+    // Build a nicely formatted comment with all the estimate details
+    const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
+    const totalUnits = windows.reduce((sum, w) => sum + parseInt(w.qty || 1), 0)
+
+    let message = `📋 WINDOW ESTIMATE — ${date}\n`
+    message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
+    message += `Customer: ${jobInfo.customerName}\n`
+    if (jobInfo.estimator) message += `Estimator: ${jobInfo.estimator}\n`
+    message += `Total: ${windows.length} line item(s), ${totalUnits} unit(s)\n`
+    message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`
+
+    windows.forEach((w, i) => {
+      message += `#${i + 1} — ${w.style || 'Window'} × ${w.qty}\n`
+      if (w.width && w.height) message += `  Size: ${w.width}" × ${w.height}"\n`
+      if (w.exteriorColor) message += `  Ext Color: ${w.exteriorColor}\n`
+      if (w.interiorColor) message += `  Int Color: ${w.interiorColor}\n`
+      if (w.glass) message += `  Glass: ${w.glass}\n`
+      if (w.grid && w.grid !== 'No Grid') message += `  Grid: ${w.grid}\n`
+      if (w.notes) message += `  Notes: ${w.notes}\n`
+      message += '\n'
+    })
+
+    if (jobInfo.notes) {
+      message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
+      message += `Job Notes: ${jobInfo.notes}\n`
+    }
+
+    message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
+    message += `Submitted via Fettig Estimator App`
+
+    const result = await pave({
       '$': { grantKey },
-      createFile: {
-        '$': {
-          name: fileName,
-          content: pdfBase64,
-          contentType: 'application/pdf',
-          targetId: jobId,
-          targetType: 'job'
-        },
-        createdFile: {
-          id: {},
-          name: {}
-        }
+      createComment: {
+        '$': { targetId: jobId, targetType: 'job', message },
+        createdComment: { id: {} }
       }
     })
 
-    if (uploadRes?.errors) {
-      return res.status(400).json({ error: uploadRes.errors[0]?.message || 'Upload error' })
+    if (result?.errors) {
+      return res.status(400).json({ error: result.errors[0]?.message || 'Comment error' })
     }
 
-    return res.status(200).json({ success: true, file: uploadRes?.createFile?.createdFile })
+    return res.status(200).json({ success: true, commentId: result?.createComment?.createdComment?.id })
 
   } catch (err) {
     return res.status(500).json({ error: err.message })
