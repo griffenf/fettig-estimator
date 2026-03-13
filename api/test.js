@@ -16,22 +16,29 @@ export default async function handler(req, res) {
 
   const results = {}
 
-  // What fields does job.folders have?
-  const t1 = await pave({
-    '$': { grantKey },
-    job: { '$': { id: jobId }, folders: { id: {}, name: {} } }
-  })
-  results.folders_id_name = t1?.raw || JSON.stringify(t1)
-
-  // What scalar fields does folder have on files?
-  for (const f of ['id', 'name', 'folderId', 'folderName']) {
+  // Try folder as a top-level query
+  for (const q of ['folder', 'fileFolder', 'folders', 'fileFolders']) {
     const r = await pave({
       '$': { grantKey },
-      job: { '$': { id: jobId }, files: { nodes: { [f]: {} } } }
+      [q]: { '$': { id: 'test' }, id: {}, name: {} }
     })
     const txt = r?.raw || JSON.stringify(r)
-    results['file_field_' + f] = txt.includes('does not exist') ? '❌' : '✅ ' + txt.slice(0, 150)
+    results[q] = txt.includes('does not exist') ? '❌' : '✅ ' + txt.slice(0, 150)
   }
+
+  // Try job.folders as a plain value (no subfields)
+  const t2 = await pave({
+    '$': { grantKey },
+    job: { '$': { id: jobId }, folders: {} }
+  })
+  results.folders_plain = t2?.raw || JSON.stringify(t2)
+
+  // Try job.files with folder as plain value
+  const t3 = await pave({
+    '$': { grantKey },
+    job: { '$': { id: jobId }, files: { nodes: { id: {}, folder: {} } } }
+  })
+  results.files_folder_plain = t3?.raw || JSON.stringify(t3)
 
   return res.status(200).json({ results })
 }
