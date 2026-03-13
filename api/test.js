@@ -2,6 +2,8 @@ export default async function handler(req, res) {
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(200).json({ status: 'NO_API_KEY' })
 
+  const jobId = '22MsvgnqcwLK'
+
   async function pave(query) {
     const r = await fetch('https://api.jobtread.com/pave', {
       method: 'POST',
@@ -14,35 +16,35 @@ export default async function handler(req, res) {
 
   const results = {}
 
-  // Probe folder-related input fields on createFile
-  const folderFields = ['folder', 'folderId', 'folderName', 'directory', 'path', 'section', 'category', 'tag']
-  for (const field of folderFields) {
-    const r = await pave({
-      '$': { grantKey },
-      createFile: {
-        '$': { name: 'test.pdf', targetId: '22MsvgnqcwLK', targetType: 'job', uploadRequestId: 'test', [field]: 'Estimate/Measurement Photos' },
-        createdFile: { id: {} }
-      }
-    })
-    const txt = r?.raw || JSON.stringify(r)
-    results[field] = txt.includes('no value is ever expected') ? '❌' 
-      : txt.includes('valid upload request') ? '⚠️ valid field, needs real uploadRequestId'
-      : '✅ ' + txt.slice(0, 120)
-  }
+  // Query folders on the job
+  const t1 = await pave({
+    '$': { grantKey },
+    job: {
+      '$': { id: jobId },
+      folders: { nodes: { id: {}, name: {} } }
+    }
+  })
+  results.jobFolders = t1?.raw || JSON.stringify(t1)
 
-  // Also check what output fields createdFile supports (like folder info)
-  const outputFields = ['id', 'name', 'folder', 'folderId', 'folderName', 'url', 'path', 'section']
-  for (const field of outputFields) {
-    const r = await pave({
-      '$': { grantKey },
-      createFile: {
-        '$': { name: 'test.pdf', targetId: '22MsvgnqcwLK', targetType: 'job', uploadRequestId: 'test' },
-        createdFile: { [field]: {} }
-      }
-    })
-    const txt = r?.raw || JSON.stringify(r)
-    results['output_' + field] = txt.includes('does not exist') ? '❌' : '✅ ' + txt.slice(0, 80)
-  }
+  // Query fileFolder
+  const t2 = await pave({
+    '$': { grantKey },
+    job: {
+      '$': { id: jobId },
+      fileFolders: { nodes: { id: {}, name: {} } }
+    }
+  })
+  results.fileFolders = t2?.raw || JSON.stringify(t2)
+
+  // Query files with folder info
+  const t3 = await pave({
+    '$': { grantKey },
+    job: {
+      '$': { id: jobId },
+      files: { nodes: { id: {}, name: {}, folder: { id: {}, name: {} } } }
+    }
+  })
+  results.filesWithFolders = t3?.raw || JSON.stringify(t3)
 
   return res.status(200).json({ results })
 }
