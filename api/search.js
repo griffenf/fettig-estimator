@@ -1,11 +1,12 @@
 export default async function handler(req, res) {
-  if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
+  if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(500).json({ error: 'JOBTREAD_API_KEY not configured in Vercel.' })
 
-  const { q } = req.query
-  if (!q || q.trim().length < 2) return res.json({ customers: [] })
+  const { pdfBase64, fileName, jobId } = req.body
+  if (!pdfBase64 || !fileName) return res.status(400).json({ error: 'Missing PDF data or file name.' })
+  if (!jobId) return res.status(400).json({ error: 'No job selected. Please select a job from the search on Step 1.' })
 
   async function pave(query) {
     const r = await fetch('https://api.jobtread.com/pave', {
@@ -25,71 +26,39 @@ export default async function handler(req, res) {
         user: {
           memberships: {
             nodes: {
-              organization: { id: {}, name: {} }
+              organization: { id: {} }
             }
           }
         }
       }
     })
 
-    const orgId = orgRes?.currentGrant?.user?.memberships?.nodes?.[0]?.organization?.id
-    if (!orgId) return res.status(400).json({ error: 'Could not get organization ID. Check your grant key.' })
+    const organizationId = orgRes?.currentGrant?.user?.memberships?.nodes?.[0]?.organization?.id
+    if (!organizationId) return res.status(400).json({ error: 'Could not get organization ID. Check your grant key.' })
 
-    // Step 2: Search customers by name and get their jobs
-    const searchRes = await pave({
+    // Step 2: Upload file using targetId (JobTread's field name for the job)
+    const uploadRes = await pave({
       '$': { grantKey },
-      organization: {
-        '$': { id: orgId },
-        id: {},
-        accounts: {
-          '$': {
-            where: {
-              and: [
-                ['name', 'like', `%${q.trim()}%`],
-                ['type', '=', 'customer']
-              ]
-            },
-            size: 10
-          },
-          nodes: {
-            id: {},
-            name: {},
-            jobs: {
-              '$': { size: 20 },
-              nodes: {
-                id: {},
-                name: {},
-                status: {},
-                location: {
-                  id: {},
-                  address: {}
-                }
-              }
-            }
-          }
+      createFile: {
+        '$': {
+          organizationId,
+          name: fileName,
+          content: pdfBase64,
+          contentType: 'application/pdf',
+          targetId: jobId
+        },
+        createdFile: {
+          id: {},
+          name: {}
         }
       }
     })
 
-    if (searchRes?.errors) {
-      return res.status(400).json({ error: searchRes.errors[0]?.message || 'Query error' })
+    if (uploadRes?.errors) {
+      return res.status(400).json({ error: uploadRes.errors[0]?.message || 'Upload error' })
     }
 
-    const rawAccounts = searchRes?.organization?.accounts?.nodes || []
-    const customers = rawAccounts.map(a => ({
-      id: a.id,
-      name: a.name,
-      jobs: {
-        nodes: (a.jobs?.nodes || []).map(j => ({
-          id: j.id,
-          name: j.name,
-          status: j.status,
-          address: j.location?.address ? { street: j.location.address } : null
-        }))
-      }
-    }))
-
-    return res.status(200).json({ customers })
+    return res.status(200).json({ success: true, file: uploadRes?.createFile?.createdFile })
 
   } catch (err) {
     return res.status(500).json({ error: err.message })
