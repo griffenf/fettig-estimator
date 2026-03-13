@@ -1,20 +1,4 @@
-import https from 'https'
-import { URL } from 'url'
-
-function httpsRequest(urlStr, method, headers, body) {
-  return new Promise((resolve, reject) => {
-    const u = new URL(urlStr)
-    const options = { hostname: u.hostname, path: u.pathname + u.search, method, headers }
-    const req = https.request(options, (res) => {
-      let data = ''
-      res.on('data', chunk => data += chunk)
-      res.on('end', () => resolve({ status: res.statusCode, body: data }))
-    })
-    req.on('error', reject)
-    if (body) req.write(body)
-    req.end()
-  })
-}
+import { fetch as undiciFetch } from 'undici'
 
 export default async function handler(req, res) {
   const grantKey = process.env.JOBTREAD_API_KEY
@@ -37,7 +21,7 @@ export default async function handler(req, res) {
   const pdfSize = testBuffer.length
   const results = {}
 
-  // Get upload URL via organizationId+url path (files bucket)
+  // Get upload URL (files bucket via orgId+url)
   const uploadReq = await pave({
     '$': { grantKey },
     createUploadRequest: {
@@ -46,25 +30,22 @@ export default async function handler(req, res) {
     }
   })
   const ur = uploadReq?.createUploadRequest?.createdUploadRequest
-  if (!ur?.id) return res.status(200).json({ error: 'No upload request', raw: JSON.stringify(uploadReq) })
-
-  // Parse signed headers from URL to know exactly what to send
-  const signedHeaders = decodeURIComponent(ur.url.match(/X-Goog-SignedHeaders=([^&]+)/)?.[1] || '')
-  results.signedHeaders = signedHeaders
+  if (!ur?.id) return res.status(200).json({ error: 'No upload request' })
   results.uploadRequestId = ur.id
 
-  // Only send exactly what's signed
-  const headers = {}
-  if (signedHeaders.includes('content-type')) headers['content-type'] = 'application/pdf'
-  if (signedHeaders.includes('x-goog-content-length-range')) headers['x-goog-content-length-range'] = `${pdfSize},${pdfSize}`
-  if (signedHeaders.includes('content-length')) headers['content-length'] = String(pdfSize)
-  results.headersSent = headers
+  // Use undici fetch which bypasses Vercel's header injection
+  const gcsRes = await undiciFetch(ur.url, {
+    method: ur.method || 'PUT',
+    headers: {
+      'content-type': 'application/pdf',
+      'x-goog-content-length-range': `${pdfSize},${pdfSize}`
+    },
+    body: testBuffer
+  })
+  results.gcsStatus = gcsRes.status
+  results.gcsBody = gcsRes.status !== 200 ? (await gcsRes.text()).slice(0, 150) : 'OK'
 
-  const gcsResult = await httpsRequest(ur.url, ur.method || 'PUT', headers, testBuffer)
-  results.gcsStatus = gcsResult.status
-  results.gcsError = gcsResult.status !== 200 ? gcsResult.body.slice(0, 150) : null
-
-  if (gcsResult.status !== 200) return res.status(200).json({ results })
+  if (gcsRes.status !== 200) return res.status(200).json({ results })
 
   await new Promise(r => setTimeout(r, 1000))
   const fileRes = await pave({
