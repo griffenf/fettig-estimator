@@ -12,43 +12,38 @@ export default async function handler(req, res) {
     try { return JSON.parse(text) } catch { return { raw: text } }
   }
 
+  const jobId = '22MsvgnqcwLK'
   const results = {}
 
-  // createUploadRequest - probe every possible output field
+  // Try creating a note on the job
   const t1 = await pave({
     '$': { grantKey },
-    createUploadRequest: {
-      '$': { contentType: 'application/pdf', name: 'test.pdf' },
-      id: {},
-      url: {},
-      uploadUrl: {},
-      uploadId: {},
-      key: {},
-      bucket: {},
-      createdUploadRequest: { id: {}, url: {} }
+    createNote: {
+      '$': { targetId: jobId, targetType: 'job', content: 'Test note from API' },
+      createdNote: { id: {}, content: {} }
     }
   })
-  results.t1_all_fields = t1?.raw || JSON.stringify(t1)
+  results.createNote = t1?.raw || JSON.stringify(t1)
 
-  // Try with no inputs at all to see what it says
+  // Try createMessage
   const t2 = await pave({
     '$': { grantKey },
-    createUploadRequest: {
-      id: {},
-      url: {}
+    createMessage: {
+      '$': { jobId, content: 'Test message from API' },
+      createdMessage: { id: {} }
     }
   })
-  results.t2_no_inputs = t2?.raw || JSON.stringify(t2)
+  results.createMessage = t2?.raw || JSON.stringify(t2)
 
-  // Try createUploadRequest with just id output
+  // Try createComment  
   const t3 = await pave({
     '$': { grantKey },
-    createUploadRequest: {
-      '$': { contentType: 'application/pdf' },
-      id: {}
+    createComment: {
+      '$': { targetId: jobId, targetType: 'job', content: 'Test comment from API' },
+      createdComment: { id: {}, content: {} }
     }
   })
-  results.t3_contentType_id = t3?.raw || JSON.stringify(t3)
+  results.createComment = t3?.raw || JSON.stringify(t3)
 
   return res.status(200).json({ results })
 }
