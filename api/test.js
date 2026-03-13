@@ -32,55 +32,45 @@ export default async function handler(req, res) {
     try { return JSON.parse(text) } catch { return { raw: text } }
   }
 
-  const results = {}
-
-  // Create a tiny test PDF-like buffer
   const testBuffer = Buffer.from('%PDF-1.4 test content')
   const pdfSize = testBuffer.length
+  const results = {}
 
-  // Step 1: Get upload request
-  const uploadReq = await pave({
-    '$': { grantKey },
-    createUploadRequest: {
-      '$': { size: pdfSize, type: 'application/pdf' },
-      createdUploadRequest: { id: {}, url: {}, method: {} }
+  // Try both range formats and report GCS status + createFile result for each
+  for (const [label, range] of [['0_to_size', `0,${pdfSize}`], ['size_to_size', `${pdfSize},${pdfSize}`]]) {
+    const uploadReq = await pave({
+      '$': { grantKey },
+      createUploadRequest: {
+        '$': { size: pdfSize, type: 'application/pdf' },
+        createdUploadRequest: { id: {}, url: {}, method: {} }
+      }
+    })
+    const ur = uploadReq?.createUploadRequest?.createdUploadRequest
+    if (!ur?.id) { results[label] = 'no upload request'; continue }
+
+    const gcsResult = await httpsRequest(
+      ur.url, ur.method || 'PUT',
+      { 'content-type': 'application/pdf', 'x-goog-content-length-range': range },
+      testBuffer
+    )
+    
+    await new Promise(r => setTimeout(r, 1000))
+
+    const fileRes = await pave({
+      '$': { grantKey },
+      createFile: {
+        '$': { name: 'test.pdf', targetId: jobId, targetType: 'job', uploadRequestId: ur.id },
+        createdFile: { id: {}, name: {} }
+      }
+    })
+    const fileText = fileRes?.raw || JSON.stringify(fileRes)
+
+    results[label] = {
+      gcsStatus: gcsResult.status,
+      gcsError: gcsResult.status !== 200 ? gcsResult.body.slice(0, 100) : null,
+      createFile: fileText.slice(0, 150)
     }
-  })
-  const ur = uploadReq?.createUploadRequest?.createdUploadRequest
-  results.uploadRequestId = ur?.id
-  results.gotUrl = !!ur?.url
-
-  if (!ur?.id) return res.status(200).json({ results, error: 'No upload request' })
-
-  // Step 2: Upload
-  const uploadResult = await httpsRequest(
-    ur.url, ur.method || 'PUT',
-    { 'content-type': 'application/pdf', 'x-goog-content-length-range': `${pdfSize},${pdfSize}` },
-    testBuffer
-  )
-  results.gcsStatus = uploadResult.status
-
-  // Step 3: Wait 2 seconds then query the uploadRequest state
-  await new Promise(r => setTimeout(r, 2000))
-
-  const stateCheck = await pave({
-    '$': { grantKey },
-    uploadRequest: {
-      '$': { id: ur.id },
-      id: {}, url: {}, method: {}
-    }
-  })
-  results.uploadRequestState = stateCheck?.raw || JSON.stringify(stateCheck)
-
-  // Step 4: Try createFile immediately after checking state
-  const fileRes = await pave({
-    '$': { grantKey },
-    createFile: {
-      '$': { name: 'test.pdf', targetId: jobId, targetType: 'job', uploadRequestId: ur.id },
-      createdFile: { id: {}, name: {} }
-    }
-  })
-  results.createFile = fileRes?.raw || JSON.stringify(fileRes)
+  }
 
   return res.status(200).json({ results })
 }
