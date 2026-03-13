@@ -1,4 +1,10 @@
-import { fetch as undiciFetch } from 'undici'
+import { execFile } from 'child_process'
+import { promisify } from 'util'
+import { writeFileSync, unlinkSync } from 'fs'
+import { tmpdir } from 'os'
+import { join } from 'path'
+
+const execFileAsync = promisify(execFile)
 
 export default async function handler(req, res) {
   const grantKey = process.env.JOBTREAD_API_KEY
@@ -21,11 +27,15 @@ export default async function handler(req, res) {
   const pdfSize = testBuffer.length
   const results = {}
 
-  // Get upload URL (files bucket via orgId+url)
+  // Write test PDF to temp file
+  const tmpFile = join(tmpdir(), 'test.pdf')
+  writeFileSync(tmpFile, testBuffer)
+
+  // Get upload URL (dropbox bucket)
   const uploadReq = await pave({
     '$': { grantKey },
     createUploadRequest: {
-      '$': { organizationId: orgId, url: 'https://pdfobject.com/pdf/sample.pdf' },
+      '$': { size: pdfSize, type: 'application/pdf' },
       createdUploadRequest: { id: {}, url: {}, method: {} }
     }
   })
@@ -33,20 +43,30 @@ export default async function handler(req, res) {
   if (!ur?.id) return res.status(200).json({ error: 'No upload request' })
   results.uploadRequestId = ur.id
 
-  // Use undici fetch which bypasses Vercel's header injection
-  const gcsRes = await undiciFetch(ur.url, {
-    method: ur.method || 'PUT',
-    headers: {
-      'content-type': 'application/pdf',
-      'x-goog-content-length-range': `${pdfSize},${pdfSize}`
-    },
-    body: testBuffer
-  })
-  results.gcsStatus = gcsRes.status
-  results.gcsBody = gcsRes.status !== 200 ? (await gcsRes.text()).slice(0, 150) : 'OK'
+  // Use curl to upload — completely bypasses Vercel's fetch/https patching
+  try {
+    const { stdout, stderr } = await execFileAsync('curl', [
+      '-X', 'PUT',
+      '-H', `content-type: application/pdf`,
+      '-H', `x-goog-content-length-range: ${pdfSize},${pdfSize}`,
+      '--data-binary', `@${tmpFile}`,
+      '-w', '\n%{http_code}',
+      '-s',
+      ur.url
+    ])
+    const lines = stdout.trim().split('\n')
+    const statusCode = lines[lines.length - 1]
+    results.gcsStatus = parseInt(statusCode)
+    results.gcsBody = lines.slice(0, -1).join('\n').slice(0, 150)
+  } catch (e) {
+    results.curlError = e.message
+  }
 
-  if (gcsRes.status !== 200) return res.status(200).json({ results })
+  unlinkSync(tmpFile)
 
+  if (results.gcsStatus !== 200) return res.status(200).json({ results })
+
+  // Try createFile
   await new Promise(r => setTimeout(r, 1000))
   const fileRes = await pave({
     '$': { grantKey },
