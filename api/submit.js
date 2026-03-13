@@ -8,69 +8,14 @@ module.exports = async function handler(req, res) {
   const jobInfo = (req.body && req.body.jobInfo) || {}
   const windows = (req.body && Array.isArray(req.body.windows)) ? req.body.windows : []
 
-  // Send back what we received so we can debug
-  if (!jobId) {
-    return res.status(400).json({ 
-      error: 'No job selected.',
-      debug_received: { jobId, jobInfo, windows, raw: JSON.stringify(req.body) }
-    })
-  }
-
-  async function pave(query) {
-    const r = await fetch('https://api.jobtread.com/pave', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query })
-    })
-    const text = await r.text()
-    try { return JSON.parse(text) } catch { throw new Error(`Pave returned: ${text.slice(0, 300)}`) }
-  }
-
-  try {
-    const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    const totalUnits = windows.reduce((sum, w) => sum + parseInt(w.qty || 1), 0)
-
-    let message = `📋 WINDOW ESTIMATE — ${date}\n`
-    message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
-    message += `Customer: ${jobInfo.customerName || 'N/A'}\n`
-    if (jobInfo.estimator) message += `Estimator: ${jobInfo.estimator}\n`
-    message += `Total: ${windows.length} line item(s), ${totalUnits} unit(s)\n`
-    message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`
-
-    windows.forEach((w, i) => {
-      message += `#${i + 1} — ${w.style || 'Window'} × ${w.qty}\n`
-      if (w.width && w.height) message += `  Size: ${w.width}" × ${w.height}"\n`
-      if (w.exteriorColor) message += `  Ext Color: ${w.exteriorColor}\n`
-      if (w.interiorColor) message += `  Int Color: ${w.interiorColor}\n`
-      if (w.glass) message += `  Glass: ${w.glass}\n`
-      if (w.grid && w.grid !== 'No Grid') message += `  Grid: ${w.grid}\n`
-      if (w.notes) message += `  Notes: ${w.notes}\n`
-      message += '\n'
-    })
-
-    if (jobInfo.notes) {
-      message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
-      message += `Job Notes: ${jobInfo.notes}\n`
+  // Always return debug info so we can see what arrived
+  return res.status(200).json({
+    VERSION: 'DEBUG-V1',
+    received: {
+      jobId,
+      jobInfoKeys: Object.keys(jobInfo),
+      windowsCount: windows.length,
+      rawBody: JSON.stringify(req.body).slice(0, 500)
     }
-
-    message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
-    message += `Submitted via Fettig Estimator App`
-
-    const result = await pave({
-      '$': { grantKey },
-      createComment: {
-        '$': { targetId: jobId, targetType: 'job', message },
-        createdComment: { id: {} }
-      }
-    })
-
-    if (result?.errors) {
-      return res.status(400).json({ error: result.errors[0]?.message || 'Comment error' })
-    }
-
-    return res.status(200).json({ success: true, commentId: result?.createComment?.createdComment?.id })
-
-  } catch (err) {
-    return res.status(500).json({ error: err.message })
-  }
+  })
 }
