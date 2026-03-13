@@ -14,35 +14,56 @@ export default async function handler(req, res) {
 
   const results = {}
 
-  // Test 1: createUploadRequest with pdf field
-  const t1 = await pave({
-    '$': { grantKey },
-    createUploadRequest: {
-      '$': { contentType: 'application/pdf' },
-      pdf: {}
-    }
-  })
-  results.t1_pdf_field = t1?.raw || JSON.stringify(t1)
+  // Try POSTing a multipart file directly to /upload endpoint
+  try {
+    const blob = new Blob(['%PDF-1.0 test'], { type: 'application/pdf' })
+    const form = new FormData()
+    form.append('file', blob, 'test.pdf')
+    form.append('grantKey', grantKey)
 
-  // Test 2: Try without any input
-  const t2 = await pave({
-    '$': { grantKey },
-    createUploadRequest: {
-      pdf: {}
-    }
-  })
-  results.t2_no_input = t2?.raw || JSON.stringify(t2)
+    const r = await fetch('https://api.jobtread.com/upload', { method: 'POST', body: form })
+    results.upload_endpoint_status = r.status
+    results.upload_endpoint_body = await r.text()
+  } catch(e) {
+    results.upload_endpoint_error = e.message
+  }
 
-  // Test 3: Try requestUpload instead
+  // Try /files endpoint
+  try {
+    const blob = new Blob(['%PDF-1.0 test'], { type: 'application/pdf' })
+    const form = new FormData()
+    form.append('file', blob, 'test.pdf')
+    form.append('grantKey', grantKey)
+
+    const r = await fetch('https://api.jobtread.com/files', { method: 'POST', body: form })
+    results.files_endpoint_status = r.status
+    results.files_endpoint_body = await r.text()
+  } catch(e) {
+    results.files_endpoint_error = e.message
+  }
+
+  // Try requestFileUpload pave query
   const t3 = await pave({
     '$': { grantKey },
-    requestUpload: {
-      '$': { contentType: 'application/pdf' },
+    requestFileUpload: {
+      '$': { contentType: 'application/pdf', name: 'test.pdf' },
+      id: {},
+      url: {},
+      fields: {}
+    }
+  })
+  results.requestFileUpload = t3?.raw || JSON.stringify(t3)
+
+  // Try uploadFile pave query
+  const t4 = await pave({
+    '$': { grantKey },
+    uploadFile: {
+      '$': { contentType: 'application/pdf', name: 'test.pdf' },
       id: {},
       url: {}
     }
   })
-  results.t3_requestUpload = t3?.raw || JSON.stringify(t3)
+  results.uploadFile = t4?.raw || JSON.stringify(t4)
 
   return res.status(200).json({ results })
 }
