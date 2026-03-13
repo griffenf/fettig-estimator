@@ -27,46 +27,42 @@ export default async function handler(req, res) {
   const pdfSize = testBuffer.length
   const results = {}
 
-  // Write test PDF to temp file
   const tmpFile = join(tmpdir(), 'test.pdf')
   writeFileSync(tmpFile, testBuffer)
 
-  // Get upload URL (dropbox bucket)
+  // Get files/ bucket URL via orgId+url
   const uploadReq = await pave({
     '$': { grantKey },
     createUploadRequest: {
-      '$': { size: pdfSize, type: 'application/pdf' },
+      '$': { organizationId: orgId, url: 'https://pdfobject.com/pdf/sample.pdf' },
       createdUploadRequest: { id: {}, url: {}, method: {} }
     }
   })
   const ur = uploadReq?.createUploadRequest?.createdUploadRequest
   if (!ur?.id) return res.status(200).json({ error: 'No upload request' })
-  results.uploadRequestId = ur.id
 
-  // Use curl to upload — completely bypasses Vercel's fetch/https patching
-  try {
-    const { stdout, stderr } = await execFileAsync('curl', [
-      '-X', 'PUT',
-      '-H', `content-type: application/pdf`,
-      '-H', `x-goog-content-length-range: ${pdfSize},${pdfSize}`,
-      '--data-binary', `@${tmpFile}`,
-      '-w', '\n%{http_code}',
-      '-s',
-      ur.url
-    ])
-    const lines = stdout.trim().split('\n')
-    const statusCode = lines[lines.length - 1]
-    results.gcsStatus = parseInt(statusCode)
-    results.gcsBody = lines.slice(0, -1).join('\n').slice(0, 150)
-  } catch (e) {
-    results.curlError = e.message
-  }
+  results.uploadRequestId = ur.id
+  results.bucket = ur.url?.includes('files/') ? 'files' : 'dropbox'
+
+  // Parse signed headers so we send exactly what's required
+  const signedHeaders = decodeURIComponent(ur.url.match(/X-Goog-SignedHeaders=([^&]+)/)?.[1] || '')
+  results.signedHeaders = signedHeaders
+
+  // Build curl args with only the signed headers
+  const curlArgs = ['-X', ur.method || 'PUT', '-s', '-w', '\n%{http_code}']
+  if (signedHeaders.includes('content-type')) curlArgs.push('-H', 'content-type: application/pdf')
+  if (signedHeaders.includes('x-goog-content-length-range')) curlArgs.push('-H', `x-goog-content-length-range: ${pdfSize},${pdfSize}`)
+  curlArgs.push('--data-binary', `@${tmpFile}`, ur.url)
+
+  const { stdout } = await execFileAsync('curl', curlArgs)
+  const lines = stdout.trim().split('\n')
+  results.gcsStatus = parseInt(lines[lines.length - 1])
+  results.gcsBody = lines.slice(0, -1).join('').slice(0, 150)
 
   unlinkSync(tmpFile)
 
   if (results.gcsStatus !== 200) return res.status(200).json({ results })
 
-  // Try createFile
   await new Promise(r => setTimeout(r, 1000))
   const fileRes = await pave({
     '$': { grantKey },
