@@ -45,7 +45,7 @@ export default async function handler(req, res) {
           '$': {
             where: {
               and: [
-                ['name', 'contains', q.trim()],
+                ['name', 'like', `%${q.trim()}%`],
                 ['type', '=', 'customer']
               ]
             },
