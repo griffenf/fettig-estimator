@@ -1,10 +1,9 @@
 const https = require('https')
 const { URL } = require('url')
 
-// Raw HTTPS request that won't have Vercel headers injected
-function httpsRequest(url, method, headers, body) {
+function httpsRequest(urlStr, method, headers, body) {
   return new Promise((resolve, reject) => {
-    const u = new URL(url)
+    const u = new URL(urlStr)
     const options = {
       hostname: u.hostname,
       path: u.pathname + u.search,
@@ -41,7 +40,6 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    // Action: finalize after upload
     if (action === 'finalize') {
       if (!jobId || !uploadRequestId) throw new Error('Missing jobId or uploadRequestId')
       const fileName = `Fettig-Estimate-${(jobInfo?.customerName || 'Draft').replace(/\s+/g, '-')}.pdf`
@@ -74,7 +72,6 @@ module.exports = async function handler(req, res) {
       return res.status(200).json({ success: true })
     }
 
-    // Default: get upload URL and upload PDF via raw https (no Vercel header injection)
     if (!pdfBase64) return res.status(400).json({ error: 'No PDF data received.' })
 
     const pdfBuffer = Buffer.from(pdfBase64, 'base64')
@@ -90,23 +87,35 @@ module.exports = async function handler(req, res) {
     const ur = result?.createUploadRequest?.createdUploadRequest
     if (!ur?.id) throw new Error('No upload URL: ' + JSON.stringify(result))
 
-    // Use raw https to avoid Vercel injecting extra headers that break GCS signature
-    const uploadResult = await httpsRequest(
-      ur.url,
-      ur.method || 'PUT',
-      {
-        'Content-Type': 'application/pdf',
-        'x-goog-content-length-range': `0,${pdfSize}`,
-        'Content-Length': pdfSize
-      },
-      pdfBuffer
-    )
+    // Try all 4 header variations to find which one works
+    const variations = [
+      { 'content-type': 'application/pdf', 'x-goog-content-length-range': `0,${pdfSize}` },
+      { 'content-type': 'application/pdf', 'x-goog-content-length-range': `${pdfSize},${pdfSize}` },
+      { 'Content-Type': 'application/pdf', 'x-goog-content-length-range': `0,${pdfSize}` },
+      { 'content-type': 'application/pdf' },
+    ]
 
-    if (uploadResult.status !== 200) {
-      throw new Error(`GCS upload failed: ${uploadResult.status} ${uploadResult.body.slice(0, 300)}`)
+    let lastError = ''
+    for (let i = 0; i < variations.length; i++) {
+      // Get a fresh signed URL for each attempt
+      const r2 = await pave({
+        '$': { grantKey },
+        createUploadRequest: {
+          '$': { size: pdfSize, type: 'application/pdf' },
+          createdUploadRequest: { id: {}, url: {}, method: {} }
+        }
+      })
+      const ur2 = r2?.createUploadRequest?.createdUploadRequest
+      if (!ur2?.id) continue
+
+      const uploadResult = await httpsRequest(ur2.url, ur2.method || 'PUT', variations[i], pdfBuffer)
+      if (uploadResult.status === 200) {
+        return res.status(200).json({ uploadRequestId: ur2.id, uploadOk: true, variation: i })
+      }
+      lastError = `variation ${i}: ${uploadResult.status} ${uploadResult.body.slice(0, 100)}`
     }
 
-    return res.status(200).json({ uploadRequestId: ur.id, uploadOk: true })
+    throw new Error('All upload variations failed. Last: ' + lastError)
 
   } catch (err) {
     return res.status(500).json({ error: err.message })
