@@ -19,34 +19,15 @@ export default async function handler(req, res) {
   }
 
   try {
-    // Step 1: Get org ID
-    const orgRes = await pave({
-      '$': { grantKey },
-      currentGrant: {
-        user: {
-          memberships: {
-            nodes: {
-              organization: { id: {} }
-            }
-          }
-        }
-      }
-    })
-
-    const organizationId = orgRes?.currentGrant?.user?.memberships?.nodes?.[0]?.organization?.id
-    if (!organizationId) return res.status(400).json({ error: 'Could not get organization ID. Check your grant key.' })
-
-    // Step 2: Upload file using targetId (JobTread's field name for the job)
     const uploadRes = await pave({
       '$': { grantKey },
       createFile: {
         '$': {
-          organizationId,
           name: fileName,
           content: pdfBase64,
           contentType: 'application/pdf',
           targetId: jobId,
-          targetType: "job"
+          targetType: 'job'
         },
         createdFile: {
           id: {},
