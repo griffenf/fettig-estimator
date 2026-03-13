@@ -1,6 +1,4 @@
-import { put, del } from '@vercel/blob'
-
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const grantKey = process.env.JOBTREAD_API_KEY
@@ -22,23 +20,29 @@ export default async function handler(req, res) {
     try { return JSON.parse(text) } catch { throw new Error(`Pave: ${text.slice(0, 200)}`) }
   }
 
-  let blobUrl = null
   try {
     const fileName = `Fettig-Estimate-${(jobInfo?.customerName || 'Draft').replace(/\s+/g, '-')}.pdf`
     const pdfBuffer = Buffer.from(pdfBase64, 'base64')
 
-    // Step 1: Upload PDF to Vercel Blob to get a public URL
-    const blob = await put(fileName, pdfBuffer, {
-      access: 'public',
-      contentType: 'application/pdf'
+    // Step 1: Upload PDF to file.io (free temp hosting, no account needed)
+    const formData = new FormData()
+    formData.append('file', new Blob([pdfBuffer], { type: 'application/pdf' }), fileName)
+
+    const fileIoRes = await fetch('https://file.io/?expires=1h', {
+      method: 'POST',
+      body: formData
     })
-    blobUrl = blob.url
+    const fileIoData = await fileIoRes.json()
+    if (!fileIoData.success || !fileIoData.link) {
+      throw new Error('file.io upload failed: ' + JSON.stringify(fileIoData))
+    }
+    const publicUrl = fileIoData.link
 
     // Step 2: Tell JobTread to download from that URL
     const uploadReq = await pave({
       '$': { grantKey },
       createUploadRequest: {
-        '$': { organizationId: orgId, url: blobUrl },
+        '$': { organizationId: orgId, url: publicUrl },
         createdUploadRequest: { id: {}, url: {}, method: {} }
       }
     })
@@ -53,7 +57,6 @@ export default async function handler(req, res) {
         createdFile: { id: {}, name: {} }
       }
     })
-    if (fileRes?.errors) throw new Error(fileRes.errors[0]?.message || 'createFile error')
     if (!fileRes?.createFile?.createdFile?.id) throw new Error('createFile failed: ' + JSON.stringify(fileRes))
 
     // Step 4: Post comment
@@ -73,14 +76,9 @@ export default async function handler(req, res) {
       }
     })
 
-    // Step 5: Delete from Vercel Blob (no longer needed)
-    await del(blobUrl)
-
     return res.status(200).json({ success: true })
 
   } catch (err) {
-    // Clean up blob if something went wrong
-    if (blobUrl) { try { await del(blobUrl) } catch {} }
     return res.status(500).json({ error: err.message })
   }
 }
