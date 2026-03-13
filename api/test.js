@@ -14,35 +14,35 @@ export default async function handler(req, res) {
 
   const results = {}
 
-  // Try createUploadRequest with pdf output field
+  // Try pdf with type=document and probe subfields
   const t1 = await pave({
     '$': { grantKey },
     createUploadRequest: {
       '$': { contentType: 'application/pdf', name: 'test.pdf' },
-      pdf: {}
+      pdf: { '$': { type: 'document' }, url: {}, id: {}, key: {}, fields: {}, uploadUrl: {}, method: {} }
     }
   })
-  results.t1_pdf_field = t1?.raw || JSON.stringify(t1)
+  results.t1_document_type = t1?.raw || JSON.stringify(t1)
 
-  // Try pdf subfields
+  // Try with type=specifications
   const t2 = await pave({
     '$': { grantKey },
     createUploadRequest: {
       '$': { contentType: 'application/pdf', name: 'test.pdf' },
-      pdf: { url: {}, id: {}, uploadUrl: {}, key: {}, fields: {} }
+      pdf: { '$': { type: 'specifications' }, url: {}, id: {}, key: {}, fields: {} }
     }
   })
-  results.t2_pdf_subfields = t2?.raw || JSON.stringify(t2)
+  results.t2_specifications_type = t2?.raw || JSON.stringify(t2)
 
-  // Try without name input
+  // Try pdf with document type, just id
   const t3 = await pave({
     '$': { grantKey },
     createUploadRequest: {
-      '$': { contentType: 'application/pdf' },
-      pdf: { url: {}, id: {}, uploadUrl: {}, key: {} }
+      '$': { contentType: 'application/pdf', name: 'test.pdf' },
+      pdf: { '$': { type: 'document' }, id: {} }
     }
   })
-  results.t3_no_name = t3?.raw || JSON.stringify(t3)
+  results.t3_document_id_only = t3?.raw || JSON.stringify(t3)
 
   return res.status(200).json({ results })
 }
