@@ -4,8 +4,9 @@ export default async function handler(req, res) {
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(500).json({ error: 'JOBTREAD_API_KEY not configured in Vercel.' })
 
-  const { jobId, jobInfo, windows } = req.body
+  const { jobId, jobInfo, windows = [] } = req.body
   if (!jobId) return res.status(400).json({ error: 'No job selected. Please select a job from the search on Step 1.' })
+  const safeWindows = Array.isArray(windows) ? windows : []
 
   async function pave(query) {
     const r = await fetch('https://api.jobtread.com/pave', {
@@ -20,16 +21,16 @@ export default async function handler(req, res) {
   try {
     // Build a nicely formatted comment with all the estimate details
     const date = new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    const totalUnits = windows.reduce((sum, w) => sum + parseInt(w.qty || 1), 0)
+    const totalUnits = safeWindows.reduce((sum, w) => sum + parseInt(w.qty || 1), 0)
 
     let message = `📋 WINDOW ESTIMATE — ${date}\n`
     message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n`
     message += `Customer: ${jobInfo.customerName}\n`
     if (jobInfo.estimator) message += `Estimator: ${jobInfo.estimator}\n`
-    message += `Total: ${windows.length} line item(s), ${totalUnits} unit(s)\n`
+    message += `Total: ${safeWindows.length} line item(s), ${totalUnits} unit(s)\n`
     message += `━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n\n`
 
-    windows.forEach((w, i) => {
+    safeWindows.forEach((w, i) => {
       message += `#${i + 1} — ${w.style || 'Window'} × ${w.qty}\n`
       if (w.width && w.height) message += `  Size: ${w.width}" × ${w.height}"\n`
       if (w.exteriorColor) message += `  Ext Color: ${w.exteriorColor}\n`
