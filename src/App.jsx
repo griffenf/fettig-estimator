@@ -397,7 +397,7 @@ export default function App() {
   const handleSubmitToJobTread = async () => {
     setSubmitting(true)
     try {
-      const res = await fetch('/api/submit', {
+      const res = await fetch('/api/debug', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ jobId: jobInfo.jobId, jobInfo, windows })
