@@ -14,41 +14,36 @@ export default async function handler(req, res) {
 
   const results = {}
 
-  // createdUploadRequest - try with no inputs
-  const t1 = await pave({
-    '$': { grantKey },
-    createUploadRequest: {
-      createdUploadRequest: { id: {}, url: {}, uploadUrl: {}, key: {}, fields: {}, method: {} }
-    }
-  })
-  results.t1_createdUploadRequest_subfields = t1?.raw || JSON.stringify(t1)
+  // Find valid inputs for createUploadRequest.$
+  const inputFields = ['name', 'fileName', 'fileType', 'mimeType', 'type', 'targetId', 'jobId', 'organizationId']
+  for (const field of inputFields) {
+    const r = await pave({
+      '$': { grantKey },
+      createUploadRequest: {
+        '$': { [field]: 'test' },
+        createdUploadRequest: { id: {} }
+      }
+    })
+    const txt = r?.raw || JSON.stringify(r)
+    results['input_' + field] = txt.includes('no value is ever expected') ? '❌'
+                               : txt.includes('non-null') ? '⚠️ needs more fields: ' + txt.slice(0, 100)
+                               : '✅ ' + txt.slice(0, 150)
+  }
 
-  // createdUploadRequest with just id
-  const t2 = await pave({
-    '$': { grantKey },
-    createUploadRequest: {
-      createdUploadRequest: { id: {} }
-    }
-  })
-  results.t2_createdUploadRequest_id = t2?.raw || JSON.stringify(t2)
-
-  // uploadRequest - probe its $ inputs
-  const t3 = await pave({
-    '$': { grantKey },
-    createUploadRequest: {
-      uploadRequest: { '$': { contentType: 'application/pdf', name: 'test.pdf' }, id: {}, url: {}, method: {} }
-    }
-  })
-  results.t3_uploadRequest_inputs = t3?.raw || JSON.stringify(t3)
-
-  // uploadRequest with just id
-  const t4 = await pave({
-    '$': { grantKey },
-    createUploadRequest: {
-      uploadRequest: { '$': { contentType: 'application/pdf' }, id: {} }
-    }
-  })
-  results.t4_uploadRequest_id = t4?.raw || JSON.stringify(t4)
+  // Find valid subfields of createdUploadRequest
+  for (const field of ['id', 'url', 'method', 'key', 'fields', 'bucket', 'token', 'uploadUrl']) {
+    const r = await pave({
+      '$': { grantKey },
+      createUploadRequest: {
+        '$': { name: 'test.pdf' },
+        createdUploadRequest: { [field]: {} }
+      }
+    })
+    const txt = r?.raw || JSON.stringify(r)
+    results['output_' + field] = txt.includes('does not exist') ? '❌'
+                                : txt.includes('Did you mean') ? '❌ meant: ' + (txt.match(/Did you mean "(.+?)"/)?.[1] || '?')
+                                : '✅ ' + txt.slice(0, 150)
+  }
 
   return res.status(200).json({ results })
 }
