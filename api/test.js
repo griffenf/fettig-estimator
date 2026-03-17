@@ -2,7 +2,7 @@ module.exports = async function handler(req, res) {
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(200).json({ status: 'NO_API_KEY' })
 
-  const jobId = '22MsvgnqcwLK'
+  const orgId = '22MsEHuFtmri'
 
   async function pave(query) {
     const r = await fetch('https://api.jobtread.com/pave', {
@@ -16,29 +16,32 @@ module.exports = async function handler(req, res) {
 
   const results = {}
 
-  // Try folder as a top-level query
-  for (const q of ['folder', 'fileFolder', 'folders', 'fileFolders']) {
-    const r = await pave({
-      '$': { grantKey },
-      [q]: { '$': { id: 'test' }, id: {}, name: {} }
-    })
-    const txt = r?.raw || JSON.stringify(r)
-    results[q] = txt.includes('does not exist') ? '❌' : '✅ ' + txt.slice(0, 150)
-  }
+  // Check org-level folders
+  const t1 = await pave({
+    '$': { grantKey },
+    organization: {
+      '$': { id: orgId },
+      folders: {}
+    }
+  })
+  results.orgFolders = t1?.raw || JSON.stringify(t1)
 
-  // Try job.folders as a plain value (no subfields)
+  // Try folders with nodes
   const t2 = await pave({
     '$': { grantKey },
-    job: { '$': { id: jobId }, folders: {} }
+    organization: {
+      '$': { id: orgId },
+      folders: { nodes: { id: {}, name: {} } }
+    }
   })
-  results.folders_plain = t2?.raw || JSON.stringify(t2)
+  results.orgFoldersNodes = t2?.raw || JSON.stringify(t2)
 
-  // Try job.files with folder as plain value
-  const t3 = await pave({
-    '$': { grantKey },
-    job: { '$': { id: jobId }, files: { nodes: { id: {}, folder: {} } } }
-  })
-  results.files_folder_plain = t3?.raw || JSON.stringify(t3)
+  // Look for createFolder mutation
+  for (const m of ['createFolder', 'createFileFolder', 'createJobFolder']) {
+    const r = await pave({ '$': { grantKey }, [m]: { '$': { name: 'test' }, id: {} } })
+    const txt = r?.raw || JSON.stringify(r)
+    results[m] = txt.includes('does not exist') ? '❌' : '✅ ' + txt.slice(0, 120)
+  }
 
   return res.status(200).json({ results })
 }
