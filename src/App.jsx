@@ -4,8 +4,22 @@ import { jsPDF } from 'jspdf'
 // ─── Data ────────────────────────────────────────────────────────────────────
 
 const WINDOW_STYLES = [
-  'Single Hung', 'Double Hung', 'Casement', 'Sliding',
-  'Fixed / Picture', 'Awning', 'Bay', 'Bow', 'Garden', 'Custom'
+  // Standard
+  'Casement', 'Picture', 'Awning', 'Double Hung', 'Single Hung',
+  'Slider', 'Slider Triple Sash', 'Bow', 'Casement Bay', 'Double Hung Bay',
+  // Special Shape
+  'Rectangle', 'Right Triangle', 'Isosceles Triangle', 'Trapezoid',
+  'Pentagon', 'Hexagon', 'Octagon',
+  // Round Top
+  'Half Circle', 'Extended Half Round', 'Eyebrow', 'Extended Eyebrow',
+  'Quarter Round', 'Extended Quarter Round', 'Quarter Eyebrow', 'Extended Quarter Eyebrow',
+  'Full Circle'
+]
+
+const WINDOW_STYLE_GROUPS = [
+  { label: 'Standard', styles: ['Casement', 'Picture', 'Awning', 'Double Hung', 'Single Hung', 'Slider', 'Slider Triple Sash', 'Bow', 'Casement Bay', 'Double Hung Bay'] },
+  { label: 'Special Shape', styles: ['Rectangle', 'Right Triangle', 'Isosceles Triangle', 'Trapezoid', 'Pentagon', 'Hexagon', 'Octagon'] },
+  { label: 'Round Top', styles: ['Half Circle', 'Extended Half Round', 'Eyebrow', 'Extended Eyebrow', 'Quarter Round', 'Extended Quarter Round', 'Quarter Eyebrow', 'Extended Quarter Eyebrow', 'Full Circle'] },
 ]
 const EXTERIOR_COLORS = ['White', 'Bronze', 'Clay', 'Tan', 'Almond', 'Black', 'Custom']
 const INTERIOR_COLORS = ['White', 'Natural Wood', 'Pine', 'Dark Bronze', 'Black', 'Custom']
@@ -308,7 +322,11 @@ function WindowForm({ initial, onSave, onCancel }) {
           <Field label="Window Style *">
             <select value={form.style} onChange={e => set('style', e.target.value)}>
               <option value="">Select style...</option>
-              {WINDOW_STYLES.map(s => <option key={s}>{s}</option>)}
+              {WINDOW_STYLE_GROUPS.map(g => (
+                <optgroup key={g.label} label={g.label}>
+                  {g.styles.map(s => <option key={s}>{s}</option>)}
+                </optgroup>
+              ))}
             </select>
           </Field>
         </div>
