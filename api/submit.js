@@ -4,7 +4,7 @@ module.exports = async function handler(req, res) {
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(500).json({ error: 'JOBTREAD_API_KEY not configured.' })
 
-  const { jobId, jobInfo, windows, pdfBase64 } = req.body || {}
+  const { jobId, jobInfo, pdfBase64 } = req.body || {}
   if (!jobId) return res.status(400).json({ error: 'No job selected.' })
   if (!pdfBase64) return res.status(400).json({ error: 'No PDF data received.' })
 
@@ -21,9 +21,6 @@ module.exports = async function handler(req, res) {
   }
 
   try {
-    const fileName = `Fettig-Estimate-${(jobInfo?.customerName || 'Draft').replace(/\s+/g, '-')}.pdf`
-    const pdfBuffer = Buffer.from(pdfBase64, 'base64')
-
     // Step 1: Store PDF on our own /api/pdf endpoint temporarily
     const pdfId = Date.now().toString(36)
     const host = req.headers.host
@@ -52,7 +49,7 @@ module.exports = async function handler(req, res) {
       '$': { grantKey },
       createFile: {
         '$': {
-          name: fileName,
+          name: 'Estimate Notes.pdf',
           targetId: jobId,
           targetType: 'job',
           uploadRequestId,
