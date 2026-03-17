@@ -3,6 +3,7 @@ module.exports = async function handler(req, res) {
   if (!grantKey) return res.status(200).json({ status: 'NO_API_KEY' })
 
   const jobId = '22PNzynyvGdD'
+  const orgId = '22MsEHuFtmri'
 
   async function pave(query) {
     const r = await fetch('https://api.jobtread.com/pave', {
@@ -16,19 +17,31 @@ module.exports = async function handler(req, res) {
 
   const results = {}
 
-  // Check folders on this job
-  const t1 = await pave({
+  // Get upload request
+  const uploadReq = await pave({
     '$': { grantKey },
-    job: { '$': { id: jobId }, folders: {} }
+    createUploadRequest: {
+      '$': { organizationId: orgId, url: 'https://pdfobject.com/pdf/sample.pdf' },
+      createdUploadRequest: { id: {}, url: {}, method: {} }
+    }
   })
-  results.folders = t1?.raw || JSON.stringify(t1)
+  const uploadRequestId = uploadReq?.createUploadRequest?.createdUploadRequest?.id
+  results.uploadRequestId = uploadRequestId
 
-  // Check files with folder info
-  const t2 = await pave({
-    '$': { grantKey },
-    job: { '$': { id: jobId }, files: { nodes: { id: {}, name: {}, folder: {} } } }
-  })
-  results.filesWithFolder = t2?.raw || JSON.stringify(t2)
+  // Try each folder-related field with the string value
+  for (const field of ['folder', 'folderId', 'folderName', 'directory', 'path', 'section', 'category']) {
+    const r = await pave({
+      '$': { grantKey },
+      createFile: {
+        '$': { name: 'test.pdf', targetId: jobId, targetType: 'job', uploadRequestId, [field]: 'Estimate/Measurement Photos' },
+        createdFile: { id: {}, name: {}, folder: {} }
+      }
+    })
+    const txt = r?.raw || JSON.stringify(r)
+    results[field] = txt.includes('no value is ever expected') ? '❌ invalid field'
+      : txt.includes('JobTreadID') ? '❌ needs ID not string'
+      : '✅ ' + txt.slice(0, 150)
+  }
 
   return res.status(200).json({ results })
 }
