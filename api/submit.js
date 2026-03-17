@@ -22,6 +22,7 @@ module.exports = async function handler(req, res) {
 
   try {
     const fileName = `Fettig-Estimate-${(jobInfo?.customerName || 'Draft').replace(/\s+/g, '-')}.pdf`
+    const pdfBuffer = Buffer.from(pdfBase64, 'base64')
 
     // Step 1: Store PDF on our own /api/pdf endpoint temporarily
     const pdfId = Date.now().toString(36)
@@ -29,7 +30,6 @@ module.exports = async function handler(req, res) {
     const protocol = host.includes('localhost') ? 'http' : 'https'
     const publicUrl = `${protocol}://${host}/api/pdf?id=${pdfId}`
 
-    // Store the PDF
     await fetch(`${protocol}://${host}/api/pdf`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
@@ -47,32 +47,21 @@ module.exports = async function handler(req, res) {
     const uploadRequestId = uploadReq?.createUploadRequest?.createdUploadRequest?.id
     if (!uploadRequestId) throw new Error('No upload request ID: ' + JSON.stringify(uploadReq))
 
-    // Step 3: Attach file to job immediately
+    // Step 3: Attach file to job in the Estimate/Measurement Photos folder
     const fileRes = await pave({
       '$': { grantKey },
       createFile: {
-        '$': { name: fileName, targetId: jobId, targetType: 'job', uploadRequestId },
-        createdFile: { id: {}, name: {} }
+        '$': {
+          name: fileName,
+          targetId: jobId,
+          targetType: 'job',
+          uploadRequestId,
+          folder: 'Estimate/Measurement Photos'
+        },
+        createdFile: { id: {}, name: {}, folder: {} }
       }
     })
     if (!fileRes?.createFile?.createdFile?.id) throw new Error('createFile failed: ' + JSON.stringify(fileRes))
-
-    // Step 4: Post comment
-    const safeWindows = Array.isArray(windows) ? windows : []
-    const totalUnits = safeWindows.reduce((sum, w) => sum + parseInt(w.qty || 1), 0)
-    let message = `📋 Window Estimate — ${new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}\n`
-    message += `Customer: ${jobInfo?.customerName || 'N/A'}\n`
-    if (jobInfo?.estimator) message += `Estimator: ${jobInfo.estimator}\n`
-    message += `${safeWindows.length} line item(s), ${totalUnits} unit(s)\n`
-    message += `PDF attached: ${fileName}`
-
-    await pave({
-      '$': { grantKey },
-      createComment: {
-        '$': { targetId: jobId, targetType: 'job', message },
-        createdComment: { id: {} }
-      }
-    })
 
     return res.status(200).json({ success: true })
 
