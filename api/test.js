@@ -2,7 +2,7 @@ module.exports = async function handler(req, res) {
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(200).json({ status: 'NO_API_KEY' })
 
-  const orgId = '22MsEHuFtmri'
+  const jobId = '22PNzynyvGdD'
 
   async function pave(query) {
     const r = await fetch('https://api.jobtread.com/pave', {
@@ -16,32 +16,19 @@ module.exports = async function handler(req, res) {
 
   const results = {}
 
-  // Check org-level folders
+  // Check folders on this job
   const t1 = await pave({
     '$': { grantKey },
-    organization: {
-      '$': { id: orgId },
-      folders: {}
-    }
+    job: { '$': { id: jobId }, folders: {} }
   })
-  results.orgFolders = t1?.raw || JSON.stringify(t1)
+  results.folders = t1?.raw || JSON.stringify(t1)
 
-  // Try folders with nodes
+  // Check files with folder info
   const t2 = await pave({
     '$': { grantKey },
-    organization: {
-      '$': { id: orgId },
-      folders: { nodes: { id: {}, name: {} } }
-    }
+    job: { '$': { id: jobId }, files: { nodes: { id: {}, name: {}, folder: {} } } }
   })
-  results.orgFoldersNodes = t2?.raw || JSON.stringify(t2)
-
-  // Look for createFolder mutation
-  for (const m of ['createFolder', 'createFileFolder', 'createJobFolder']) {
-    const r = await pave({ '$': { grantKey }, [m]: { '$': { name: 'test' }, id: {} } })
-    const txt = r?.raw || JSON.stringify(r)
-    results[m] = txt.includes('does not exist') ? '❌' : '✅ ' + txt.slice(0, 120)
-  }
+  results.filesWithFolder = t2?.raw || JSON.stringify(t2)
 
   return res.status(200).json({ results })
 }
