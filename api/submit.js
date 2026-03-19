@@ -22,14 +22,14 @@ module.exports = async function handler(req, res) {
     try { return JSON.parse(text) } catch { throw new Error(`Pave: ${text.slice(0, 200)}`) }
   }
 
-  async function uploadFile(base64Data, fileName) {
+  async function uploadFile(base64Data, fileName, mimeType) {
     const fileId = Date.now().toString(36) + Math.random().toString(36).slice(2)
     const publicUrl = `${protocol}://${host}/api/pdf?id=${fileId}`
 
     await fetch(`${protocol}://${host}/api/pdf`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: fileId, pdfBase64: base64Data })
+      body: JSON.stringify({ id: fileId, pdfBase64: base64Data, mimeType: mimeType || 'application/pdf' })
     })
 
     const uploadReq = await pave({
@@ -68,7 +68,8 @@ module.exports = async function handler(req, res) {
         const fileName = `${roomName}${count > 1 ? ` ${count}` : ''}.${ext}`
         const base64 = photo.dataUrl.split(',')[1]
         if (!base64) throw new Error(`Photo for "${roomName}" has no valid image data`)
-        await uploadFile(base64, fileName)
+        const mimeType = photo.dataUrl.includes('image/png') ? 'image/png' : 'image/jpeg'
+        await uploadFile(base64, fileName, mimeType)
       }
     }
 
