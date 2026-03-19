@@ -28,6 +28,36 @@ const RECT_PATTERNS  = ['Rectangular']
 const HARDWARE_COLORS = ['Satin Taupe', 'Sierra', 'White', 'Matte Black', 'Oil Rubbed Bronze', 'Satin Nickel', 'Brushed Chrome', 'Antique Brass', 'Brass']
 const SCREEN_COLORS  = ['Stone White', 'EverWood Pine', 'Satin Taupe', 'Sierra', 'Bronze', 'Ebony']
 const SCREEN_MESHES  = ['Bright View Mesh', 'Charcoal Hi-Transparency Fiberglass Mesh']
+const ROUND_TOP_STYLES = ['Half Circle', 'Extended Half Round', 'Eyebrow', 'Extended Eyebrow', 'Quarter Round', 'Extended Quarter Round', 'Quarter Eyebrow', 'Extended Quarter Eyebrow']
+
+const TWO_HIGH_WINDOWS = ['Casement', 'Picture', 'Double Hung', 'Single Hung', 'Awning']
+
+function getTopWindowOptions(baseStyle) {
+  const isCasAwnPic = ['Casement', 'Picture', 'Awning'].includes(baseStyle)
+  if (isCasAwnPic) return ['Casement', 'Picture', 'Awning', ...ROUND_TOP_STYLES]
+  return ['Picture', ...ROUND_TOP_STYLES] // DH / SH
+}
+
+function getTopWinMeasurements(style) {
+  if (!style) return { m: [], facing: false }
+  const facing = ['Quarter Round', 'Extended Quarter Round', 'Quarter Eyebrow', 'Extended Quarter Eyebrow'].includes(style)
+  if (['Half Circle', 'Quarter Round'].includes(style)) return { m: ['w'], facing }
+  if (['Extended Eyebrow', 'Extended Quarter Eyebrow'].includes(style)) return { m: ['w', 'h', 's'], facing }
+  return { m: ['w', 'h'], facing }
+}
+
+const TWO_HIGH_STYLES = ['Casement', 'Picture', 'Awning', 'Double Hung', 'Single Hung']
+const CAS_PIC_AWN_TOPS = ['Casement', 'Picture', 'Awning', ...ROUND_PATTERNS]
+const DH_SH_TOPS = ['Picture', ...ROUND_PATTERNS]
+
+function getTopOptions(baseStyle) {
+  if (['Double Hung', 'Single Hung'].includes(baseStyle)) return DH_SH_TOPS
+  return CAS_PIC_AWN_TOPS
+}
+
+function canBe2Wide(baseWide) { return baseWide === 2 }
+function mustBe1Wide(baseWide) { return baseWide >= 3 }
+
 const JAMB_TYPES = ['Primed', 'Pine', 'Oak', 'Knotty Alder', 'Maple']
 const CASING_STYLES = ['Ranch', 'Colonial', 'Other']
 
@@ -128,12 +158,30 @@ function summarizeWindow(w) {
   if (w.hardwareColor) parts.push(`HW: ${w.hardwareColor}`)
   if (w.screenColor) parts.push(`Screen: ${w.screenColor}`)
   if (w.screenMesh) parts.push(w.screenMesh)
+  if (w.numberHigh === 2) {
+    if (w.topWindowWidth === 2 && w.topLeftStyle) parts.push(`Top: ${w.topLeftStyle} | ${w.topRightStyle}`)
+    else if (w.topStyle) parts.push(`Top: ${w.topStyle}`)
+    if (w.topHeight) parts.push(`Top H: ${fmtMeasurement(w.topHeight, w.topHeightFrac)}`)
+  }
   if (w.jambDepth) parts.push(`Jamb: ${fmtMeasurement(w.jambDepth, w.jambDepthFrac)}`)
   if (w.jambType) parts.push(w.jambType)
   if (w.casingWidth) parts.push(`Casing: ${fmtMeasurement(w.casingWidth, w.casingWidthFrac)}`)
   if (w.casingType) parts.push(w.casingType)
   if (w.casingStyle) parts.push(w.casingStyle)
   if (w.lpTrimColor) parts.push(`LP: ${w.lpTrimColor}`)
+  if (w.numberHigh === 2 && w.topWindows?.length > 0) {
+    const tops = w.topWindows.filter(t => t.style)
+    if (tops.length > 0) {
+      const topStr = tops.map((t, i) => {
+        const parts2 = [t.style]
+        if (t.facing) parts2.push(t.facing)
+        if (t.width) parts2.push(`W:${fmtMeasurement(t.width, t.widthFrac)}`)
+        if (t.height) parts2.push(`H:${fmtMeasurement(t.height, t.heightFrac)}`)
+        return parts2.join(' ')
+      }).join(' | ')
+      parts.push(`Top: ${topStr}`)
+    }
+  }
   return parts.join(' · ')
 }
 
@@ -359,6 +407,54 @@ function WindowCard({ win, index, onEdit, onRemove }) {
   )
 }
 
+// ─── Top Window Unit ─────────────────────────────────────────────────────────
+
+function TopWindowUnit({ label, value, onChange, options }) {
+  const { m, facing } = getTopWinMeasurements(value.style)
+  const set = (k, v) => onChange({ ...value, [k]: v })
+  return (
+    <div style={{ background: 'rgba(0,0,0,0.15)', borderRadius: 8, padding: '12px', marginBottom: 8 }}>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.07em', marginBottom: 8 }}>{label}</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 12px' }}>
+        <div style={{ gridColumn: '1/-1', marginBottom: 10 }}>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Style</label>
+          <select value={value.style} onChange={e => onChange({ style: e.target.value, width: '', widthFrac: '', height: '', heightFrac: '', shortSideHeight: '', shortSideHeightFrac: '', facing: '' })}>
+            <option value="">Select...</option>
+            {options.map(o => <option key={o}>{o}</option>)}
+          </select>
+        </div>
+        {facing && (
+          <div style={{ gridColumn: '1/-1', marginBottom: 10 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Facing</label>
+            <select value={value.facing} onChange={e => set('facing', e.target.value)}>
+              <option value="">Select...</option>
+              <option>Left</option><option>Right</option>
+            </select>
+          </div>
+        )}
+        {m.includes('w') && (
+          <div style={{ marginBottom: 10 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Width (in) *</label>
+            <MeasurementInput value={value.width} frac={value.widthFrac} onValue={v => set('width', v)} onFrac={v => set('widthFrac', v)} />
+          </div>
+        )}
+        {m.includes('h') && (
+          <div style={{ marginBottom: 10 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Height (in) *</label>
+            <MeasurementInput value={value.height} frac={value.heightFrac} onValue={v => set('height', v)} onFrac={v => set('heightFrac', v)} />
+          </div>
+        )}
+        {m.includes('s') && (
+          <div style={{ gridColumn: '1/-1', marginBottom: 10 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Short Side Height (in) *</label>
+            <MeasurementInput value={value.shortSideHeight} frac={value.shortSideHeightFrac} onValue={v => set('shortSideHeight', v)} onFrac={v => set('shortSideHeightFrac', v)} />
+          </div>
+        )}
+      </div>
+    </div>
+  )
+}
+
 // ─── Window Form ──────────────────────────────────────────────────────────────
 
 const EMPTY = {
@@ -372,6 +468,13 @@ const EMPTY = {
   grilleType: '', grillePattern: '', simulatedRail: '',
   hardwareColor: '', screenColor: '', screenMesh: '',
   photos: [], qty: '1', notes: '',
+  numberHigh: 1, topWindowsWide: 1,
+  topWindows: [{ style: '', width: '', widthFrac: '', height: '', heightFrac: '', shortSideHeight: '', shortSideHeightFrac: '', facing: '' }],
+  numberHigh: 1,
+  topWindowWidth: 1,
+  topStyle: '', topHeight: '', topHeightFrac: '',
+  topLeftStyle: '', topLeftHeight: '', topLeftHeightFrac: '',
+  topRightStyle: '', topRightHeight: '', topRightHeightFrac: '',
   jambDepth: '', jambDepthFrac: '', jambType: '',
   casingWidth: '', casingWidthFrac: '', casingType: '', casingStyle: '', lpTrimColor: ''
 }
@@ -461,6 +564,16 @@ function WindowForm({ initial, onSave, onCancel }) {
     if (!form.interiorColor) missing.push('Interior Color')
     if (!form.glassSurface) missing.push('Glass Surface')
     if (cfg.sm && !form.screenMesh) missing.push('Screen Mesh Type')
+    if (form.numberHigh === 2) {
+      form.topWindows.forEach((tw, i) => {
+        const label = form.topWindows.length > 1 ? `Top Window ${i + 1}` : 'Top Window'
+        if (!tw.style) missing.push(`${label} Style`)
+        const { m } = getTopWinMeasurements(tw.style)
+        if (m.includes('w') && !tw.width) missing.push(`${label} Width`)
+        if (m.includes('h') && !tw.height) missing.push(`${label} Height`)
+        if (m.includes('s') && !tw.shortSideHeight) missing.push(`${label} Short Side Height`)
+      })
+    }
     return missing
   }
 
@@ -505,6 +618,29 @@ function WindowForm({ initial, onSave, onCancel }) {
             <Field label="Number Wide">
               <select value={form.numberWide} onChange={e => set('numberWide', parseInt(e.target.value))}>
                 {cfg.wide.map(n => <option key={n} value={n}>{n} Wide</option>)}
+              </select>
+            </Field>
+          )}
+
+          {TWO_HIGH_WINDOWS.includes(form.style) && form.numberWide <= 3 && (
+            <Field label="Number High">
+              <select value={form.numberHigh} onChange={e => set('numberHigh', parseInt(e.target.value))}>
+                <option value={1}>1 High</option>
+                <option value={2}>2 High</option>
+              </select>
+            </Field>
+          )}
+
+          {TWO_HIGH_WINDOWS.includes(form.style) && form.numberHigh === 2 && form.numberWide === 2 && (
+            <Field label="Top Window Width">
+              <select value={form.topWindowsWide} onChange={e => {
+                const w = parseInt(e.target.value)
+                const blank = { style: '', width: '', widthFrac: '', height: '', heightFrac: '', shortSideHeight: '', shortSideHeightFrac: '', facing: '' }
+                set('topWindowsWide', w)
+                set('topWindows', w === 2 ? [{ ...blank }, { ...blank }] : [{ ...blank }])
+              }}>
+                <option value={1}>1 Wide (spans full width)</option>
+                <option value={2}>2 Wide (one per panel)</option>
               </select>
             </Field>
           )}
@@ -630,6 +766,36 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           </>}
 
+          {TWO_HIGH_WINDOWS.includes(form.style) && form.numberHigh === 2 && (() => {
+            const isCasAwnPic = ['Casement', 'Picture', 'Awning'].includes(form.style)
+            // 3 wide: only round tops, 1 wide
+            const topOpts = form.numberWide === 3
+              ? ROUND_TOP_STYLES
+              : getTopWindowOptions(form.style)
+
+            // Ensure topWindows array is correct size
+            const expectedCount = (form.numberWide === 2 && form.topWindowsWide === 2) ? 2 : 1
+
+            return (
+              <>
+                <SectionHeader>Top Window</SectionHeader>
+                {form.topWindows.slice(0, expectedCount).map((tw, i) => (
+                  <TopWindowUnit
+                    key={i}
+                    label={expectedCount > 1 ? (i === 0 ? 'Left Panel' : 'Right Panel') : 'Top Window'}
+                    value={tw}
+                    options={topOpts}
+                    onChange={v => {
+                      const updated = [...form.topWindows]
+                      updated[i] = v
+                      set('topWindows', updated)
+                    }}
+                  />
+                ))}
+              </>
+            )
+          })()}
+
           <SectionHeader>Color & Glass</SectionHeader>
           <Field label="Exterior Color *">
             <select value={form.exteriorColor} onChange={e => set('exteriorColor', e.target.value)}>
@@ -723,6 +889,79 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           )}
         </>}
+
+        {/* ── 2 High ── */}
+          {cfg && TWO_HIGH_STYLES.includes(form.style) && (
+            <>
+              <SectionHeader>Number High</SectionHeader>
+              <Field label="Number High" col="1/-1">
+                <select value={form.numberHigh} onChange={e => set('numberHigh', parseInt(e.target.value))}>
+                  <option value={1}>1 High</option>
+                  <option value={2}>2 High</option>
+                </select>
+              </Field>
+
+              {form.numberHigh === 2 && (() => {
+                const topOpts = getTopOptions(form.style)
+                const base2Wide = canBe2Wide(form.numberWide)
+                const forceRound = mustBe1Wide(form.numberWide)
+
+                return (
+                  <>
+                    {/* For 2-wide base: choose if top is 1 or 2 wide */}
+                    {base2Wide && !forceRound && (
+                      <Field label="Top Window Width" col="1/-1">
+                        <select value={form.topWindowWidth} onChange={e => set('topWindowWidth', parseInt(e.target.value))}>
+                          <option value={1}>1 Wide (centered)</option>
+                          <option value={2}>2 Wide (full width)</option>
+                        </select>
+                      </Field>
+                    )}
+
+                    {/* 2-wide top: two separate panels */}
+                    {base2Wide && form.topWindowWidth === 2 && !forceRound && (
+                      <>
+                        <Field label="Top Left Style">
+                          <select value={form.topLeftStyle} onChange={e => set('topLeftStyle', e.target.value)}>
+                            <option value="">Select...</option>
+                            {topOpts.map(s => <option key={s}>{s}</option>)}
+                          </select>
+                        </Field>
+                        <Field label="Top Left Height (in)">
+                          <MeasurementInput value={form.topLeftHeight} frac={form.topLeftHeightFrac} onValue={v => set('topLeftHeight', v)} onFrac={v => set('topLeftHeightFrac', v)} />
+                        </Field>
+                        <Field label="Top Right Style">
+                          <select value={form.topRightStyle} onChange={e => set('topRightStyle', e.target.value)}>
+                            <option value="">Select...</option>
+                            {topOpts.map(s => <option key={s}>{s}</option>)}
+                          </select>
+                        </Field>
+                        <Field label="Top Right Height (in)">
+                          <MeasurementInput value={form.topRightHeight} frac={form.topRightHeightFrac} onValue={v => set('topRightHeight', v)} onFrac={v => set('topRightHeightFrac', v)} />
+                        </Field>
+                      </>
+                    )}
+
+                    {/* 1-wide top or 3-4 wide base: single top window */}
+                    {(!base2Wide || form.topWindowWidth === 1 || forceRound) && (
+                      <>
+                        <Field label="Top Window Style" col="1/-1">
+                          <select value={form.topStyle} onChange={e => set('topStyle', e.target.value)}>
+                            <option value="">Select...</option>
+                            {(forceRound ? ROUND_PATTERNS : topOpts).map(s => <option key={s}>{s}</option>)}
+                          </select>
+                        </Field>
+                        <Field label="Top Window Height (in)">
+                          <MeasurementInput value={form.topHeight} frac={form.topHeightFrac} onValue={v => set('topHeight', v)} onFrac={v => set('topHeightFrac', v)} />
+                        </Field>
+                        <div />
+                      </>
+                    )}
+                  </>
+                )
+              })()}
+            </>
+          )}
 
         <SectionHeader>Extension Jamb & Casing</SectionHeader>
           <Field label="Jamb Depth (inches)">
