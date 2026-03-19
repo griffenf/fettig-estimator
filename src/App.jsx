@@ -11,6 +11,9 @@ const getIntColors = (ext) => {
   return ['Stone White', 'EverWood Pine', 'Sierra']
 }
 
+const INT_TO_HW = { 'Stone White': 'White', 'EverWood Pine': 'Satin Taupe', 'Sierra': 'Sierra', 'Bronze': 'Oil Rubbed Bronze', 'Ebony': 'Matte Black' }
+const INT_TO_SCREEN = { 'Stone White': 'Stone White', 'EverWood Pine': 'EverWood Pine', 'Sierra': 'Sierra', 'Bronze': 'Bronze', 'Ebony': 'Ebony' }
+
 const GLASS_SURFACES = {
   Double: ['Clear', 'Low E1', 'Low E2', 'Low E3', 'Low E2/ERS', 'Low E3/ERS'],
   Triple: ['Low E2/E1', 'Low E3/E1', 'Low E2/E1/ERS', 'Low E3/E1/ERS'],
@@ -25,10 +28,8 @@ const RECT_PATTERNS  = ['Rectangular']
 const HARDWARE_COLORS = ['Satin Taupe', 'Sierra', 'White', 'Matte Black', 'Oil Rubbed Bronze', 'Satin Nickel', 'Brushed Chrome', 'Antique Brass', 'Brass']
 const SCREEN_COLORS  = ['Stone White', 'EverWood Pine', 'Satin Taupe', 'Sierra', 'Bronze', 'Ebony']
 const SCREEN_MESHES  = ['Bright View Mesh', 'Charcoal Hi-Transparency Fiberglass Mesh']
+const FRACTIONS = ['', '1/16"', '1/8"', '3/16"', '1/4"', '5/16"', '3/8"', '7/16"', '1/2"', '9/16"', '5/8"', '11/16"', '3/4"', '13/16"', '7/8"', '15/16"']
 
-// mt: 1=RO only 2=Frame/RO  m: w h s(shortSide) wo(widthOrHeight)
-// pt: panel type  hw/sc/sm: hardware/screenColor/screenMesh
-// facing sash bay sunburst: extra feature flags
 const WIN = {
   'Casement':               { wide:[1,2,3,4], mt:2, m:['w','h'],     pt:'cas', g:['GBG','SDL'], gp:STD_PATTERNS,   hw:1,sc:1,sm:1 },
   'Picture':                { wide:[1,2,3,4], mt:2, m:['w','h'],     pt:'pic', g:['GBG','SDL'], gp:STD_PATTERNS,   hw:0,sc:0,sm:0 },
@@ -94,16 +95,24 @@ function getPanelConfig(pt, wide) {
   return null
 }
 
+function fmtMeasurement(val, frac) {
+  if (!val) return ''
+  return frac ? `${val} ${frac}` : `${val}"`
+}
+
 function summarizeWindow(w) {
   const parts = []
   if (w.numberWide > 1) parts.push(`${w.numberWide} Wide`)
   if (w.facing) parts.push(w.facing)
+  if (w.sashSplit) parts.push(`Sash: ${w.sashSplit}`)
   if (w.configuration) parts.push(w.configuration)
   if (w.measurementType) parts.push(w.measurementType)
-  if (w.width && !w.widthOrHeight) parts.push(`W: ${w.width}"`)
-  if (w.height) parts.push(`H: ${w.height}"`)
-  if (w.widthOrHeight) parts.push(`${w.widthOrHeight}"`)
-  if (w.shortSideHeight) parts.push(`SSH: ${w.shortSideHeight}"`)
+  if (w.width) parts.push(`W: ${fmtMeasurement(w.width, w.widthFrac)}`)
+  if (w.height) parts.push(`H: ${fmtMeasurement(w.height, w.heightFrac)}`)
+  if (w.widthOrHeight) parts.push(fmtMeasurement(w.widthOrHeight, w.widthOrHeightFrac))
+  if (w.shortSideHeight) parts.push(`SSH: ${fmtMeasurement(w.shortSideHeight, w.shortSideHeightFrac)}`)
+  if (w.angleOfDeflection) parts.push(`Angle: ${w.angleOfDeflection}`)
+  if (w.flankerRatio) parts.push(`Flanker: ${w.flankerRatio}`)
   if (w.exteriorColor) parts.push(`Ext: ${w.exteriorColor}`)
   if (w.interiorColor) parts.push(`Int: ${w.interiorColor}`)
   if (w.pane) parts.push(w.pane + ' Pane')
@@ -121,12 +130,21 @@ function summarizeWindow(w) {
 
 // ─── PDF Generator ───────────────────────────────────────────────────────────
 
-function generatePDF(jobInfo, windows) {
+function generatePDF(jobInfo, rooms) {
   const doc = new jsPDF({ unit: 'pt', format: 'letter' })
   const W = doc.internal.pageSize.getWidth()
+  const pageH = doc.internal.pageSize.getHeight()
   const margin = 48
   let y = 0
 
+  const addFooter = () => {
+    doc.setFillColor(26, 35, 50); doc.rect(0, pageH - 36, W, 36, 'F')
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(138, 154, 176)
+    doc.text('Fettig Millwork & Windows, Inc.  —  Window Estimate', margin, pageH - 14)
+    doc.setTextColor(200, 151, 58); doc.text('CONFIDENTIAL', W - margin, pageH - 14, { align: 'right' })
+  }
+
+  // Header
   doc.setFillColor(26, 35, 50); doc.rect(0, 0, W, 80, 'F')
   doc.setFillColor(200, 151, 58); doc.rect(0, 80, W, 3, 'F')
   doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(245, 243, 239)
@@ -151,50 +169,75 @@ function generatePDF(jobInfo, windows) {
     if (i % 2 === 0) leftY = cy; else rightY = cy
   })
   y = Math.max(leftY, rightY) + 12
-
   doc.setDrawColor(200, 151, 58); doc.setLineWidth(0.5); doc.line(margin, y, W - margin, y); y += 16
 
-  windows.forEach((win, i) => {
-    if (y > 700) { doc.addPage(); y = 60 }
-    const bg = i % 2 === 0 ? [245, 243, 239] : [235, 232, 226]
-    const summary = summarizeWindow(win)
-    const lines = doc.splitTextToSize(summary, W - margin * 2 - 60)
-    const rowH = Math.max(28, lines.length * 13 + 16)
-    doc.setFillColor(...bg); doc.rect(margin, y - 10, W - margin * 2, rowH, 'F')
-    doc.setFillColor(200, 151, 58); doc.rect(margin, y - 10, 28, rowH, 'F')
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(26, 35, 50)
-    doc.text(String(i + 1), margin + 14, y + (rowH / 2) - 16, { align: 'center' })
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(11); doc.setTextColor(26, 35, 50)
-    doc.text(`${win.style}${win.qty > 1 ? ` × ${win.qty}` : ''}`, margin + 36, y)
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(80, 90, 110)
-    lines.forEach((line, li) => doc.text(line, margin + 36, y + 13 + li * 12))
-    if (win.notes) {
-      const noteLines = doc.splitTextToSize(`Note: ${win.notes}`, W - margin * 2 - 60)
-      doc.setFontSize(8); doc.setTextColor(138, 154, 176)
-      noteLines.forEach((line, li) => doc.text(line, margin + 36, y + 13 + lines.length * 12 + li * 11))
+  let winNum = 1
+  rooms.forEach(room => {
+    if (!room.windows.length) return
+    if (y > pageH - 80) { addFooter(); doc.addPage(); y = 40 }
+
+    // Room header
+    if (room.name) {
+      doc.setFillColor(40, 55, 78); doc.rect(margin, y - 10, W - margin * 2, 20, 'F')
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(200, 151, 58)
+      doc.text(`ROOM: ${room.name.toUpperCase()}`, margin + 8, y + 4); y += 18
     }
-    y += rowH + 4
+
+    room.windows.forEach((win) => {
+      const summary = summarizeWindow(win)
+      const lines = doc.splitTextToSize(summary, W - margin * 2 - 60)
+      const rowH = Math.max(28, lines.length * 13 + 16)
+      if (y + rowH > pageH - 60) { addFooter(); doc.addPage(); y = 40 }
+
+      const bg = winNum % 2 === 0 ? [245, 243, 239] : [235, 232, 226]
+      doc.setFillColor(...bg); doc.rect(margin, y - 10, W - margin * 2, rowH, 'F')
+      doc.setFillColor(200, 151, 58); doc.rect(margin, y - 10, 28, rowH, 'F')
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(26, 35, 50)
+      doc.text(String(winNum), margin + 14, y + (rowH / 2) - 14, { align: 'center' })
+      doc.setFontSize(11); doc.text(`${win.style}${parseInt(win.qty) > 1 ? ` × ${win.qty}` : ''}`, margin + 36, y)
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(80, 90, 110)
+      lines.forEach((line, li) => doc.text(line, margin + 36, y + 13 + li * 12))
+      if (win.notes) {
+        doc.setFontSize(8); doc.setTextColor(138, 154, 176)
+        doc.splitTextToSize(`Note: ${win.notes}`, W - margin * 2 - 60).forEach((line, li) => doc.text(line, margin + 36, y + 13 + lines.length * 12 + li * 11))
+      }
+      y += rowH + 4
+
+      // Photos
+      if (win.photos && win.photos.length > 0) {
+        win.photos.forEach(photo => {
+          if (y + 120 > pageH - 60) { addFooter(); doc.addPage(); y = 40 }
+          try {
+            doc.addImage(photo, 'JPEG', margin + 36, y, 100, 80)
+            y += 88
+          } catch (e) {}
+        })
+      }
+
+      winNum++
+    })
+    y += 8
   })
 
-  y += 8
-  doc.setFillColor(26, 35, 50); doc.rect(margin, y - 10, W - margin * 2, 22, 'F')
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(200, 151, 58)
-  const totalQty = windows.reduce((sum, w) => sum + parseInt(w.qty || 1), 0)
-  doc.text(`TOTAL: ${windows.length} line item(s)  |  ${totalQty} unit(s)`, margin + 8, y + 5)
+  const allWindows = rooms.flatMap(r => r.windows)
+  if (allWindows.length > 0) {
+    if (y + 30 > pageH - 60) { addFooter(); doc.addPage(); y = 40 }
+    doc.setFillColor(26, 35, 50); doc.rect(margin, y - 10, W - margin * 2, 22, 'F')
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(200, 151, 58)
+    const totalQty = allWindows.reduce((sum, w) => sum + parseInt(w.qty || 1), 0)
+    doc.text(`TOTAL: ${allWindows.length} line item(s)  |  ${totalQty} unit(s)`, margin + 8, y + 5)
+    y += 20
+  }
 
   if (jobInfo.notes) {
-    y += 28
+    y += 8
     doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(200, 151, 58)
     doc.text('ADDITIONAL NOTES', margin, y); y += 14
     doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(26, 35, 50)
     doc.splitTextToSize(jobInfo.notes, W - margin * 2).forEach(line => { doc.text(line, margin, y); y += 14 })
   }
 
-  const pageH = doc.internal.pageSize.getHeight()
-  doc.setFillColor(26, 35, 50); doc.rect(0, pageH - 36, W, 36, 'F')
-  doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(138, 154, 176)
-  doc.text('Fettig Millwork & Windows, Inc.  —  Window Estimate', margin, pageH - 14)
-  doc.setTextColor(200, 151, 58); doc.text('CONFIDENTIAL', W - margin, pageH - 14, { align: 'right' })
+  addFooter()
   return doc
 }
 
@@ -277,21 +320,37 @@ function SectionHeader({ children }) {
   return <div style={{ gridColumn: '1/-1', fontFamily: 'var(--font-head)', fontSize: 12, fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: '1px solid rgba(200,151,58,0.3)', paddingBottom: 6, marginTop: 8, marginBottom: 4 }}>{children}</div>
 }
 
+function MeasurementInput({ value, frac, onValue, onFrac, placeholder }) {
+  return (
+    <div style={{ display: 'flex', gap: 6 }}>
+      <input type="number" step="1" placeholder={placeholder || 'e.g. 36'} value={value} onChange={e => onValue(e.target.value)} style={{ flex: 2 }} />
+      <select value={frac || ''} onChange={e => onFrac(e.target.value)} style={{ flex: 1, fontSize: 13 }}>
+        {FRACTIONS.map(f => <option key={f} value={f}>{f || '+'}</option>)}
+      </select>
+    </div>
+  )
+}
+
 // ─── Window Card ──────────────────────────────────────────────────────────────
 
 function WindowCard({ win, index, onEdit, onRemove }) {
   const summary = summarizeWindow(win)
   return (
-    <div style={{ background: 'var(--navy-light)', border: '1.5px solid var(--border)', borderRadius: 8, padding: '12px 14px', marginBottom: 10 }}>
+    <div style={{ background: 'var(--navy-light)', border: '1.5px solid var(--border)', borderRadius: 8, padding: '12px 14px', marginBottom: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <div style={{ flex: 1 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 4 }}>
-            <span style={{ background: 'var(--gold)', color: 'var(--navy)', borderRadius: 4, padding: '2px 8px', fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 12 }}>#{index + 1}</span>
-            <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>{win.style}</span>
-            {win.qty > 1 && <span style={{ color: 'var(--gray)', fontSize: 13 }}>× {win.qty}</span>}
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+            <span style={{ background: 'var(--gold)', color: 'var(--navy)', borderRadius: 4, padding: '2px 7px', fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 12 }}>#{index + 1}</span>
+            <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 15 }}>{win.style}</span>
+            {parseInt(win.qty) > 1 && <span style={{ color: 'var(--gray)', fontSize: 13 }}>× {win.qty}</span>}
           </div>
           <div style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6 }}>{summary}</div>
           {win.notes && <div style={{ marginTop: 4, fontSize: 11, color: 'var(--gray)', fontStyle: 'italic' }}>"{win.notes}"</div>}
+          {win.photos && win.photos.length > 0 && (
+            <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
+              {win.photos.map((p, i) => <img key={i} src={p} alt="" style={{ width: 56, height: 44, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)' }} />)}
+            </div>
+          )}
         </div>
         <div style={{ display: 'flex', gap: 6, flexShrink: 0 }}>
           <button className="btn-outline" onClick={() => onEdit(index)} style={{ padding: '6px 12px', fontSize: 13 }}>Edit</button>
@@ -306,18 +365,21 @@ function WindowCard({ win, index, onEdit, onRemove }) {
 
 const EMPTY = {
   style: '', numberWide: 1, facing: '', sashSplit: '',
-  measurementType: '', configType: 'standard', standardConfig: '', panelConfigs: [],
-  width: '', height: '', shortSideHeight: '', widthOrHeight: '',
+  measurementType: 'Frame Size', configType: 'standard', standardConfig: '', panelConfigs: [],
+  width: '', widthFrac: '', height: '', heightFrac: '',
+  shortSideHeight: '', shortSideHeightFrac: '', widthOrHeight: '', widthOrHeightFrac: '',
+  angleOfDeflection: '', flankerRatio: '',
   exteriorColor: '', interiorColor: '', pane: 'Double',
   glassSurface: '', tempered: 'No', decorativeGlass: 'None',
   grilleType: '', grillePattern: '', simulatedRail: '',
   hardwareColor: '', screenColor: '', screenMesh: '',
-  qty: '1', notes: ''
+  photos: [], qty: '1', notes: ''
 }
 
 function WindowForm({ initial, onSave, onCancel }) {
   const [form, setForm] = useState(() => initial ? { ...EMPTY, ...initial } : { ...EMPTY })
   const set = (k, v) => setForm(f => ({ ...f, [k]: v }))
+  const cameraRef = useRef(null)
 
   const cfg = WIN[form.style]
   const panelCfg = cfg ? getPanelConfig(cfg.pt, form.numberWide) : null
@@ -326,7 +388,6 @@ function WindowForm({ initial, onSave, onCancel }) {
   const decorGlasses = DECORATIVE_GLASSES[form.pane] || []
   const grillePatterns = cfg?.gp || []
 
-  // Reset fields when style changes
   useEffect(() => {
     if (!form.style || !WIN[form.style]) return
     const c = WIN[form.style]
@@ -337,35 +398,53 @@ function WindowForm({ initial, onSave, onCancel }) {
       configType: 'standard', standardConfig: '',
       panelConfigs: Array(c.wide[0]).fill(''),
       facing: '', sashSplit: '',
-      grilleType: c.g[0] || '', grillePattern: '', simulatedRail: '',
+      grilleType: '', grillePattern: '', simulatedRail: '',
     }))
   }, [form.style])
 
-  // Reset panel configs when numberWide changes
   useEffect(() => {
     setForm(f => ({ ...f, panelConfigs: Array(f.numberWide).fill(''), standardConfig: '' }))
   }, [form.numberWide])
 
-  // Reset glass/decorative when pane changes
   useEffect(() => {
     setForm(f => ({ ...f, glassSurface: '', decorativeGlass: 'None' }))
   }, [form.pane])
 
-  // Reset pattern/rail when grilleType changes
   useEffect(() => {
     setForm(f => ({ ...f, grillePattern: '', simulatedRail: '' }))
   }, [form.grilleType])
 
-  // Reset interiorColor if not valid for new exterior
   useEffect(() => {
     if (form.interiorColor && !getIntColors(form.exteriorColor).includes(form.interiorColor)) {
       set('interiorColor', '')
     }
   }, [form.exteriorColor])
 
+  // Auto-populate hardware and screen color from interior color
+  useEffect(() => {
+    if (!form.interiorColor) return
+    const hw = INT_TO_HW[form.interiorColor]
+    const sc = INT_TO_SCREEN[form.interiorColor]
+    setForm(f => ({
+      ...f,
+      hardwareColor: hw || f.hardwareColor,
+      screenColor: sc || f.screenColor,
+    }))
+  }, [form.interiorColor])
+
+  const handlePhoto = (e) => {
+    const file = e.target.files[0]
+    if (!file) return
+    const reader = new FileReader()
+    reader.onload = (ev) => set('photos', [...(form.photos || []), ev.target.result])
+    reader.readAsDataURL(file)
+    e.target.value = ''
+  }
+
+  const removePhoto = (i) => set('photos', form.photos.filter((_, j) => j !== i))
+
   const handleSave = () => {
     const w = { ...form }
-    // Build configuration string
     if (panelCfg) {
       if (panelCfg.type === 'fixed') w.configuration = panelCfg.value
       else if (panelCfg.type === 'single') w.configuration = form.standardConfig
@@ -384,7 +463,6 @@ function WindowForm({ initial, onSave, onCancel }) {
       <div style={{ fontFamily: 'var(--font-head)', fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--gold)', marginBottom: 16, textTransform: 'uppercase' }}>Window Details</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
 
-        {/* Style */}
         <Field label="Window Style *" col="1/-1">
           <select value={form.style} onChange={e => set('style', e.target.value)}>
             <option value="">Select style...</option>
@@ -397,7 +475,6 @@ function WindowForm({ initial, onSave, onCancel }) {
         </Field>
 
         {cfg && <>
-          {/* Number Wide */}
           {cfg.wide.length > 1 && (
             <Field label="Number Wide">
               <select value={form.numberWide} onChange={e => set('numberWide', parseInt(e.target.value))}>
@@ -406,7 +483,6 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           )}
 
-          {/* Facing */}
           {cfg.facing && (
             <Field label="Facing">
               <select value={form.facing} onChange={e => set('facing', e.target.value)}>
@@ -417,7 +493,6 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           )}
 
-          {/* Sash Split */}
           {cfg.sash && (
             <Field label="Sash Split" col="1/-1">
               <select value={form.sashSplit} onChange={e => set('sashSplit', e.target.value)}>
@@ -428,14 +503,11 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           )}
 
-          {/* Configuration */}
           {panelCfg && (
             <>
               <SectionHeader>Configuration</SectionHeader>
               {panelCfg.type === 'fixed' && (
-                <Field label="Configuration" col="1/-1">
-                  <input value={panelCfg.value} disabled style={{ opacity: 0.6 }} />
-                </Field>
+                <Field label="Configuration" col="1/-1"><input value={panelCfg.value} disabled style={{ opacity: 0.6 }} /></Field>
               )}
               {panelCfg.type === 'single' && (
                 <Field label="Configuration" col="1/-1">
@@ -467,7 +539,7 @@ function WindowForm({ initial, onSave, onCancel }) {
                   )}
                   {form.configType === 'custom' && (
                     <Field label="Custom Panel Configuration" col="1/-1">
-                      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${panelCfg.panels}, 1fr)`, gap: 8 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(panelCfg.panels, 3)}, 1fr)`, gap: 8 }}>
                         {Array.from({ length: panelCfg.panels }).map((_, i) => (
                           <select key={i} value={form.panelConfigs[i] || ''} onChange={e => {
                             const pc = [...form.panelConfigs]; pc[i] = e.target.value; set('panelConfigs', pc)
@@ -484,22 +556,37 @@ function WindowForm({ initial, onSave, onCancel }) {
             </>
           )}
 
-          {/* Measurements */}
           <SectionHeader>Measurements</SectionHeader>
           {cfg.mt === 2 && (
             <Field label="Measurement Type" col="1/-1">
               <select value={form.measurementType} onChange={e => set('measurementType', e.target.value)}>
                 <option>Frame Size</option>
                 <option>Rough Opening</option>
+                <option>Inside Opening</option>
               </select>
             </Field>
           )}
-          {cfg.m.includes('w') && <Field label='Width (inches)'><input type="number" step="0.125" placeholder='e.g. 36' value={form.width} onChange={e => set('width', e.target.value)} /></Field>}
-          {cfg.m.includes('h') && <Field label='Height (inches)'><input type="number" step="0.125" placeholder='e.g. 48' value={form.height} onChange={e => set('height', e.target.value)} /></Field>}
-          {cfg.m.includes('s') && <Field label='Short Side Height (inches)' col="1/-1"><input type="number" step="0.125" placeholder='e.g. 24' value={form.shortSideHeight} onChange={e => set('shortSideHeight', e.target.value)} /></Field>}
-          {cfg.m.includes('wo') && <Field label='Width or Height (inches)' col="1/-1"><input type="number" step="0.125" placeholder='e.g. 36' value={form.widthOrHeight} onChange={e => set('widthOrHeight', e.target.value)} /></Field>}
+          {cfg.m.includes('w') && (
+            <Field label="Width (inches)">
+              <MeasurementInput value={form.width} frac={form.widthFrac} onValue={v => set('width', v)} onFrac={v => set('widthFrac', v)} />
+            </Field>
+          )}
+          {cfg.m.includes('h') && (
+            <Field label="Height (inches)">
+              <MeasurementInput value={form.height} frac={form.heightFrac} onValue={v => set('height', v)} onFrac={v => set('heightFrac', v)} />
+            </Field>
+          )}
+          {cfg.m.includes('s') && (
+            <Field label="Short Side Height (in)" col="1/-1">
+              <MeasurementInput value={form.shortSideHeight} frac={form.shortSideHeightFrac} onValue={v => set('shortSideHeight', v)} onFrac={v => set('shortSideHeightFrac', v)} />
+            </Field>
+          )}
+          {cfg.m.includes('wo') && (
+            <Field label="Width or Height (inches)" col="1/-1">
+              <MeasurementInput value={form.widthOrHeight} frac={form.widthOrHeightFrac} onValue={v => set('widthOrHeight', v)} onFrac={v => set('widthOrHeightFrac', v)} />
+            </Field>
+          )}
 
-          {/* Bay Fields */}
           {cfg.bay && <>
             <Field label="Angle of Deflection">
               <select value={form.angleOfDeflection || ''} onChange={e => set('angleOfDeflection', e.target.value)}>
@@ -517,7 +604,6 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           </>}
 
-          {/* Glass & Color */}
           <SectionHeader>Color & Glass</SectionHeader>
           <Field label="Exterior Color">
             <select value={form.exteriorColor} onChange={e => set('exteriorColor', e.target.value)}>
@@ -555,20 +641,13 @@ function WindowForm({ initial, onSave, onCancel }) {
             </select>
           </Field>
 
-          {/* Grille */}
           <SectionHeader>Grille</SectionHeader>
-          {cfg.g.length > 1 ? (
-            <Field label="Grille Type">
-              <select value={form.grilleType} onChange={e => set('grilleType', e.target.value)}>
-                <option value="">None</option>
-                {cfg.g.map(g => <option key={g}>{g}</option>)}
-              </select>
-            </Field>
-          ) : (
-            <Field label="Grille Type">
-              <input value={cfg.g[0]} disabled style={{ opacity: 0.6 }} />
-            </Field>
-          )}
+          <Field label="Grille Type">
+            <select value={form.grilleType} onChange={e => set('grilleType', e.target.value)}>
+              <option value="">None</option>
+              {cfg.g.map(g => <option key={g}>{g}</option>)}
+            </select>
+          </Field>
           {form.grilleType && (
             <Field label="Grille Pattern">
               <select value={form.grillePattern} onChange={e => set('grillePattern', e.target.value)}>
@@ -592,7 +671,6 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           )}
 
-          {/* Hardware & Screen */}
           {(cfg.hw || cfg.sc || cfg.sm) && <SectionHeader>Hardware & Screen</SectionHeader>}
           {cfg.hw && (
             <Field label="Hardware Color" col="1/-1">
@@ -620,8 +698,20 @@ function WindowForm({ initial, onSave, onCancel }) {
           )}
         </>}
 
-        {/* Qty & Notes */}
-        <SectionHeader>Other</SectionHeader>
+        <SectionHeader>Photos & Notes</SectionHeader>
+        <Field label="Photos" col="1/-1">
+          <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handlePhoto} />
+          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+            <button type="button" className="btn-outline" onClick={() => cameraRef.current.click()} style={{ padding: '8px 16px', fontSize: 13 }}>📷 Take / Add Photo</button>
+            {(form.photos || []).map((p, i) => (
+              <div key={i} style={{ position: 'relative' }}>
+                <img src={p} alt="" style={{ width: 64, height: 52, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)' }} />
+                <button onClick={() => removePhoto(i)} style={{ position: 'absolute', top: -6, right: -6, background: '#c0392b', border: 'none', borderRadius: '50%', color: '#fff', width: 18, height: 18, fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+              </div>
+            ))}
+          </div>
+        </Field>
+
         <Field label="Quantity">
           <input type="number" min="1" value={form.qty} onChange={e => set('qty', e.target.value)} />
         </Field>
@@ -641,43 +731,55 @@ function WindowForm({ initial, onSave, onCancel }) {
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
+const newRoom = () => ({ id: Date.now(), name: '', windows: [] })
+
 export default function App() {
   const [step, setStep] = useState('job')
   const [jobInfo, setJobInfo] = useState({ customerName: '', jobId: '', jobName: '', address: '', estimator: '', notes: '' })
-  const [windows, setWindows] = useState([])
-  const [showForm, setShowForm] = useState(false)
-  const [editIndex, setEditIndex] = useState(null)
+  const [rooms, setRooms] = useState([newRoom()])
+  const [showFormInRoom, setShowFormInRoom] = useState(null)
+  const [editInfo, setEditInfo] = useState(null) // { roomId, winIndex }
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
 
+  const allWindows = rooms.flatMap(r => r.windows)
   const setJob = (k, v) => setJobInfo(f => ({ ...f, [k]: v }))
+  const handleJobSelect = (s) => setJobInfo(f => ({ ...f, customerName: s.customerName, jobId: s.jobId, jobName: s.jobName, address: s.address }))
+  const jobValid = jobInfo.customerName.trim().length > 0
 
-  const handleJobSelect = (selected) => setJobInfo(f => ({ ...f, customerName: selected.customerName, jobId: selected.jobId, jobName: selected.jobName, address: selected.address }))
+  const updateRoom = (id, key, val) => setRooms(rs => rs.map(r => r.id === id ? { ...r, [key]: val } : r))
+  const deleteRoom = (id) => setRooms(rs => rs.filter(r => r.id !== id))
 
   const saveWindow = (win) => {
-    if (editIndex !== null) { setWindows(ws => ws.map((w, i) => i === editIndex ? win : w)); setEditIndex(null) }
-    else setWindows(ws => [...ws, win])
-    setShowForm(false)
+    if (editInfo) {
+      setRooms(rs => rs.map(r => r.id === editInfo.roomId ? { ...r, windows: r.windows.map((w, i) => i === editInfo.winIndex ? win : w) } : r))
+      setEditInfo(null)
+    } else {
+      setRooms(rs => rs.map(r => r.id === showFormInRoom ? { ...r, windows: [...r.windows, win] } : r))
+      setShowFormInRoom(null)
+    }
   }
 
+  const removeWindow = (roomId, winIndex) => setRooms(rs => rs.map(r => r.id === roomId ? { ...r, windows: r.windows.filter((_, i) => i !== winIndex) } : r))
+
   const handleDownloadPDF = () => {
-    const doc = generatePDF(jobInfo, windows)
+    const doc = generatePDF(jobInfo, rooms)
     doc.save(`Fettig-Estimate-${jobInfo.customerName.replace(/\s+/g, '-') || 'Draft'}-${Date.now()}.pdf`)
   }
 
   const handleSubmitToJobTread = async () => {
     setSubmitting(true)
     try {
-      const doc = generatePDF(jobInfo, windows)
+      const doc = generatePDF(jobInfo, rooms)
       const pdfBase64 = doc.output('datauristring').split(',')[1]
-      const res = await fetch('/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jobId: jobInfo.jobId, jobInfo, windows, pdfBase64 }) })
+      const res = await fetch('/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jobId: jobInfo.jobId, jobInfo, windows: allWindows, pdfBase64 }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Unknown error')
       setSubmitted(true)
     } catch (err) { alert('JobTread error: ' + err.message) } finally { setSubmitting(false) }
   }
 
-  const jobValid = jobInfo.customerName.trim().length > 0
+  let globalWinNum = 1
 
   return (
     <div style={{ maxWidth: 680, margin: '0 auto', padding: '0 0 80px 0' }}>
@@ -685,13 +787,15 @@ export default function App() {
         <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 18, letterSpacing: '0.06em' }}>FETTIG MILLWORK & WINDOWS</div>
         <div style={{ color: 'var(--gold)', fontSize: 11, letterSpacing: '0.12em', fontWeight: 600 }}>WINDOW ESTIMATOR</div>
         <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
-          {[['job', '1', 'Job Info'], ['windows', '2', 'Windows'], ['review', '3', 'Review & Submit']].map(([s, n, label]) => (
-            <button key={s} className={step === s ? 'btn-gold' : 'btn-outline'} onClick={() => { if (s === 'windows' && !jobValid) return; setStep(s) }} style={{ flex: 1, fontSize: 12, padding: '7px 8px', opacity: (s === 'windows' && !jobValid) ? 0.4 : 1 }}>{n}. {label}</button>
+          {[['job','1','Job Info'],['windows','2','Windows'],['review','3','Review & Submit']].map(([s,n,label]) => (
+            <button key={s} className={step===s?'btn-gold':'btn-outline'} onClick={()=>{if(s==='windows'&&!jobValid)return;setStep(s)}} style={{flex:1,fontSize:12,padding:'7px 8px',opacity:(s==='windows'&&!jobValid)?0.4:1}}>{n}. {label}</button>
           ))}
         </div>
       </div>
 
       <div style={{ padding: '20px 20px 0' }}>
+
+        {/* ── Step 1 ── */}
         {step === 'job' && (
           <div>
             <div style={{ marginBottom: 20 }}>
@@ -719,31 +823,61 @@ export default function App() {
               <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>General Job Notes</label>
               <textarea rows={3} placeholder="Any general notes about this job..." value={jobInfo.notes} onChange={e => setJob('notes', e.target.value)} style={{ resize: 'vertical' }} />
             </div>
-            <button className="btn-gold" style={{ width: '100%', fontSize: 16, padding: 14, marginTop: 4, opacity: jobValid ? 1 : 0.5 }} onClick={() => jobValid && setStep('windows')}>Next: Add Windows →</button>
+            <button className="btn-gold" style={{ width: '100%', fontSize: 16, padding: 14, opacity: jobValid ? 1 : 0.5 }} onClick={() => jobValid && setStep('windows')}>Next: Add Windows →</button>
           </div>
         )}
 
+        {/* ── Step 2 ── */}
         {step === 'windows' && (
           <div>
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4 }}>Windows</div>
-              <div style={{ color: 'var(--gray)', fontSize: 13 }}>Add each window for <span style={{ color: 'var(--gold)' }}>{jobInfo.customerName}</span>.</div>
+              <div style={{ color: 'var(--gray)', fontSize: 13 }}>Organize windows by room for <span style={{ color: 'var(--gold)' }}>{jobInfo.customerName}</span>.</div>
             </div>
-            {windows.map((win, i) => (
-              editIndex === i
-                ? <WindowForm key={i} initial={win} onSave={saveWindow} onCancel={() => setEditIndex(null)} />
-                : <WindowCard key={i} win={win} index={i} onEdit={(idx) => { setEditIndex(idx); setShowForm(false) }} onRemove={(idx) => setWindows(ws => ws.filter((_, j) => j !== idx))} />
+
+            {rooms.map((room, ri) => (
+              <div key={room.id} style={{ background: 'var(--navy-light)', border: '1.5px solid var(--border)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+                {/* Room header */}
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
+                  <div style={{ background: 'var(--gold)', color: 'var(--navy)', borderRadius: 4, padding: '3px 10px', fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 12, letterSpacing: '0.06em', flexShrink: 0 }}>ROOM {ri + 1}</div>
+                  <input
+                    placeholder="Room name (e.g. Living Room, Kitchen...)"
+                    value={room.name}
+                    onChange={e => updateRoom(room.id, 'name', e.target.value)}
+                    style={{ flex: 1, margin: 0 }}
+                  />
+                  {rooms.length > 1 && (
+                    <button className="btn-danger" onClick={() => deleteRoom(room.id)} style={{ flexShrink: 0 }}>✕</button>
+                  )}
+                </div>
+
+                {/* Windows in room */}
+                {room.windows.map((win, wi) => {
+                  const num = globalWinNum++
+                  return editInfo?.roomId === room.id && editInfo?.winIndex === wi
+                    ? <WindowForm key={wi} initial={win} onSave={saveWindow} onCancel={() => setEditInfo(null)} />
+                    : <WindowCard key={wi} win={win} index={num - 1} onEdit={() => { setShowFormInRoom(null); setEditInfo({ roomId: room.id, winIndex: wi }) }} onRemove={() => removeWindow(room.id, wi)} />
+                })}
+
+                {/* Add window form */}
+                {showFormInRoom === room.id && !editInfo
+                  ? <WindowForm onSave={saveWindow} onCancel={() => setShowFormInRoom(null)} />
+                  : (!editInfo || editInfo.roomId !== room.id) && (
+                    <button className="btn-outline" style={{ width: '100%', padding: 12, fontSize: 14, borderStyle: 'dashed' }} onClick={() => { setShowFormInRoom(room.id); setEditInfo(null) }}>+ Add Window to {room.name || `Room ${ri + 1}`}</button>
+                  )
+                }
+              </div>
             ))}
-            {showForm && editIndex === null
-              ? <WindowForm onSave={saveWindow} onCancel={() => setShowForm(false)} />
-              : editIndex === null && <button className="btn-outline" style={{ width: '100%', padding: 14, fontSize: 15, borderStyle: 'dashed', marginBottom: 16 }} onClick={() => setShowForm(true)}>+ Add Window</button>
-            }
-            {windows.length > 0 && (
-              <button className="btn-gold" style={{ width: '100%', fontSize: 16, padding: 14, marginTop: 8 }} onClick={() => setStep('review')}>Review Estimate ({windows.length} window{windows.length !== 1 ? 's' : ''}) →</button>
+
+            <button className="btn-outline" style={{ width: '100%', padding: 12, fontSize: 14, marginBottom: 16 }} onClick={() => setRooms(rs => [...rs, newRoom()])}>+ Add Another Room</button>
+
+            {allWindows.length > 0 && (
+              <button className="btn-gold" style={{ width: '100%', fontSize: 16, padding: 14 }} onClick={() => setStep('review')}>Review Estimate ({allWindows.length} window{allWindows.length !== 1 ? 's' : ''}) →</button>
             )}
           </div>
         )}
 
+        {/* ── Step 3 ── */}
         {step === 'review' && (
           <div>
             <div style={{ marginBottom: 20 }}>
@@ -757,14 +891,21 @@ export default function App() {
                 {jobInfo.jobName && <div><span style={{ color: 'var(--gray)' }}>Job:</span> {jobInfo.jobName}</div>}
                 {jobInfo.address && <div style={{ gridColumn: '1/-1' }}><span style={{ color: 'var(--gray)' }}>Address:</span> {jobInfo.address}</div>}
                 {jobInfo.estimator && <div><span style={{ color: 'var(--gray)' }}>Estimator:</span> {jobInfo.estimator}</div>}
-                <div><span style={{ color: 'var(--gray)' }}>Line Items:</span> <strong>{windows.length}</strong></div>
-                <div><span style={{ color: 'var(--gray)' }}>Total Units:</span> <strong>{windows.reduce((s, w) => s + parseInt(w.qty || 1), 0)}</strong></div>
+                <div><span style={{ color: 'var(--gray)' }}>Rooms:</span> <strong>{rooms.filter(r => r.windows.length > 0).length}</strong></div>
+                <div><span style={{ color: 'var(--gray)' }}>Total Units:</span> <strong>{allWindows.reduce((s, w) => s + parseInt(w.qty || 1), 0)}</strong></div>
               </div>
             </div>
-            <div style={{ marginBottom: 20 }}>
-              {windows.map((win, i) => <WindowCard key={i} win={win} index={i} onEdit={(idx) => { setStep('windows'); setTimeout(() => setEditIndex(idx), 50) }} onRemove={(idx) => setWindows(ws => ws.filter((_, j) => j !== idx))} />)}
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+
+            {(() => { let n = 1; return rooms.filter(r => r.windows.length > 0).map(room => (
+              <div key={room.id} style={{ marginBottom: 16 }}>
+                <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 13, color: 'var(--gold)', letterSpacing: '0.08em', marginBottom: 8, textTransform: 'uppercase' }}>
+                  {room.name || 'Unnamed Room'}
+                </div>
+                {room.windows.map((win, wi) => <WindowCard key={wi} win={win} index={n++ - 1} onEdit={() => { setStep('windows'); setTimeout(() => setEditInfo({ roomId: room.id, winIndex: wi }), 50) }} onRemove={() => removeWindow(room.id, wi)} />)}
+              </div>
+            ))})()}
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 12, marginTop: 8 }}>
               <button className="btn-outline" style={{ width: '100%', fontSize: 16, padding: 14 }} onClick={handleDownloadPDF}>📄 Download PDF</button>
               {!submitted ? (
                 <button className="btn-gold" style={{ width: '100%', fontSize: 16, padding: 14 }} onClick={handleSubmitToJobTread} disabled={submitting}>
@@ -777,7 +918,7 @@ export default function App() {
                   <div style={{ color: 'var(--gray)', fontSize: 13, marginTop: 4 }}>Estimate Notes.pdf uploaded to <strong>{jobInfo.jobName}</strong>.</div>
                 </div>
               )}
-              <button className="btn-outline" style={{ width: '100%', fontSize: 14, padding: 12 }} onClick={() => { setStep('job'); setJobInfo({ customerName: '', jobId: '', jobName: '', address: '', estimator: '', notes: '' }); setWindows([]); setSubmitted(false) }}>Start New Estimate</button>
+              <button className="btn-outline" style={{ width: '100%', fontSize: 14, padding: 12 }} onClick={() => { setStep('job'); setJobInfo({ customerName: '', jobId: '', jobName: '', address: '', estimator: '', notes: '' }); setRooms([newRoom()]); setSubmitted(false) }}>Start New Estimate</button>
             </div>
           </div>
         )}
