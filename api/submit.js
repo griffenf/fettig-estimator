@@ -22,8 +22,7 @@ module.exports = async function handler(req, res) {
     try { return JSON.parse(text) } catch { throw new Error(`Pave: ${text.slice(0, 200)}`) }
   }
 
-  async function uploadFile(base64Data, fileName, mimeType) {
-    // Store file temporarily on our /api/pdf endpoint
+  async function uploadFile(base64Data, fileName) {
     const fileId = Date.now().toString(36) + Math.random().toString(36).slice(2)
     const publicUrl = `${protocol}://${host}/api/pdf?id=${fileId}`
 
@@ -41,7 +40,7 @@ module.exports = async function handler(req, res) {
       }
     })
     const uploadRequestId = uploadReq?.createUploadRequest?.createdUploadRequest?.id
-    if (!uploadRequestId) throw new Error(`No upload request ID for ${fileName}`)
+    if (!uploadRequestId) throw new Error(`No upload request ID for "${fileName}": ${JSON.stringify(uploadReq)}`)
 
     const fileRes = await pave({
       '$': { grantKey },
@@ -50,15 +49,15 @@ module.exports = async function handler(req, res) {
         createdFile: { id: {}, name: {} }
       }
     })
-    if (!fileRes?.createFile?.createdFile?.id) throw new Error(`createFile failed for ${fileName}`)
+    if (!fileRes?.createFile?.createdFile?.id) throw new Error(`createFile failed for "${fileName}": ${JSON.stringify(fileRes)}`)
     return fileRes.createFile.createdFile.id
   }
 
   try {
-    // Upload the PDF
-    await uploadFile(pdfBase64, 'Estimate Notes.pdf', 'application/pdf')
+    // Upload the PDF first
+    await uploadFile(pdfBase64, 'Estimate Notes.pdf')
 
-    // Upload each photo named by room
+    // Upload each photo
     if (photos && photos.length > 0) {
       const roomCounts = {}
       for (const photo of photos) {
@@ -67,9 +66,9 @@ module.exports = async function handler(req, res) {
         const count = roomCounts[roomName]
         const ext = photo.dataUrl.includes('image/png') ? 'png' : 'jpg'
         const fileName = `${roomName}${count > 1 ? ` ${count}` : ''}.${ext}`
-        // Strip the data URL prefix to get raw base64
         const base64 = photo.dataUrl.split(',')[1]
-        await uploadFile(base64, fileName, photo.dataUrl.includes('image/png') ? 'image/png' : 'image/jpeg')
+        if (!base64) throw new Error(`Photo for "${roomName}" has no valid image data`)
+        await uploadFile(base64, fileName)
       }
     }
 
