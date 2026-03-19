@@ -72,6 +72,7 @@ function getPanelConfig(pt, wide) {
     return { type: 'multi', standard: stds[wide] || '', panelOptions: ['Left', 'Right', 'Fixed'], panels: wide }
   }
   if (pt === 'bow') {
+    if (wide < 4) return null
     const mid = Array(wide - 2).fill('Stationary').join(' | ')
     return { type: 'multi', standard: `Left | ${mid} | Right`, panelOptions: ['Left', 'Right', 'Fixed'], panels: wide }
   }
