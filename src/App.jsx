@@ -432,7 +432,26 @@ function WindowForm({ initial, onSave, onCancel }) {
 
   const removePhoto = (i) => set('photos', form.photos.filter((_, j) => j !== i))
 
+  const getMissingFields = () => {
+    if (!cfg) return []
+    const missing = []
+    if (cfg.m.includes('w') && !form.width) missing.push('Width')
+    if (cfg.m.includes('h') && !form.height) missing.push('Height')
+    if (cfg.m.includes('s') && !form.shortSideHeight) missing.push('Short Side Height')
+    if (cfg.m.includes('wo') && !form.widthOrHeight) missing.push('Width or Height')
+    if (!form.exteriorColor) missing.push('Exterior Color')
+    if (!form.interiorColor) missing.push('Interior Color')
+    if (!form.glassSurface) missing.push('Glass Surface')
+    if (cfg.sm && !form.screenMesh) missing.push('Screen Mesh Type')
+    return missing
+  }
+
   const handleSave = () => {
+    const missing = getMissingFields()
+    if (missing.length > 0) {
+      alert(`Please fill in the following required fields:\n• ${missing.join('\n• ')}`)
+      return
+    }
     const w = { ...form }
     if (panelCfg) {
       if (panelCfg.type === 'fixed') w.configuration = panelCfg.value
@@ -556,22 +575,22 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           )}
           {cfg.m.includes('w') && (
-            <Field label="Width (inches)">
+            <Field label="Width (inches) *">
               <MeasurementInput value={form.width} frac={form.widthFrac} onValue={v => set('width', v)} onFrac={v => set('widthFrac', v)} />
             </Field>
           )}
           {cfg.m.includes('h') && (
-            <Field label="Height (inches)">
+            <Field label="Height (inches) *">
               <MeasurementInput value={form.height} frac={form.heightFrac} onValue={v => set('height', v)} onFrac={v => set('heightFrac', v)} />
             </Field>
           )}
           {cfg.m.includes('s') && (
-            <Field label="Short Side Height (in)" col="1/-1">
+            <Field label="Short Side Height (in) *" col="1/-1">
               <MeasurementInput value={form.shortSideHeight} frac={form.shortSideHeightFrac} onValue={v => set('shortSideHeight', v)} onFrac={v => set('shortSideHeightFrac', v)} />
             </Field>
           )}
           {cfg.m.includes('wo') && (
-            <Field label="Width or Height (inches)" col="1/-1">
+            <Field label="Width or Height (inches) *" col="1/-1">
               <MeasurementInput value={form.widthOrHeight} frac={form.widthOrHeightFrac} onValue={v => set('widthOrHeight', v)} onFrac={v => set('widthOrHeightFrac', v)} />
             </Field>
           )}
@@ -594,13 +613,13 @@ function WindowForm({ initial, onSave, onCancel }) {
           </>}
 
           <SectionHeader>Color & Glass</SectionHeader>
-          <Field label="Exterior Color">
+          <Field label="Exterior Color *">
             <select value={form.exteriorColor} onChange={e => set('exteriorColor', e.target.value)}>
               <option value="">Select...</option>
               {EXT_COLORS.map(c => <option key={c}>{c}</option>)}
             </select>
           </Field>
-          <Field label="Interior Color">
+          <Field label="Interior Color *">
             <select value={form.interiorColor} onChange={e => set('interiorColor', e.target.value)}>
               <option value="">Select...</option>
               {intColors.map(c => <option key={c}>{c}</option>)}
@@ -612,7 +631,7 @@ function WindowForm({ initial, onSave, onCancel }) {
               <option>Triple</option>
             </select>
           </Field>
-          <Field label="Glass Surface">
+          <Field label="Glass Surface *">
             <select value={form.glassSurface} onChange={e => set('glassSurface', e.target.value)}>
               <option value="">Select...</option>
               {glassSurfaces.map(g => <option key={g}>{g}</option>)}
@@ -678,7 +697,7 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           )}
           {cfg.sm && (
-            <Field label="Screen Mesh Type" col={cfg.sc ? '' : '1/-1'}>
+            <Field label="Screen Mesh Type *" col={cfg.sc ? '' : '1/-1'}>
               <select value={form.screenMesh} onChange={e => set('screenMesh', e.target.value)}>
                 <option value="">Select...</option>
                 {SCREEN_MESHES.map(m => <option key={m}>{m}</option>)}
