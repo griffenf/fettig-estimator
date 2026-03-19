@@ -28,6 +28,9 @@ const RECT_PATTERNS  = ['Rectangular']
 const HARDWARE_COLORS = ['Satin Taupe', 'Sierra', 'White', 'Matte Black', 'Oil Rubbed Bronze', 'Satin Nickel', 'Brushed Chrome', 'Antique Brass', 'Brass']
 const SCREEN_COLORS  = ['Stone White', 'EverWood Pine', 'Satin Taupe', 'Sierra', 'Bronze', 'Ebony']
 const SCREEN_MESHES  = ['Bright View Mesh', 'Charcoal Hi-Transparency Fiberglass Mesh']
+const JAMB_TYPES = ['Primed', 'Pine', 'Oak', 'Knotty Alder', 'Maple']
+const CASING_STYLES = ['Ranch', 'Colonial', 'Other']
+
 const FRACTIONS = ['', '1/16"', '1/8"', '3/16"', '1/4"', '5/16"', '3/8"', '7/16"', '1/2"', '9/16"', '5/8"', '11/16"', '3/4"', '13/16"', '7/8"', '15/16"']
 
 const WIN = {
@@ -125,6 +128,12 @@ function summarizeWindow(w) {
   if (w.hardwareColor) parts.push(`HW: ${w.hardwareColor}`)
   if (w.screenColor) parts.push(`Screen: ${w.screenColor}`)
   if (w.screenMesh) parts.push(w.screenMesh)
+  if (w.jambDepth) parts.push(`Jamb: ${fmtMeasurement(w.jambDepth, w.jambDepthFrac)}`)
+  if (w.jambType) parts.push(w.jambType)
+  if (w.casingWidth) parts.push(`Casing: ${fmtMeasurement(w.casingWidth, w.casingWidthFrac)}`)
+  if (w.casingType) parts.push(w.casingType)
+  if (w.casingStyle) parts.push(w.casingStyle)
+  if (w.lpTrimColor) parts.push(`LP: ${w.lpTrimColor}`)
   return parts.join(' · ')
 }
 
@@ -362,7 +371,9 @@ const EMPTY = {
   glassSurface: '', tempered: 'No', decorativeGlass: 'None',
   grilleType: '', grillePattern: '', simulatedRail: '',
   hardwareColor: '', screenColor: '', screenMesh: '',
-  photos: [], qty: '1', notes: ''
+  photos: [], qty: '1', notes: '',
+  jambDepth: '', jambDepthFrac: '', jambType: '',
+  casingWidth: '', casingWidthFrac: '', casingType: '', casingStyle: '', lpTrimColor: ''
 }
 
 function WindowForm({ initial, onSave, onCancel }) {
@@ -408,6 +419,13 @@ function WindowForm({ initial, onSave, onCancel }) {
       set('interiorColor', '')
     }
   }, [form.exteriorColor])
+
+  // Auto-sync casing type from jamb type
+  useEffect(() => {
+    if (form.jambType && !form.casingType) {
+      set('casingType', form.jambType)
+    }
+  }, [form.jambType])
 
   // Auto-populate hardware and screen color from interior color
   useEffect(() => {
@@ -705,6 +723,35 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           )}
         </>}
+
+        <SectionHeader>Extension Jamb & Casing</SectionHeader>
+          <Field label="Jamb Depth (inches)">
+            <MeasurementInput value={form.jambDepth} frac={form.jambDepthFrac} onValue={v => set('jambDepth', v)} onFrac={v => set('jambDepthFrac', v)} />
+          </Field>
+          <Field label="Jamb Type">
+            <select value={form.jambType} onChange={e => { set('jambType', e.target.value); if (!form.casingType) set('casingType', e.target.value) }}>
+              <option value="">Select...</option>
+              {JAMB_TYPES.map(t => <option key={t}>{t}</option>)}
+            </select>
+          </Field>
+          <Field label="Casing Width (inches)">
+            <MeasurementInput value={form.casingWidth} frac={form.casingWidthFrac} onValue={v => set('casingWidth', v)} onFrac={v => set('casingWidthFrac', v)} />
+          </Field>
+          <Field label="Casing Type">
+            <select value={form.casingType} onChange={e => set('casingType', e.target.value)}>
+              <option value="">Select...</option>
+              {JAMB_TYPES.map(t => <option key={t}>{t}</option>)}
+            </select>
+          </Field>
+          <Field label="Casing Style">
+            <select value={form.casingStyle} onChange={e => set('casingStyle', e.target.value)}>
+              <option value="">Select...</option>
+              {CASING_STYLES.map(s => <option key={s}>{s}</option>)}
+            </select>
+          </Field>
+          <Field label="LP Trim Color">
+            <input placeholder="e.g. White" value={form.lpTrimColor} onChange={e => set('lpTrimColor', e.target.value)} />
+          </Field>
 
         <SectionHeader>Photos & Notes</SectionHeader>
         <Field label="Photos" col="1/-1">
