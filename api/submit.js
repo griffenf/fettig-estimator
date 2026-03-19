@@ -4,11 +4,13 @@ module.exports = async function handler(req, res) {
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(500).json({ error: 'JOBTREAD_API_KEY not configured.' })
 
-  const { jobId, jobInfo, pdfBase64 } = req.body || {}
+  const { jobId, jobInfo, pdfBase64, photos } = req.body || {}
   if (!jobId) return res.status(400).json({ error: 'No job selected.' })
   if (!pdfBase64) return res.status(400).json({ error: 'No PDF data received.' })
 
   const orgId = '22MsEHuFtmri'
+  const host = req.headers.host
+  const protocol = host.includes('localhost') ? 'http' : 'https'
 
   async function pave(query) {
     const r = await fetch('https://api.jobtread.com/pave', {
@@ -20,20 +22,17 @@ module.exports = async function handler(req, res) {
     try { return JSON.parse(text) } catch { throw new Error(`Pave: ${text.slice(0, 200)}`) }
   }
 
-  try {
-    // Step 1: Store PDF on our own /api/pdf endpoint temporarily
-    const pdfId = Date.now().toString(36)
-    const host = req.headers.host
-    const protocol = host.includes('localhost') ? 'http' : 'https'
-    const publicUrl = `${protocol}://${host}/api/pdf?id=${pdfId}`
+  async function uploadFile(base64Data, fileName, mimeType) {
+    // Store file temporarily on our /api/pdf endpoint
+    const fileId = Date.now().toString(36) + Math.random().toString(36).slice(2)
+    const publicUrl = `${protocol}://${host}/api/pdf?id=${fileId}`
 
     await fetch(`${protocol}://${host}/api/pdf`, {
       method: 'PUT',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: pdfId, pdfBase64 })
+      body: JSON.stringify({ id: fileId, pdfBase64: base64Data })
     })
 
-    // Step 2: Tell JobTread to download from our URL
     const uploadReq = await pave({
       '$': { grantKey },
       createUploadRequest: {
@@ -42,26 +41,39 @@ module.exports = async function handler(req, res) {
       }
     })
     const uploadRequestId = uploadReq?.createUploadRequest?.createdUploadRequest?.id
-    if (!uploadRequestId) throw new Error('No upload request ID: ' + JSON.stringify(uploadReq))
+    if (!uploadRequestId) throw new Error(`No upload request ID for ${fileName}`)
 
-    // Step 3: Attach file to job in the Estimate/Measurement Photos folder
     const fileRes = await pave({
       '$': { grantKey },
       createFile: {
-        '$': {
-          name: 'Estimate Notes.pdf',
-          targetId: jobId,
-          targetType: 'job',
-          uploadRequestId,
-          folder: 'Estimate/Measurement Photos'
-        },
-        createdFile: { id: {}, name: {}, folder: {} }
+        '$': { name: fileName, targetId: jobId, targetType: 'job', uploadRequestId, folder: 'Estimate/Measurement Photos' },
+        createdFile: { id: {}, name: {} }
       }
     })
-    if (!fileRes?.createFile?.createdFile?.id) throw new Error('createFile failed: ' + JSON.stringify(fileRes))
+    if (!fileRes?.createFile?.createdFile?.id) throw new Error(`createFile failed for ${fileName}`)
+    return fileRes.createFile.createdFile.id
+  }
+
+  try {
+    // Upload the PDF
+    await uploadFile(pdfBase64, 'Estimate Notes.pdf', 'application/pdf')
+
+    // Upload each photo named by room
+    if (photos && photos.length > 0) {
+      const roomCounts = {}
+      for (const photo of photos) {
+        const roomName = photo.roomName || 'Unknown Room'
+        roomCounts[roomName] = (roomCounts[roomName] || 0) + 1
+        const count = roomCounts[roomName]
+        const ext = photo.dataUrl.includes('image/png') ? 'png' : 'jpg'
+        const fileName = `${roomName}${count > 1 ? ` ${count}` : ''}.${ext}`
+        // Strip the data URL prefix to get raw base64
+        const base64 = photo.dataUrl.split(',')[1]
+        await uploadFile(base64, fileName, photo.dataUrl.includes('image/png') ? 'image/png' : 'image/jpeg')
+      }
+    }
 
     return res.status(200).json({ success: true })
-
   } catch (err) {
     return res.status(500).json({ error: err.message })
   }
