@@ -12,7 +12,7 @@ const getIntColors = (ext) => {
 }
 
 const INT_TO_HW = { 'Stone White': 'White', 'EverWood Pine': 'Satin Taupe', 'Sierra': 'Sierra', 'Bronze': 'Oil Rubbed Bronze', 'Ebony': 'Matte Black' }
-const INT_TO_SCREEN = { 'Stone White': 'Stone White', 'EverWood Pine': 'EverWood Pine', 'Sierra': 'Sierra', 'Bronze': 'Bronze', 'Ebony': 'Ebony' }
+const INT_TO_SCREEN = { 'Stone White': 'Stone White', 'EverWood Pine': 'Satin Taupe', 'Sierra': 'Sierra', 'Bronze': 'Bronze', 'Ebony': 'Ebony' }
 
 const GLASS_SURFACES = {
   Double: ['Clear', 'Low E1', 'Low E2', 'Low E3', 'Low E2/ERS', 'Low E3/ERS'],
@@ -78,7 +78,7 @@ function getPanelConfig(pt, wide) {
     return { type: 'multi', standard: `Left | ${mid} | Right`, panelOptions: ['Left', 'Right', 'Fixed'], panels: wide }
   }
   if (pt === 'awn') {
-    if (wide === 1) return { type: 'single', options: ['Awning', 'Awning Picture'] }
+    if (wide === 1) return null
     return { type: 'multi', standard: Array(wide).fill('Awning').join(' | '), panelOptions: ['Awning', 'Awning Picture'], panels: wide }
   }
   if (pt === 'dh') {
