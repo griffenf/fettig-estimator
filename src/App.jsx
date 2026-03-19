@@ -759,22 +759,38 @@ export default function App() {
   const handleSubmitToJobTread = async () => {
     setSubmitting(true)
     try {
+      async function uploadFile(base64Data, fileName, mimeType) {
+        const res = await fetch('/api/submit', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ action: 'uploadFile', jobId: jobInfo.jobId, pdfBase64: base64Data, fileName, mimeType })
+        })
+        const data = await res.json()
+        if (!res.ok) throw new Error(data.error || `Failed to upload ${fileName}`)
+      }
+
+      // Upload PDF
       const doc = generatePDF(jobInfo, rooms)
       const pdfBase64 = doc.output('datauristring').split(',')[1]
+      await uploadFile(pdfBase64, 'Estimate Notes.pdf', 'application/pdf')
 
-      // Collect all photos with their room name
-      const photos = []
-      rooms.forEach(room => {
-        room.windows.forEach(win => {
-          (win.photos || []).forEach(dataUrl => {
-            photos.push({ roomName: room.name || 'Unknown Room', dataUrl })
-          })
-        })
-      })
+      // Upload each photo one at a time
+      const roomCounts = {}
+      for (const room of rooms) {
+        for (const win of room.windows) {
+          for (const dataUrl of (win.photos || [])) {
+            const roomName = room.name || 'Unknown Room'
+            roomCounts[roomName] = (roomCounts[roomName] || 0) + 1
+            const count = roomCounts[roomName]
+            const ext = dataUrl.includes('image/png') ? 'png' : 'jpg'
+            const mimeType = dataUrl.includes('image/png') ? 'image/png' : 'image/jpeg'
+            const fileName = `${roomName}${count > 1 ? ` ${count}` : ''}.${ext}`
+            const base64 = dataUrl.split(',')[1]
+            await uploadFile(base64, fileName, mimeType)
+          }
+        }
+      }
 
-      const res = await fetch('/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jobId: jobInfo.jobId, jobInfo, windows: allWindows, pdfBase64, photos }) })
-      const data = await res.json()
-      if (!res.ok) throw new Error(data.error || 'Unknown error')
       setSubmitted(true)
     } catch (err) { alert('JobTread error: ' + err.message) } finally { setSubmitting(false) }
   }
