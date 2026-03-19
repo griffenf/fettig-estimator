@@ -203,17 +203,6 @@ function generatePDF(jobInfo, rooms) {
       }
       y += rowH + 4
 
-      // Photos
-      if (win.photos && win.photos.length > 0) {
-        win.photos.forEach(photo => {
-          if (y + 120 > pageH - 60) { addFooter(); doc.addPage(); y = 40 }
-          try {
-            doc.addImage(photo, 'JPEG', margin + 36, y, 100, 80)
-            y += 88
-          } catch (e) {}
-        })
-      }
-
       winNum++
     })
     y += 8
@@ -772,7 +761,18 @@ export default function App() {
     try {
       const doc = generatePDF(jobInfo, rooms)
       const pdfBase64 = doc.output('datauristring').split(',')[1]
-      const res = await fetch('/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jobId: jobInfo.jobId, jobInfo, windows: allWindows, pdfBase64 }) })
+
+      // Collect all photos with their room name
+      const photos = []
+      rooms.forEach(room => {
+        room.windows.forEach(win => {
+          (win.photos || []).forEach(dataUrl => {
+            photos.push({ roomName: room.name || 'Unknown Room', dataUrl })
+          })
+        })
+      })
+
+      const res = await fetch('/api/submit', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ jobId: jobInfo.jobId, jobInfo, windows: allWindows, pdfBase64, photos }) })
       const data = await res.json()
       if (!res.ok) throw new Error(data.error || 'Unknown error')
       setSubmitted(true)
