@@ -731,19 +731,76 @@ function WindowForm({ initial, onSave, onCancel }) {
               <MeasurementInput value={form.width} frac={form.widthFrac} onValue={v => set('width', v)} onFrac={v => set('widthFrac', v)} />
             </Field>
           )}
-          {cfg.m.includes('h') && (
+          {cfg.m.includes('wo') && (
+            <Field label="Width or Height (inches) *" col="1/-1">
+              <MeasurementInput value={form.widthOrHeight} frac={form.widthOrHeightFrac} onValue={v => set('widthOrHeight', v)} onFrac={v => set('widthOrHeightFrac', v)} />
+            </Field>
+          )}
+
+          {/* 2 High measurements */}
+          {cfg.m.includes('h') && TWO_HIGH_STYLES.includes(form.style) && form.numberHigh === 2 ? (() => {
+            const topOpts = getTopOptions(form.style)
+            const base2Wide = form.numberWide === 2
+            const forceRound = form.numberWide >= 3
+            return (
+              <>
+                <Field label="Overall Height (in) *">
+                  <MeasurementInput value={form.overallHeight} frac={form.overallHeightFrac} onValue={v => set('overallHeight', v)} onFrac={v => set('overallHeightFrac', v)} />
+                </Field>
+                <div />
+                <Field label="Bottom Window Height (in) *">
+                  <MeasurementInput value={form.height} frac={form.heightFrac} onValue={v => set('height', v)} onFrac={v => set('heightFrac', v)} />
+                </Field>
+                <Field label="Top Window Height (in) *">
+                  <MeasurementInput value={form.topHeight} frac={form.topHeightFrac} onValue={v => set('topHeight', v)} onFrac={v => set('topHeightFrac', v)} />
+                </Field>
+                {WIN[form.topStyle]?.m.includes('s') && (
+                  <Field label="Top Short Side Height (in)" col="1/-1">
+                    <MeasurementInput value={form.topShortSideHeight} frac={form.topShortSideHeightFrac} onValue={v => set('topShortSideHeight', v)} onFrac={v => set('topShortSideHeightFrac', v)} />
+                  </Field>
+                )}
+                <SectionHeader>Top Window</SectionHeader>
+                {base2Wide && !forceRound && (
+                  <Field label="Top Window Width" col="1/-1">
+                    <select value={form.topWindowWidth} onChange={e => set('topWindowWidth', parseInt(e.target.value))}>
+                      <option value={1}>1 Wide</option>
+                      <option value={2}>2 Wide</option>
+                    </select>
+                  </Field>
+                )}
+                {base2Wide && form.topWindowWidth === 2 && !forceRound ? (
+                  <>
+                    <Field label="Left Panel Style">
+                      <select value={form.topLeftStyle} onChange={e => set('topLeftStyle', e.target.value)}>
+                        <option value="">Select...</option>
+                        {topOpts.map(s => <option key={s}>{s}</option>)}
+                      </select>
+                    </Field>
+                    <Field label="Right Panel Style">
+                      <select value={form.topRightStyle} onChange={e => set('topRightStyle', e.target.value)}>
+                        <option value="">Select...</option>
+                        {topOpts.map(s => <option key={s}>{s}</option>)}
+                      </select>
+                    </Field>
+                  </>
+                ) : (
+                  <Field label="Top Window Style" col="1/-1">
+                    <select value={form.topStyle} onChange={e => set('topStyle', e.target.value)}>
+                      <option value="">Select...</option>
+                      {(forceRound ? ROUND_TOP_WINDOW_STYLES : topOpts).map(s => <option key={s}>{s}</option>)}
+                    </select>
+                  </Field>
+                )}
+              </>
+            )
+          })() : cfg.m.includes('h') && (
             <Field label="Height (inches) *">
               <MeasurementInput value={form.height} frac={form.heightFrac} onValue={v => set('height', v)} onFrac={v => set('heightFrac', v)} />
             </Field>
           )}
-          {cfg.m.includes('s') && (
+          {cfg.m.includes('s') && form.numberHigh !== 2 && (
             <Field label="Short Side Height (in) *" col="1/-1">
               <MeasurementInput value={form.shortSideHeight} frac={form.shortSideHeightFrac} onValue={v => set('shortSideHeight', v)} onFrac={v => set('shortSideHeightFrac', v)} />
-            </Field>
-          )}
-          {cfg.m.includes('wo') && (
-            <Field label="Width or Height (inches) *" col="1/-1">
-              <MeasurementInput value={form.widthOrHeight} frac={form.widthOrHeightFrac} onValue={v => set('widthOrHeight', v)} onFrac={v => set('widthOrHeightFrac', v)} />
             </Field>
           )}
 
@@ -858,77 +915,6 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           )}
         </>}
-
-        {/* ── 2 High ── */}
-          {cfg && TWO_HIGH_STYLES.includes(form.style) && form.numberHigh === 2 && (() => {
-                const topOpts = getTopOptions(form.style)
-                const base2Wide = canBe2Wide(form.numberWide)
-                const forceRound = mustBe1Wide(form.numberWide)
-
-                return (
-                  <>
-                    {/* For 2-wide base: choose if top is 1 or 2 wide */}
-                    {base2Wide && !forceRound && (
-                      <Field label="Top Window Width" col="1/-1">
-                        <select value={form.topWindowWidth} onChange={e => set('topWindowWidth', parseInt(e.target.value))}>
-                          <option value={1}>1 Wide (centered)</option>
-                          <option value={2}>2 Wide (full width)</option>
-                        </select>
-                      </Field>
-                    )}
-
-                    {/* 2-wide top: two separate panels */}
-                    {base2Wide && form.topWindowWidth === 2 && !forceRound && (
-                      <>
-                        <Field label="Top Left Style">
-                          <select value={form.topLeftStyle} onChange={e => set('topLeftStyle', e.target.value)}>
-                            <option value="">Select...</option>
-                            {topOpts.map(s => <option key={s}>{s}</option>)}
-                          </select>
-                        </Field>
-                        <Field label="Top Left Height (in)">
-                          <MeasurementInput value={form.topLeftHeight} frac={form.topLeftHeightFrac} onValue={v => set('topLeftHeight', v)} onFrac={v => set('topLeftHeightFrac', v)} />
-                        </Field>
-                        <Field label="Top Right Style">
-                          <select value={form.topRightStyle} onChange={e => set('topRightStyle', e.target.value)}>
-                            <option value="">Select...</option>
-                            {topOpts.map(s => <option key={s}>{s}</option>)}
-                          </select>
-                        </Field>
-                        <Field label="Top Right Height (in)">
-                          <MeasurementInput value={form.topRightHeight} frac={form.topRightHeightFrac} onValue={v => set('topRightHeight', v)} onFrac={v => set('topRightHeightFrac', v)} />
-                        </Field>
-                        <Field label="Overall Height (in)" col="1/-1">
-                          <MeasurementInput value={form.overallHeight} frac={form.overallHeightFrac} onValue={v => set('overallHeight', v)} onFrac={v => set('overallHeightFrac', v)} />
-                        </Field>
-                      </>
-                    )}
-
-                    {/* 1-wide top or 3-4 wide base: single top window */}
-                    {(!base2Wide || form.topWindowWidth === 1 || forceRound) && (
-                      <>
-                        <Field label="Top Window Style" col="1/-1">
-                          <select value={form.topStyle} onChange={e => set('topStyle', e.target.value)}>
-                            <option value="">Select...</option>
-                            {(forceRound ? ROUND_TOP_WINDOW_STYLES : topOpts).map(s => <option key={s}>{s}</option>)}
-                          </select>
-                        </Field>
-                        <Field label="Top Window Height (in)">
-                          <MeasurementInput value={form.topHeight} frac={form.topHeightFrac} onValue={v => set('topHeight', v)} onFrac={v => set('topHeightFrac', v)} />
-                        </Field>
-                        {WIN[form.topStyle]?.m.includes('s') && (
-                          <Field label="Top Short Side Height (in)">
-                            <MeasurementInput value={form.topShortSideHeight} frac={form.topShortSideHeightFrac} onValue={v => set('topShortSideHeight', v)} onFrac={v => set('topShortSideHeightFrac', v)} />
-                          </Field>
-                        )}
-                      </>
-                    )}
-                    <Field label="Overall Height (in)" col="1/-1">
-                      <MeasurementInput value={form.overallHeight} frac={form.overallHeightFrac} onValue={v => set('overallHeight', v)} onFrac={v => set('overallHeightFrac', v)} />
-                    </Field>
-                  </>
-                )
-              })()}
 
         <SectionHeader>Extension Jamb & Casing</SectionHeader>
           <Field label="Jamb Depth (inches)">
