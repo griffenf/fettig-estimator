@@ -751,13 +751,19 @@ function WindowForm({ initial, onSave, onCancel }) {
           )}
 
           <SectionHeader>Measurements</SectionHeader>
-          {cfg.mt === 2 && (
+          {cfg.mt === 2 ? (
             <Field label="Measurement Type" col="1/-1">
               <select value={form.measurementType} onChange={e => set('measurementType', e.target.value)}>
                 <option>Frame Size</option>
                 <option>Rough Opening</option>
                 <option>Inside Opening</option>
               </select>
+            </Field>
+          ) : (
+            <Field label="Measurement Type" col="1/-1">
+              <div style={{ padding: '8px 12px', background: 'rgba(200,151,58,0.1)', border: '1px solid rgba(200,151,58,0.4)', borderRadius: 6, fontSize: 13, color: 'var(--gold)', fontWeight: 600 }}>
+                📐 Use Rough Opening measurements for this window type
+              </div>
             </Field>
           )}
           {cfg.m.includes('w') && form.numberHigh !== 2 && (
