@@ -47,8 +47,9 @@ function getTopWinMeasurements(style) {
 }
 
 const TWO_HIGH_STYLES = ['Casement', 'Picture', 'Awning', 'Double Hung', 'Single Hung']
-const CAS_PIC_AWN_TOPS = ['Casement', 'Picture', 'Awning', ...ROUND_PATTERNS]
-const DH_SH_TOPS = ['Picture', ...ROUND_PATTERNS]
+const ROUND_TOP_WINDOW_STYLES = ['Half Circle', 'Extended Half Round', 'Eyebrow', 'Extended Eyebrow', 'Quarter Round', 'Extended Quarter Round', 'Quarter Eyebrow', 'Extended Quarter Eyebrow']
+const CAS_PIC_AWN_TOPS = ['Casement', 'Picture', 'Awning', ...ROUND_TOP_WINDOW_STYLES]
+const DH_SH_TOPS = ['Picture', ...ROUND_TOP_WINDOW_STYLES]
 
 function getTopOptions(baseStyle) {
   if (['Double Hung', 'Single Hung'].includes(baseStyle)) return DH_SH_TOPS
@@ -617,10 +618,26 @@ function WindowForm({ initial, onSave, onCancel }) {
         </Field>
 
         {cfg && <>
+          {cfg.wide.length === 1 && TWO_HIGH_STYLES.includes(form.style) && (
+            <Field label="Number High">
+              <select value={form.numberHigh} onChange={e => set('numberHigh', parseInt(e.target.value))}>
+                <option value={1}>1 High</option>
+                <option value={2}>2 High</option>
+              </select>
+            </Field>
+          )}
           {cfg.wide.length > 1 && (
             <Field label="Number Wide">
               <select value={form.numberWide} onChange={e => set('numberWide', parseInt(e.target.value))}>
                 {cfg.wide.map(n => <option key={n} value={n}>{n} Wide</option>)}
+              </select>
+            </Field>
+          )}
+          {TWO_HIGH_STYLES.includes(form.style) && (
+            <Field label="Number High">
+              <select value={form.numberHigh} onChange={e => set('numberHigh', parseInt(e.target.value))}>
+                <option value={1}>1 High</option>
+                <option value={2}>2 High</option>
               </select>
             </Field>
           )}
@@ -843,17 +860,7 @@ function WindowForm({ initial, onSave, onCancel }) {
         </>}
 
         {/* ── 2 High ── */}
-          {cfg && TWO_HIGH_STYLES.includes(form.style) && (
-            <>
-              <SectionHeader>Number High</SectionHeader>
-              <Field label="Number High" col="1/-1">
-                <select value={form.numberHigh} onChange={e => set('numberHigh', parseInt(e.target.value))}>
-                  <option value={1}>1 High</option>
-                  <option value={2}>2 High</option>
-                </select>
-              </Field>
-
-              {form.numberHigh === 2 && (() => {
+          {cfg && TWO_HIGH_STYLES.includes(form.style) && form.numberHigh === 2 && (() => {
                 const topOpts = getTopOptions(form.style)
                 const base2Wide = canBe2Wide(form.numberWide)
                 const forceRound = mustBe1Wide(form.numberWide)
@@ -903,7 +910,7 @@ function WindowForm({ initial, onSave, onCancel }) {
                         <Field label="Top Window Style" col="1/-1">
                           <select value={form.topStyle} onChange={e => set('topStyle', e.target.value)}>
                             <option value="">Select...</option>
-                            {(forceRound ? ROUND_PATTERNS : topOpts).map(s => <option key={s}>{s}</option>)}
+                            {(forceRound ? ROUND_TOP_WINDOW_STYLES : topOpts).map(s => <option key={s}>{s}</option>)}
                           </select>
                         </Field>
                         <Field label="Top Window Height (in)">
@@ -922,8 +929,6 @@ function WindowForm({ initial, onSave, onCancel }) {
                   </>
                 )
               })()}
-            </>
-          )}
 
         <SectionHeader>Extension Jamb & Casing</SectionHeader>
           <Field label="Jamb Depth (inches)">
