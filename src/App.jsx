@@ -99,6 +99,17 @@ const WINDOW_STYLE_GROUPS = [
   { label: 'Round Top', styles: ['Half Circle','Extended Half Round','Eyebrow','Extended Eyebrow','Quarter Round','Extended Quarter Round','Quarter Eyebrow','Extended Quarter Eyebrow','Full Circle'] },
 ]
 
+function getPanelNames(wide) {
+  const names = {
+    2: ['Left Panel', 'Right Panel'],
+    3: ['Left Panel', 'Center Panel', 'Right Panel'],
+    4: ['Left Panel', 'Left Center Panel', 'Right Center Panel', 'Right Panel'],
+    5: ['Left Panel', 'Left Center Panel', 'Center Panel', 'Right Center Panel', 'Right Panel'],
+    6: ['Left Panel', 'Left Center Panel', 'Center Left Panel', 'Center Right Panel', 'Right Center Panel', 'Right Panel'],
+  }
+  return names[wide] || Array.from({length: wide}, (_, i) => `Panel ${i+1}`)
+}
+
 function getPanelConfig(pt, wide) {
   if (!pt || pt === 'none' || pt === 'pic') return null
   if (pt === 'cas' || pt === 'cby') {
@@ -136,6 +147,7 @@ function fmtMeasurement(val, frac) {
 
 function summarizeWindow(w) {
   const parts = []
+  if (w.insert) parts.push('INSERT')
   if (w.numberWide > 1) parts.push(`${w.numberWide} Wide`)
   if (w.facing) parts.push(w.facing)
   if (w.sashSplit) parts.push(`Sash: ${w.sashSplit}`)
@@ -471,6 +483,7 @@ const EMPTY = {
   grilleType: '', grillePattern: '', simulatedRail: '',
   hardwareColor: '', screenColor: '', screenMesh: '',
   photos: [], qty: '1', notes: '',
+  insert: false,
   numberHigh: 1, topWindowsWide: 1,
   topWindows: [{ style: '', width: '', widthFrac: '', height: '', heightFrac: '', shortSideHeight: '', shortSideHeightFrac: '', facing: '' }],
   numberHigh: 1,
@@ -618,6 +631,13 @@ function WindowForm({ initial, onSave, onCancel }) {
         </Field>
 
         {cfg && <>
+          <Field label="" col="1/-1">
+            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
+              <input type="checkbox" checked={form.insert || false} onChange={e => set('insert', e.target.checked)}
+                style={{ width: 18, height: 18, accentColor: 'var(--gold)', cursor: 'pointer' }} />
+              <span style={{ fontSize: 14, fontWeight: 600, color: form.insert ? 'var(--gold)' : 'var(--gray)' }}>Insert Window</span>
+            </label>
+          </Field>
           {cfg.wide.length === 1 && TWO_HIGH_STYLES.includes(form.style) && (
             <Field label="Number High">
               <select value={form.numberHigh} onChange={e => set('numberHigh', parseInt(e.target.value))}>
@@ -644,7 +664,7 @@ function WindowForm({ initial, onSave, onCancel }) {
 
 
           {cfg.facing && (
-            <Field label="Facing">
+            <Field label="Facing (viewed from exterior)">
               <select value={form.facing} onChange={e => set('facing', e.target.value)}>
                 <option value="">Select...</option>
                 <option>Left</option>
@@ -699,15 +719,22 @@ function WindowForm({ initial, onSave, onCancel }) {
                   )}
                   {form.configType === 'custom' && (
                     <Field label="Custom Panel Configuration" col="1/-1">
+                        <div style={{ fontSize: 11, color: 'var(--gold)', marginBottom: 6, fontStyle: 'italic' }}>Viewed from exterior</div>
                       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(panelCfg.panels, 3)}, 1fr)`, gap: 8 }}>
-                        {Array.from({ length: panelCfg.panels }).map((_, i) => (
-                          <select key={i} value={form.panelConfigs[i] || ''} onChange={e => {
-                            const pc = [...form.panelConfigs]; pc[i] = e.target.value; set('panelConfigs', pc)
-                          }}>
-                            <option value="">Panel {i + 1}</option>
-                            {panelCfg.panelOptions.map(o => <option key={o}>{o}</option>)}
-                          </select>
-                        ))}
+                        {Array.from({ length: panelCfg.panels }).map((_, i) => {
+                          const names = getPanelNames(panelCfg.panels)
+                          return (
+                            <div key={i}>
+                              <div style={{ fontSize: 10, color: 'var(--gray)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{names[i]}</div>
+                              <select value={form.panelConfigs[i] || ''} onChange={e => {
+                                const pc = [...form.panelConfigs]; pc[i] = e.target.value; set('panelConfigs', pc)
+                              }}>
+                                <option value="">Select...</option>
+                                {panelCfg.panelOptions.map(o => <option key={o}>{o}</option>)}
+                              </select>
+                            </div>
+                          )
+                        })}
                       </div>
                     </Field>
                   )}
@@ -834,28 +861,28 @@ function WindowForm({ initial, onSave, onCancel }) {
               {EXT_COLORS.map(c => <option key={c}>{c}</option>)}
             </select>
           </Field>
-          <Field label="Interior Color *">
-            <select value={form.interiorColor} onChange={e => set('interiorColor', e.target.value)}>
-              <option value="">Select...</option>
-              {intColors.map(c => <option key={c}>{c}</option>)}
-            </select>
-          </Field>
           <Field label="Pane">
             <select value={form.pane} onChange={e => set('pane', e.target.value)}>
               <option>Double</option>
               <option>Triple</option>
             </select>
           </Field>
-          <Field label="Glass Surface *">
-            <select value={form.glassSurface} onChange={e => set('glassSurface', e.target.value)}>
+          <Field label="Interior Color *">
+            <select value={form.interiorColor} onChange={e => set('interiorColor', e.target.value)}>
               <option value="">Select...</option>
-              {glassSurfaces.map(g => <option key={g}>{g}</option>)}
+              {intColors.map(c => <option key={c}>{c}</option>)}
             </select>
           </Field>
           <Field label="Tempered">
             <select value={form.tempered} onChange={e => set('tempered', e.target.value)}>
               <option>No</option>
               <option>Yes</option>
+            </select>
+          </Field>
+          <Field label="Glass Surface *">
+            <select value={form.glassSurface} onChange={e => set('glassSurface', e.target.value)}>
+              <option value="">Select...</option>
+              {glassSurfaces.map(g => <option key={g}>{g}</option>)}
             </select>
           </Field>
           <Field label="Decorative Glass">
