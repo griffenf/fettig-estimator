@@ -162,6 +162,8 @@ function summarizeWindow(w) {
     if (w.topWindowWidth === 2 && w.topLeftStyle) parts.push(`Top: ${w.topLeftStyle} | ${w.topRightStyle}`)
     else if (w.topStyle) parts.push(`Top: ${w.topStyle}`)
     if (w.topHeight) parts.push(`Top H: ${fmtMeasurement(w.topHeight, w.topHeightFrac)}`)
+    if (w.topShortSideHeight) parts.push(`Top SSH: ${fmtMeasurement(w.topShortSideHeight, w.topShortSideHeightFrac)}`)
+    if (w.overallHeight) parts.push(`Overall H: ${fmtMeasurement(w.overallHeight, w.overallHeightFrac)}`)
   }
   if (w.jambDepth) parts.push(`Jamb: ${fmtMeasurement(w.jambDepth, w.jambDepthFrac)}`)
   if (w.jambType) parts.push(w.jambType)
@@ -472,9 +474,10 @@ const EMPTY = {
   topWindows: [{ style: '', width: '', widthFrac: '', height: '', heightFrac: '', shortSideHeight: '', shortSideHeightFrac: '', facing: '' }],
   numberHigh: 1,
   topWindowWidth: 1,
-  topStyle: '', topHeight: '', topHeightFrac: '',
+  topStyle: '', topHeight: '', topHeightFrac: '', topShortSideHeight: '', topShortSideHeightFrac: '',
   topLeftStyle: '', topLeftHeight: '', topLeftHeightFrac: '',
   topRightStyle: '', topRightHeight: '', topRightHeightFrac: '',
+  overallHeight: '', overallHeightFrac: '',
   jambDepth: '', jambDepthFrac: '', jambType: '',
   casingWidth: '', casingWidthFrac: '', casingType: '', casingStyle: '', lpTrimColor: ''
 }
@@ -622,28 +625,6 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           )}
 
-          {TWO_HIGH_WINDOWS.includes(form.style) && form.numberWide <= 3 && (
-            <Field label="Number High">
-              <select value={form.numberHigh} onChange={e => set('numberHigh', parseInt(e.target.value))}>
-                <option value={1}>1 High</option>
-                <option value={2}>2 High</option>
-              </select>
-            </Field>
-          )}
-
-          {TWO_HIGH_WINDOWS.includes(form.style) && form.numberHigh === 2 && form.numberWide === 2 && (
-            <Field label="Top Window Width">
-              <select value={form.topWindowsWide} onChange={e => {
-                const w = parseInt(e.target.value)
-                const blank = { style: '', width: '', widthFrac: '', height: '', heightFrac: '', shortSideHeight: '', shortSideHeightFrac: '', facing: '' }
-                set('topWindowsWide', w)
-                set('topWindows', w === 2 ? [{ ...blank }, { ...blank }] : [{ ...blank }])
-              }}>
-                <option value={1}>1 Wide (spans full width)</option>
-                <option value={2}>2 Wide (one per panel)</option>
-              </select>
-            </Field>
-          )}
 
           {cfg.facing && (
             <Field label="Facing">
@@ -766,35 +747,6 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           </>}
 
-          {TWO_HIGH_WINDOWS.includes(form.style) && form.numberHigh === 2 && (() => {
-            const isCasAwnPic = ['Casement', 'Picture', 'Awning'].includes(form.style)
-            // 3 wide: only round tops, 1 wide
-            const topOpts = form.numberWide === 3
-              ? ROUND_TOP_STYLES
-              : getTopWindowOptions(form.style)
-
-            // Ensure topWindows array is correct size
-            const expectedCount = (form.numberWide === 2 && form.topWindowsWide === 2) ? 2 : 1
-
-            return (
-              <>
-                <SectionHeader>Top Window</SectionHeader>
-                {form.topWindows.slice(0, expectedCount).map((tw, i) => (
-                  <TopWindowUnit
-                    key={i}
-                    label={expectedCount > 1 ? (i === 0 ? 'Left Panel' : 'Right Panel') : 'Top Window'}
-                    value={tw}
-                    options={topOpts}
-                    onChange={v => {
-                      const updated = [...form.topWindows]
-                      updated[i] = v
-                      set('topWindows', updated)
-                    }}
-                  />
-                ))}
-              </>
-            )
-          })()}
 
           <SectionHeader>Color & Glass</SectionHeader>
           <Field label="Exterior Color *">
@@ -939,6 +891,9 @@ function WindowForm({ initial, onSave, onCancel }) {
                         <Field label="Top Right Height (in)">
                           <MeasurementInput value={form.topRightHeight} frac={form.topRightHeightFrac} onValue={v => set('topRightHeight', v)} onFrac={v => set('topRightHeightFrac', v)} />
                         </Field>
+                        <Field label="Overall Height (in)" col="1/-1">
+                          <MeasurementInput value={form.overallHeight} frac={form.overallHeightFrac} onValue={v => set('overallHeight', v)} onFrac={v => set('overallHeightFrac', v)} />
+                        </Field>
                       </>
                     )}
 
@@ -954,9 +909,16 @@ function WindowForm({ initial, onSave, onCancel }) {
                         <Field label="Top Window Height (in)">
                           <MeasurementInput value={form.topHeight} frac={form.topHeightFrac} onValue={v => set('topHeight', v)} onFrac={v => set('topHeightFrac', v)} />
                         </Field>
-                        <div />
+                        {WIN[form.topStyle]?.m.includes('s') && (
+                          <Field label="Top Short Side Height (in)">
+                            <MeasurementInput value={form.topShortSideHeight} frac={form.topShortSideHeightFrac} onValue={v => set('topShortSideHeight', v)} onFrac={v => set('topShortSideHeightFrac', v)} />
+                          </Field>
+                        )}
                       </>
                     )}
+                    <Field label="Overall Height (in)" col="1/-1">
+                      <MeasurementInput value={form.overallHeight} frac={form.overallHeightFrac} onValue={v => set('overallHeight', v)} onFrac={v => set('overallHeightFrac', v)} />
+                    </Field>
                   </>
                 )
               })()}
