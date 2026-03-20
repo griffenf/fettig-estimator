@@ -619,25 +619,32 @@ function WindowForm({ initial, onSave, onCancel }) {
       <div style={{ fontFamily: 'var(--font-head)', fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--gold)', marginBottom: 16, textTransform: 'uppercase' }}>Window Details</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
 
-        <Field label="Window Style *" col="1/-1">
-          <select value={form.style} onChange={e => set('style', e.target.value)}>
-            <option value="">Select style...</option>
-            {WINDOW_STYLE_GROUPS.map(g => (
-              <optgroup key={g.label} label={g.label}>
-                {g.styles.map(s => <option key={s}>{s}</option>)}
-              </optgroup>
-            ))}
-          </select>
-        </Field>
+        <div style={{ gridColumn: '1/-1', display: 'flex', gap: 12, alignItems: 'flex-end', marginBottom: 12 }}>
+          <div style={{ flex: 1 }}>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Window Style *</label>
+            <select value={form.style} onChange={e => set('style', e.target.value)} style={{ margin: 0 }}>
+              <option value="">Select style...</option>
+              {WINDOW_STYLE_GROUPS.map(g => (
+                <optgroup key={g.label} label={g.label}>
+                  {g.styles.map(s => <option key={s}>{s}</option>)}
+                </optgroup>
+              ))}
+            </select>
+          </div>
+          <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer', userSelect: 'none', flexShrink: 0 }}>
+            <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
+            <div onClick={() => set('insert', !form.insert)} style={{
+              width: 32, height: 32, borderRadius: 6, border: `2px solid ${form.insert ? 'var(--gold)' : 'var(--border)'}`,
+              background: form.insert ? 'var(--gold)' : 'transparent',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              cursor: 'pointer', transition: 'all 0.15s', flexShrink: 0
+            }}>
+              {form.insert && <span style={{ color: 'var(--navy)', fontSize: 18, fontWeight: 900, lineHeight: 1 }}>✓</span>}
+            </div>
+          </label>
+        </div>
 
         {cfg && <>
-          <Field label="" col="1/-1">
-            <label style={{ display: 'flex', alignItems: 'center', gap: 10, cursor: 'pointer', userSelect: 'none' }}>
-              <input type="checkbox" checked={form.insert || false} onChange={e => set('insert', e.target.checked)}
-                style={{ width: 18, height: 18, accentColor: 'var(--gold)', cursor: 'pointer' }} />
-              <span style={{ fontSize: 14, fontWeight: 600, color: form.insert ? 'var(--gold)' : 'var(--gray)' }}>Insert Window</span>
-            </label>
-          </Field>
           {cfg.wide.length === 1 && TWO_HIGH_STYLES.includes(form.style) && (
             <Field label="Number High">
               <select value={form.numberHigh} onChange={e => set('numberHigh', parseInt(e.target.value))}>
