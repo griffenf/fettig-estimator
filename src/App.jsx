@@ -622,14 +622,20 @@ function WindowForm({ initial, onSave, onCancel }) {
         <div style={{ gridColumn: '1/-1', display: 'flex', gap: 12, alignItems: 'flex-end', marginBottom: 12 }}>
           <div style={{ flex: 1 }}>
             <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Window Style *</label>
-            <select value={form.style} onChange={e => set('style', e.target.value)} style={{ margin: 0 }}>
-              <option value="">Select style...</option>
-              {WINDOW_STYLE_GROUPS.map(g => (
-                <optgroup key={g.label} label={g.label}>
-                  {g.styles.map(s => <option key={s}>{s}</option>)}
-                </optgroup>
-              ))}
-            </select>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <select value={form.style} onChange={e => set('style', e.target.value)} style={{ margin: 0, flex: 1 }}>
+                <option value="">Select style...</option>
+                {WINDOW_STYLE_GROUPS.map(g => (
+                  <optgroup key={g.label} label={g.label}>
+                    {g.styles.map(s => <option key={s}>{s}</option>)}
+                  </optgroup>
+                ))}
+              </select>
+              {form.style && <ImgPreview src={IMG.windows[form.style]} alt={form.style} size={44} />}
+            </div>
+            {form.style && IMG.windows[form.style] && (
+              <div style={{ marginTop: 8 }}><ImgPreview src={IMG.windows[form.style]} alt={form.style} size={160} /></div>
+            )}
           </div>
           <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer', userSelect: 'none', flexShrink: 0 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
@@ -671,13 +677,15 @@ function WindowForm({ initial, onSave, onCancel }) {
 
 
           {cfg.facing && (
-            <Field label="Facing (viewed from exterior)">
-              <select value={form.facing} onChange={e => set('facing', e.target.value)}>
-                <option value="">Select...</option>
-                <option>Left</option>
-                <option>Right</option>
-              </select>
-            </Field>
+            <div style={{ gridColumn: 'auto' }}>
+              <SelectWithPreview
+                label="Facing (viewed from exterior)"
+                value={form.facing}
+                onChange={e => set('facing', e.target.value)}
+                imgMap={IMG.facing}
+                options={<><option value="">Select...</option><option>Left</option><option>Right</option></>}
+              />
+            </div>
           )}
 
           {cfg.sash && (
@@ -868,56 +876,39 @@ function WindowForm({ initial, onSave, onCancel }) {
 
 
           <SectionHeader>Color & Glass</SectionHeader>
-          <Field label="Exterior Color *">
-            <select value={form.exteriorColor} onChange={e => set('exteriorColor', e.target.value)}>
-              <option value="">Select...</option>
-              {EXT_COLORS.map(c => <option key={c}>{c}</option>)}
-            </select>
-          </Field>
+          <SelectWithPreview label="Exterior Color" required value={form.exteriorColor}
+            onChange={e => set('exteriorColor', e.target.value)} imgMap={IMG.exteriorColor}
+            options={<><option value="">Select...</option>{EXT_COLORS.map(c => <option key={c}>{c}</option>)}</>} />
           <Field label="Pane">
             <select value={form.pane} onChange={e => set('pane', e.target.value)}>
               <option>Double</option>
               <option>Triple</option>
             </select>
           </Field>
-          <Field label="Interior Color *">
-            <select value={form.interiorColor} onChange={e => set('interiorColor', e.target.value)}>
-              <option value="">Select...</option>
-              {intColors.map(c => <option key={c}>{c}</option>)}
-            </select>
-          </Field>
+          <SelectWithPreview label="Interior Color" required value={form.interiorColor}
+            onChange={e => set('interiorColor', e.target.value)} imgMap={IMG.interiorColor}
+            options={<><option value="">Select...</option>{intColors.map(c => <option key={c}>{c}</option>)}</>} />
           <Field label="Tempered">
             <select value={form.tempered} onChange={e => set('tempered', e.target.value)}>
               <option>No</option>
               <option>Yes</option>
             </select>
           </Field>
-          <Field label="Glass Surface *">
-            <select value={form.glassSurface} onChange={e => set('glassSurface', e.target.value)}>
-              <option value="">Select...</option>
-              {glassSurfaces.map(g => <option key={g}>{g}</option>)}
-            </select>
-          </Field>
-          <Field label="Decorative Glass">
-            <select value={form.decorativeGlass} onChange={e => set('decorativeGlass', e.target.value)}>
-              {decorGlasses.map(g => <option key={g}>{g}</option>)}
-            </select>
-          </Field>
+          <SelectWithPreview label="Glass Surface" required value={form.glassSurface}
+            onChange={e => set('glassSurface', e.target.value)} imgMap={IMG.glassSurface}
+            options={<><option value="">Select...</option>{glassSurfaces.map(g => <option key={g}>{g}</option>)}</>} />
+          <SelectWithPreview label="Decorative Glass" value={form.decorativeGlass}
+            onChange={e => set('decorativeGlass', e.target.value)} imgMap={IMG.decorativeGlass}
+            options={decorGlasses.map(g => <option key={g}>{g}</option>)} />
 
           <SectionHeader>Grille</SectionHeader>
-          <Field label="Grille Type">
-            <select value={form.grilleType} onChange={e => set('grilleType', e.target.value)}>
-              <option value="">None</option>
-              {cfg.g.map(g => <option key={g}>{g}</option>)}
-            </select>
-          </Field>
+          <SelectWithPreview label="Grille Type" value={form.grilleType}
+            onChange={e => set('grilleType', e.target.value)} imgMap={IMG.grilleType}
+            options={<><option value="">None</option>{cfg.g.map(g => <option key={g}>{g}</option>)}</>} />
           {form.grilleType && (
-            <Field label="Grille Pattern">
-              <select value={form.grillePattern} onChange={e => set('grillePattern', e.target.value)}>
-                <option value="">Select...</option>
-                {grillePatterns.map(p => <option key={p}>{p}</option>)}
-              </select>
-            </Field>
+            <SelectWithPreview label="Grille Pattern" value={form.grillePattern}
+              onChange={e => set('grillePattern', e.target.value)} imgMap={IMG.grillePattern}
+              options={<><option value="">Select...</option>{grillePatterns.map(p => <option key={p}>{p}</option>)}</>} />
           )}
           {form.grilleType === 'SDL' && (
             <Field label="Simulated Rail">
@@ -936,28 +927,19 @@ function WindowForm({ initial, onSave, onCancel }) {
 
           {(cfg.hw || cfg.sc || cfg.sm) && <SectionHeader>Hardware & Screen</SectionHeader>}
           {cfg.hw && (
-            <Field label="Hardware Color" col="1/-1">
-              <select value={form.hardwareColor} onChange={e => set('hardwareColor', e.target.value)}>
-                <option value="">Select...</option>
-                {HARDWARE_COLORS.map(c => <option key={c}>{c}</option>)}
-              </select>
-            </Field>
+            <SelectWithPreview label="Hardware Color" value={form.hardwareColor}
+              onChange={e => set('hardwareColor', e.target.value)} imgMap={IMG.hardwareColor}
+              options={<><option value="">Select...</option>{HARDWARE_COLORS.map(c => <option key={c}>{c}</option>)}</>} />
           )}
           {cfg.sc && (
-            <Field label="Interior Screen Color">
-              <select value={form.screenColor} onChange={e => set('screenColor', e.target.value)}>
-                <option value="">Select...</option>
-                {SCREEN_COLORS.map(c => <option key={c}>{c}</option>)}
-              </select>
-            </Field>
+            <SelectWithPreview label="Interior Screen Color" value={form.screenColor}
+              onChange={e => set('screenColor', e.target.value)} imgMap={IMG.screenColor}
+              options={<><option value="">Select...</option>{SCREEN_COLORS.map(c => <option key={c}>{c}</option>)}</>} />
           )}
           {cfg.sm && (
-            <Field label="Screen Mesh Type *" col={cfg.sc ? '' : '1/-1'}>
-              <select value={form.screenMesh} onChange={e => set('screenMesh', e.target.value)}>
-                <option value="">Select...</option>
-                {SCREEN_MESHES.map(m => <option key={m}>{m}</option>)}
-              </select>
-            </Field>
+            <SelectWithPreview label="Screen Mesh Type *" value={form.screenMesh}
+              onChange={e => set('screenMesh', e.target.value)} imgMap={IMG.screenMesh}
+              options={<><option value="">Select...</option>{SCREEN_MESHES.map(m => <option key={m}>{m}</option>)}</>} />
           )}
         </>}
 
@@ -980,12 +962,9 @@ function WindowForm({ initial, onSave, onCancel }) {
               {JAMB_TYPES.map(t => <option key={t}>{t}</option>)}
             </select>
           </Field>
-          <Field label="Casing Style">
-            <select value={form.casingStyle} onChange={e => set('casingStyle', e.target.value)}>
-              <option value="">Select...</option>
-              {CASING_STYLES.map(s => <option key={s}>{s}</option>)}
-            </select>
-          </Field>
+          <SelectWithPreview label="Casing Style" value={form.casingStyle}
+            onChange={e => set('casingStyle', e.target.value)} imgMap={IMG.casingStyle}
+            options={<><option value="">Select...</option>{CASING_STYLES.map(s => <option key={s}>{s}</option>)}</>} />
           <Field label="LP Trim Color">
             <input placeholder="e.g. White" value={form.lpTrimColor} onChange={e => set('lpTrimColor', e.target.value)} />
           </Field>
