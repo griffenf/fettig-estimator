@@ -776,9 +776,9 @@ function WindowForm({ initial, onSave, onCancel }) {
                     </select>
                   </Field>
                 )}
-                <SectionHeader>Measurements (Bottom Window)</SectionHeader>
+                <SectionHeader>Measurements</SectionHeader>
                 {cfg.m.includes('w') && (
-                  <Field label="Width (inches) *" col="1/-1">
+                  <Field label="Width (inches) *">
                     <MeasurementInput value={form.width} frac={form.widthFrac} onValue={v => set('width', v)} onFrac={v => set('widthFrac', v)} />
                   </Field>
                 )}
@@ -788,11 +788,11 @@ function WindowForm({ initial, onSave, onCancel }) {
                 <Field label="Bottom Window Height (in)">
                   <MeasurementInput value={form.height} frac={form.heightFrac} onValue={v => set('height', v)} onFrac={v => set('heightFrac', v)} />
                 </Field>
-                <Field label="Top Window Height (in) *">
+                <Field label="Top Window Height (in)">
                   <MeasurementInput value={form.topHeight} frac={form.topHeightFrac} onValue={v => set('topHeight', v)} onFrac={v => set('topHeightFrac', v)} />
                 </Field>
                 {WIN[form.topStyle]?.m.includes('s') && (
-                  <Field label="Top Short Side Height (in)">
+                  <Field label="Top Short Side Height (in) *">
                     <MeasurementInput value={form.topShortSideHeight} frac={form.topShortSideHeightFrac} onValue={v => set('topShortSideHeight', v)} onFrac={v => set('topShortSideHeightFrac', v)} />
                   </Field>
                 )}
