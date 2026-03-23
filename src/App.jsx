@@ -682,7 +682,7 @@ function WindowForm({ initial, onSave, onCancel }) {
                 label="Facing (viewed from exterior)"
                 value={form.facing}
                 onChange={e => set('facing', e.target.value)}
-                imgMap={IMG.facing}
+                imgMap={IMG.facing[form.style] || {}}
                 options={<><option value="">Select...</option><option>Left</option><option>Right</option></>}
               />
             </div>
@@ -705,12 +705,15 @@ function WindowForm({ initial, onSave, onCancel }) {
                 <Field label="Configuration" col="1/-1"><input value={panelCfg.value} disabled style={{ opacity: 0.6 }} /></Field>
               )}
               {panelCfg.type === 'single' && (
-                <Field label="Configuration" col="1/-1">
-                  <select value={form.standardConfig} onChange={e => set('standardConfig', e.target.value)}>
-                    <option value="">Select...</option>
-                    {panelCfg.options.map(o => <option key={o}>{o}</option>)}
-                  </select>
-                </Field>
+                <div style={{ gridColumn: '1/-1' }}>
+                  <SelectWithPreview
+                    label="Configuration (viewed from exterior)"
+                    value={form.standardConfig}
+                    onChange={e => set('standardConfig', e.target.value)}
+                    imgMap={IMG.facing[form.style] || {}}
+                    options={<><option value="">Select...</option>{panelCfg.options.map(o => <option key={o}>{o}</option>)}</>}
+                  />
+                </div>
               )}
               {panelCfg.type === 'multi' && (
                 <>
