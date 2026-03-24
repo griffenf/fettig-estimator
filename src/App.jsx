@@ -183,7 +183,7 @@ function ImgPreview({ src, alt, size = 80 }) {
   )
 }
 
-function SelectWithPreview({ label, value, onChange, options, imgMap, required, placeholder }) {
+function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }) {
   const [open, setOpen] = useState(false)
   const ref = useRef(null)
 
@@ -193,24 +193,7 @@ function SelectWithPreview({ label, value, onChange, options, imgMap, required, 
     return () => document.removeEventListener('mousedown', handleClick)
   }, [])
 
-  // Extract option values from React option elements or plain strings
-  const getOpts = () => {
-    if (!options) return []
-    const arr = Array.isArray(options) ? options : [options]
-    const result = []
-    const extract = (el) => {
-      if (!el) return
-      if (typeof el === 'string') { result.push(el); return }
-      if (el.type === 'option') { if (el.props.value !== '' && el.props.value !== undefined) result.push({ value: el.props.value !== undefined ? el.props.value : el.props.children, label: el.props.children }); else if (el.props.children) result.push({ value: el.props.children, label: el.props.children }); return }
-      if (el.props?.children) { const ch = el.props.children; Array.isArray(ch) ? ch.forEach(extract) : extract(ch) }
-    }
-    arr.forEach(extract)
-    return result
-  }
-
-  const opts = getOpts()
   const selectedImg = imgMap?.[value]
-  const selectedLabel = value || ''
 
   return (
     <div style={{ marginBottom: 12, position: 'relative' }} ref={ref}>
@@ -220,10 +203,10 @@ function SelectWithPreview({ label, value, onChange, options, imgMap, required, 
         background: 'var(--navy-light)', border: '1.5px solid var(--border)', borderRadius: 6,
         cursor: 'pointer', minHeight: 44
       }}>
-        {selectedLabel ? (
+        {value ? (
           <>
-            {selectedImg && <img src={selectedImg} alt={selectedLabel} style={{ width: 48, height: 40, objectFit: 'contain', background: '#fff', borderRadius: 3, flexShrink: 0 }} />}
-            <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{selectedLabel}</span>
+            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 48, height: 40, objectFit: 'contain', background: '#fff', borderRadius: 3, flexShrink: 0 }} />}
+            <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{value}</span>
           </>
         ) : (
           <span style={{ flex: 1, fontSize: 13, color: 'var(--gray)' }}>{placeholder || 'Select...'}</span>
@@ -238,26 +221,21 @@ function SelectWithPreview({ label, value, onChange, options, imgMap, required, 
           boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
         }}>
           {opts.map(opt => {
-            const optVal = typeof opt === 'string' ? opt : opt.value
-            const optLabel = typeof opt === 'string' ? opt : opt.label
-            const img = imgMap?.[optVal]
-            const selected = value === optVal
+            const img = imgMap?.[opt]
+            const selected = value === opt
             return (
-              <div key={optVal} onClick={() => { onChange({ target: { value: optVal } }); setOpen(false) }} style={{
-                display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
-                cursor: 'pointer', background: selected ? 'rgba(200,151,58,0.15)' : 'transparent',
-                borderLeft: selected ? '3px solid var(--gold)' : '3px solid transparent',
-              }}
-              onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,151,58,0.08)'}
-              onMouseLeave={e => e.currentTarget.style.background = selected ? 'rgba(200,151,58,0.15)' : 'transparent'}>
+              <div key={opt} onClick={() => { onChange(opt); setOpen(false) }}
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', background: selected ? 'rgba(200,151,58,0.15)' : 'transparent', borderLeft: selected ? '3px solid var(--gold)' : '3px solid transparent' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,151,58,0.08)'}
+                onMouseLeave={e => e.currentTarget.style.background = selected ? 'rgba(200,151,58,0.15)' : 'transparent'}>
                 {img ? (
-                  <img src={img} alt={optLabel} style={{ width: 64, height: 52, objectFit: 'contain', background: '#fff', borderRadius: 4, flexShrink: 0 }} />
+                  <img src={img} alt={opt} style={{ width: 64, height: 52, objectFit: 'contain', background: '#fff', borderRadius: 4, flexShrink: 0 }} />
                 ) : (
                   <div style={{ width: 64, height: 52, background: 'var(--navy-light)', borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 9, color: 'var(--gray)', textAlign: 'center', padding: '0 4px' }}>{optLabel}</span>
+                    <span style={{ fontSize: 9, color: 'var(--gray)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
                   </div>
                 )}
-                <span style={{ fontSize: 13, color: selected ? 'var(--gold)' : 'var(--text)', fontWeight: selected ? 600 : 400 }}>{optLabel}</span>
+                <span style={{ fontSize: 13, color: selected ? 'var(--gold)' : 'var(--text)', fontWeight: selected ? 600 : 400 }}>{opt}</span>
               </div>
             )
           })}
@@ -950,9 +928,9 @@ function WindowForm({ initial, onSave, onCancel }) {
               <SelectWithPreview
                 label="Facing (viewed from exterior)"
                 value={form.facing}
-                onChange={e => set('facing', e.target.value)}
+                onChange={v => set('facing', v)}
                 imgMap={IMG.facing[form.style] || {}}
-                options={<><option value="">Select...</option><option>Left</option><option>Right</option></>}
+                opts={['Left', 'Right']} placeholder="Select..."
               />
             </div>
           )}
@@ -978,9 +956,9 @@ function WindowForm({ initial, onSave, onCancel }) {
                   <SelectWithPreview
                     label="Configuration (viewed from exterior)"
                     value={form.standardConfig}
-                    onChange={e => set('standardConfig', e.target.value)}
+                    onChange={v => set('standardConfig', v)}
                     imgMap={IMG.facing[form.style] || {}}
-                    options={<><option value="">Select...</option>{panelCfg.options.map(o => <option key={o}>{o}</option>)}</>}
+                    opts={panelCfg.options} placeholder="Select..."
                   />
                 </div>
               )}
@@ -1148,39 +1126,39 @@ function WindowForm({ initial, onSave, onCancel }) {
 
 
           <SectionHeader>Color & Glass</SectionHeader>
-          <SelectWithPreview label="Exterior Color" required value={form.exteriorColor}
-            onChange={e => set('exteriorColor', e.target.value)} imgMap={IMG.exteriorColor}
-            options={<><option value="">Select...</option>{EXT_COLORS.map(c => <option key={c}>{c}</option>)}</>} />
+          <SelectWithPreview label="Exterior Color *" value={form.exteriorColor}
+            onChange={v => set('exteriorColor', v)} imgMap={IMG.exteriorColor}
+            opts={EXT_COLORS} placeholder="Select..." />
           <Field label="Pane">
             <select value={form.pane} onChange={e => set('pane', e.target.value)}>
               <option>Double</option>
               <option>Triple</option>
             </select>
           </Field>
-          <SelectWithPreview label="Interior Color" required value={form.interiorColor}
-            onChange={e => set('interiorColor', e.target.value)} imgMap={IMG.interiorColor}
-            options={<><option value="">Select...</option>{intColors.map(c => <option key={c}>{c}</option>)}</>} />
+          <SelectWithPreview label="Interior Color *" value={form.interiorColor}
+            onChange={v => set('interiorColor', v)} imgMap={IMG.interiorColor}
+            opts={intColors} placeholder="Select..." />
           <Field label="Tempered">
             <select value={form.tempered} onChange={e => set('tempered', e.target.value)}>
               <option>No</option>
               <option>Yes</option>
             </select>
           </Field>
-          <SelectWithPreview label="Glass Surface" required value={form.glassSurface}
-            onChange={e => set('glassSurface', e.target.value)} imgMap={IMG.glassSurface}
-            options={<><option value="">Select...</option>{glassSurfaces.map(g => <option key={g}>{g}</option>)}</>} />
+          <SelectWithPreview label="Glass Surface *" value={form.glassSurface}
+            onChange={v => set('glassSurface', v)} imgMap={IMG.glassSurface}
+            opts={glassSurfaces} placeholder="Select..." />
           <SelectWithPreview label="Decorative Glass" value={form.decorativeGlass}
-            onChange={e => set('decorativeGlass', e.target.value)} imgMap={IMG.decorativeGlass}
-            options={decorGlasses.map(g => <option key={g}>{g}</option>)} />
+            onChange={v => set('decorativeGlass', v)} imgMap={IMG.decorativeGlass}
+            opts={decorGlasses} />
 
           <SectionHeader>Grille</SectionHeader>
           <SelectWithPreview label="Grille Type" value={form.grilleType}
-            onChange={e => set('grilleType', e.target.value)} imgMap={IMG.grilleType}
-            options={<><option value="">None</option>{cfg.g.map(g => <option key={g}>{g}</option>)}</>} />
+            onChange={v => set('grilleType', v)} imgMap={IMG.grilleType}
+            opts={['', ...cfg.g]} placeholder="None" />
           {form.grilleType && (
             <SelectWithPreview label="Grille Pattern" value={form.grillePattern}
-              onChange={e => set('grillePattern', e.target.value)} imgMap={IMG.grillePattern}
-              options={<><option value="">Select...</option>{grillePatterns.map(p => <option key={p}>{p}</option>)}</>} />
+              onChange={v => set('grillePattern', v)} imgMap={IMG.grillePattern}
+              opts={grillePatterns} placeholder="Select..." />
           )}
           {form.grilleType === 'SDL' && (
             <Field label="Simulated Rail">
@@ -1200,18 +1178,18 @@ function WindowForm({ initial, onSave, onCancel }) {
           {(cfg.hw || cfg.sc || cfg.sm) && <SectionHeader>Hardware & Screen</SectionHeader>}
           {cfg.hw && (
             <SelectWithPreview label="Hardware Color" value={form.hardwareColor}
-              onChange={e => set('hardwareColor', e.target.value)} imgMap={IMG.hardwareColor}
-              options={<><option value="">Select...</option>{HARDWARE_COLORS.map(c => <option key={c}>{c}</option>)}</>} />
+              onChange={v => set('hardwareColor', v)} imgMap={IMG.hardwareColor}
+              opts={HARDWARE_COLORS} placeholder="Select..." />
           )}
           {cfg.sc && (
             <SelectWithPreview label="Interior Screen Color" value={form.screenColor}
-              onChange={e => set('screenColor', e.target.value)} imgMap={IMG.screenColor}
-              options={<><option value="">Select...</option>{SCREEN_COLORS.map(c => <option key={c}>{c}</option>)}</>} />
+              onChange={v => set('screenColor', v)} imgMap={IMG.screenColor}
+              opts={SCREEN_COLORS} placeholder="Select..." />
           )}
           {cfg.sm && (
             <SelectWithPreview label="Screen Mesh Type *" value={form.screenMesh}
-              onChange={e => set('screenMesh', e.target.value)} imgMap={IMG.screenMesh}
-              options={<><option value="">Select...</option>{SCREEN_MESHES.map(m => <option key={m}>{m}</option>)}</>} />
+              onChange={v => set('screenMesh', v)} imgMap={IMG.screenMesh}
+              opts={SCREEN_MESHES} placeholder="Select..." />
           )}
         </>}
 
@@ -1235,8 +1213,8 @@ function WindowForm({ initial, onSave, onCancel }) {
             </select>
           </Field>
           <SelectWithPreview label="Casing Style" value={form.casingStyle}
-            onChange={e => set('casingStyle', e.target.value)} imgMap={IMG.casingStyle}
-            options={<><option value="">Select...</option>{CASING_STYLES.map(s => <option key={s}>{s}</option>)}</>} />
+            onChange={v => set('casingStyle', v)} imgMap={IMG.casingStyle}
+            opts={CASING_STYLES} placeholder="Select..." />
           <Field label="LP Trim Color">
             <input placeholder="e.g. White" value={form.lpTrimColor} onChange={e => set('lpTrimColor', e.target.value)} />
           </Field>
