@@ -196,6 +196,66 @@ function SelectWithPreview({ label, value, onChange, options, imgMap, required }
   )
 }
 
+function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
+  return (
+    <div style={{ marginBottom: 12 }}>
+      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>{label}</label>}
+      {groups ? groups.map(g => (
+        <div key={g.label} style={{ marginBottom: 10 }}>
+          <div style={{ fontSize: 11, color: 'var(--gold)', fontWeight: 700, letterSpacing: '0.08em', marginBottom: 6, textTransform: 'uppercase' }}>{g.label}</div>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 8 }}>
+            {g.styles.map(opt => {
+              const img = imgMap?.[opt]
+              const selected = value === opt
+              return (
+                <div key={opt} onClick={() => onChange(opt)} style={{
+                  border: `2px solid ${selected ? 'var(--gold)' : 'var(--border)'}`,
+                  borderRadius: 8, overflow: 'hidden', cursor: 'pointer',
+                  background: selected ? 'rgba(200,151,58,0.1)' : 'var(--navy-light)',
+                  transition: 'border-color 0.15s'
+                }}>
+                  {img ? (
+                    <img src={img} alt={opt} style={{ width: '100%', height: 64, objectFit: 'contain', background: '#fff', display: 'block' }} />
+                  ) : (
+                    <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--navy-mid)' }}>
+                      <span style={{ fontSize: 10, color: 'var(--gray)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
+                    </div>
+                  )}
+                  <div style={{ padding: '4px 6px', fontSize: 10, fontWeight: selected ? 700 : 400, color: selected ? 'var(--gold)' : 'var(--gray)', textAlign: 'center', lineHeight: 1.3 }}>{opt}</div>
+                </div>
+              )
+            })}
+          </div>
+        </div>
+      )) : (
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 8 }}>
+          {options.map(opt => {
+            const img = imgMap?.[opt]
+            const selected = value === opt
+            return (
+              <div key={opt} onClick={() => onChange(opt)} style={{
+                border: `2px solid ${selected ? 'var(--gold)' : 'var(--border)'}`,
+                borderRadius: 8, overflow: 'hidden', cursor: 'pointer',
+                background: selected ? 'rgba(200,151,58,0.1)' : 'var(--navy-light)',
+                transition: 'border-color 0.15s'
+              }}>
+                {img ? (
+                  <img src={img} alt={opt} style={{ width: '100%', height: 64, objectFit: 'contain', background: '#fff', display: 'block' }} />
+                ) : (
+                  <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--navy-mid)' }}>
+                    <span style={{ fontSize: 10, color: 'var(--gray)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
+                  </div>
+                )}
+                <div style={{ padding: '4px 6px', fontSize: 10, fontWeight: selected ? 700 : 400, color: selected ? 'var(--gold)' : 'var(--gray)', textAlign: 'center', lineHeight: 1.3 }}>{opt}</div>
+              </div>
+            )
+          })}
+        </div>
+      )}
+    </div>
+  )
+}
+
 const JAMB_TYPES = ['Primed', 'Pine', 'Oak', 'Knotty Alder', 'Maple']
 const CASING_STYLES = ['Ranch', 'Colonial', 'Other']
 
