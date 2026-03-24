@@ -30,7 +30,7 @@ const SCREEN_COLORS  = ['Stone White', 'EverWood Pine', 'Satin Taupe', 'Sierra',
 const SCREEN_MESHES  = ['Bright View Mesh', 'Charcoal Hi-Transparency Fiberglass Mesh']
 const ROUND_TOP_STYLES = ['Half Circle', 'Extended Half Round', 'Eyebrow', 'Extended Eyebrow', 'Quarter Round', 'Extended Quarter Round', 'Quarter Eyebrow', 'Extended Quarter Eyebrow']
 
-const TWO_HIGH_WINDOWS = ['Casement', 'Picture', 'Double Hung', 'Single Hung', 'Awning']
+const TWO_HIGH_STYLES = ['Casement', 'Picture', 'Double Hung', 'Single Hung', 'Awning']
 
 function getTopWindowOptions(baseStyle) {
   const isCasAwnPic = ['Casement', 'Picture', 'Awning'].includes(baseStyle)
@@ -46,7 +46,6 @@ function getTopWinMeasurements(style) {
   return { m: ['w', 'h'], facing }
 }
 
-const TWO_HIGH_STYLES = ['Casement', 'Picture', 'Awning', 'Double Hung', 'Single Hung']
 const ROUND_TOP_WINDOW_STYLES = ['Half Circle', 'Extended Half Round', 'Eyebrow', 'Extended Eyebrow', 'Quarter Round', 'Extended Quarter Round', 'Quarter Eyebrow', 'Extended Quarter Eyebrow']
 const CAS_PIC_AWN_TOPS = ['Casement', 'Picture', 'Awning', ...ROUND_TOP_WINDOW_STYLES]
 const DH_SH_TOPS = ['Picture', ...ROUND_TOP_WINDOW_STYLES]
@@ -623,8 +622,6 @@ const EMPTY = {
   hardwareColor: '', screenColor: '', screenMesh: '',
   photos: [], qty: '1', notes: '',
   insert: false,
-  numberHigh: 1, topWindowsWide: 1,
-  topWindows: [{ style: '', width: '', widthFrac: '', height: '', heightFrac: '', shortSideHeight: '', shortSideHeightFrac: '', facing: '' }],
   numberHigh: 1,
   topWindowWidth: 1,
   topStyle: '', topHeight: '', topHeightFrac: '', topShortSideHeight: '', topShortSideHeightFrac: '',
