@@ -814,21 +814,15 @@ function WindowForm({ initial, onSave, onCancel }) {
       <div style={{ fontFamily: 'var(--font-head)', fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--gold)', marginBottom: 16, textTransform: 'uppercase' }}>Window Details</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
 
-        <div style={{ gridColumn: '1/-1', display: 'flex', gap: 12, alignItems: 'flex-end', marginBottom: 12 }}>
+        <div style={{ gridColumn: '1/-1', display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 12 }}>
           <div style={{ flex: 1 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Window Style *</label>
-            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-              <select value={form.style} onChange={e => set('style', e.target.value)} style={{ margin: 0, flex: 1 }}>
-                <option value="">Select style...</option>
-                {WINDOW_STYLE_GROUPS.map(g => (
-                  <optgroup key={g.label} label={g.label}>
-                    {g.styles.map(s => <option key={s}>{s}</option>)}
-                  </optgroup>
-                ))}
-              </select>
-              {form.style && <ImgPreview src={IMG.windows[form.style]} alt={form.style} size={44} />}
-            </div>
-
+            <ImagePicker
+              label="Window Style *"
+              value={form.style}
+              onChange={v => set('style', v)}
+              imgMap={IMG.windows}
+              groups={WINDOW_STYLE_GROUPS}
+            />
           </div>
           <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer', userSelect: 'none', flexShrink: 0 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
