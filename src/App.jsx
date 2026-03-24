@@ -179,7 +179,7 @@ function ImgPreview({ src, alt, size = 80 }) {
   if (!src || !ok) return null
   return (
     <img src={src} alt={alt} onError={() => setOk(false)}
-      style={{ width: size, height: size, objectFit: 'cover', borderRadius: 6, border: '1.5px solid var(--border)', display: 'block', flexShrink: 0 }} />
+      style={{ width: size, height: size, objectFit: 'contain', borderRadius: 6, border: '1.5px solid var(--border)', display: 'block', flexShrink: 0, background: '#fff' }} />
   )
 }
 
@@ -190,9 +190,8 @@ function SelectWithPreview({ label, value, onChange, options, imgMap, required }
       {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
       <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
         <select value={value} onChange={onChange} style={{ flex: 1, margin: 0 }}>{options}</select>
-        {imgSrc && <ImgPreview src={imgSrc} alt={value} size={44} />}
+        {imgSrc && <ImgPreview src={imgSrc} alt={value} size={48} />}
       </div>
-      {imgSrc && <div style={{ marginTop: 6 }}><ImgPreview src={imgSrc} alt={value} size={160} /></div>}
     </div>
   )
 }
@@ -769,9 +768,7 @@ function WindowForm({ initial, onSave, onCancel }) {
               </select>
               {form.style && <ImgPreview src={IMG.windows[form.style]} alt={form.style} size={44} />}
             </div>
-            {form.style && IMG.windows[form.style] && (
-              <div style={{ marginTop: 8 }}><ImgPreview src={IMG.windows[form.style]} alt={form.style} size={160} /></div>
-            )}
+
           </div>
           <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer', userSelect: 'none', flexShrink: 0 }}>
             <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
