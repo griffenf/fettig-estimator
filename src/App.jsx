@@ -183,15 +183,86 @@ function ImgPreview({ src, alt, size = 80 }) {
   )
 }
 
-function SelectWithPreview({ label, value, onChange, options, imgMap, required }) {
-  const imgSrc = imgMap?.[value]
+function SelectWithPreview({ label, value, onChange, options, imgMap, required, placeholder }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    function handleClick(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  // Extract option values from React option elements or plain strings
+  const getOpts = () => {
+    if (!options) return []
+    const arr = Array.isArray(options) ? options : [options]
+    const result = []
+    const extract = (el) => {
+      if (!el) return
+      if (typeof el === 'string') { result.push(el); return }
+      if (el.type === 'option') { if (el.props.value !== '' && el.props.value !== undefined) result.push({ value: el.props.value !== undefined ? el.props.value : el.props.children, label: el.props.children }); else if (el.props.children) result.push({ value: el.props.children, label: el.props.children }); return }
+      if (el.props?.children) { const ch = el.props.children; Array.isArray(ch) ? ch.forEach(extract) : extract(ch) }
+    }
+    arr.forEach(extract)
+    return result
+  }
+
+  const opts = getOpts()
+  const selectedImg = imgMap?.[value]
+  const selectedLabel = value || ''
+
   return (
-    <div style={{ marginBottom: 12 }}>
+    <div style={{ marginBottom: 12, position: 'relative' }} ref={ref}>
       {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
-      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-        <select value={value} onChange={onChange} style={{ flex: 1, margin: 0 }}>{options}</select>
-        {imgSrc && <ImgPreview src={imgSrc} alt={value} size={48} />}
+      <div onClick={() => setOpen(o => !o)} style={{
+        display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+        background: 'var(--navy-light)', border: '1.5px solid var(--border)', borderRadius: 6,
+        cursor: 'pointer', minHeight: 44
+      }}>
+        {selectedLabel ? (
+          <>
+            {selectedImg && <img src={selectedImg} alt={selectedLabel} style={{ width: 48, height: 40, objectFit: 'contain', background: '#fff', borderRadius: 3, flexShrink: 0 }} />}
+            <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{selectedLabel}</span>
+          </>
+        ) : (
+          <span style={{ flex: 1, fontSize: 13, color: 'var(--gray)' }}>{placeholder || 'Select...'}</span>
+        )}
+        <span style={{ color: 'var(--gold)', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
       </div>
+      {open && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 300,
+          background: 'var(--navy-mid)', border: '1.5px solid var(--gold)',
+          borderRadius: 8, marginTop: 4, maxHeight: 320, overflowY: 'auto',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
+        }}>
+          {opts.map(opt => {
+            const optVal = typeof opt === 'string' ? opt : opt.value
+            const optLabel = typeof opt === 'string' ? opt : opt.label
+            const img = imgMap?.[optVal]
+            const selected = value === optVal
+            return (
+              <div key={optVal} onClick={() => { onChange({ target: { value: optVal } }); setOpen(false) }} style={{
+                display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+                cursor: 'pointer', background: selected ? 'rgba(200,151,58,0.15)' : 'transparent',
+                borderLeft: selected ? '3px solid var(--gold)' : '3px solid transparent',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,151,58,0.08)'}
+              onMouseLeave={e => e.currentTarget.style.background = selected ? 'rgba(200,151,58,0.15)' : 'transparent'}>
+                {img ? (
+                  <img src={img} alt={optLabel} style={{ width: 64, height: 52, objectFit: 'contain', background: '#fff', borderRadius: 4, flexShrink: 0 }} />
+                ) : (
+                  <div style={{ width: 64, height: 52, background: 'var(--navy-light)', borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: 9, color: 'var(--gray)', textAlign: 'center', padding: '0 4px' }}>{optLabel}</span>
+                  </div>
+                )}
+                <span style={{ fontSize: 13, color: selected ? 'var(--gold)' : 'var(--text)', fontWeight: selected ? 600 : 400 }}>{optLabel}</span>
+              </div>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }
