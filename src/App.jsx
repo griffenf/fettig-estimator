@@ -197,59 +197,70 @@ function SelectWithPreview({ label, value, onChange, options, imgMap, required }
 }
 
 function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef(null)
+
+  useEffect(() => {
+    function handleClick(e) { if (ref.current && !ref.current.contains(e.target)) setOpen(false) }
+    document.addEventListener('mousedown', handleClick)
+    return () => document.removeEventListener('mousedown', handleClick)
+  }, [])
+
+  const allOptions = groups ? groups.flatMap(g => g.styles) : (options || [])
+  const selectedImg = imgMap?.[value]
+
+  const renderOption = (opt, groupLabel) => {
+    const img = imgMap?.[opt]
+    const selected = value === opt
+    return (
+      <div key={opt} onClick={() => { onChange(opt); setOpen(false) }} style={{
+        display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+        cursor: 'pointer', background: selected ? 'rgba(200,151,58,0.15)' : 'transparent',
+        borderLeft: selected ? '3px solid var(--gold)' : '3px solid transparent',
+      }}
+      onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,151,58,0.08)'}
+      onMouseLeave={e => e.currentTarget.style.background = selected ? 'rgba(200,151,58,0.15)' : 'transparent'}>
+        {img ? (
+          <img src={img} alt={opt} style={{ width: 44, height: 36, objectFit: 'contain', background: '#fff', borderRadius: 4, flexShrink: 0 }} />
+        ) : (
+          <div style={{ width: 44, height: 36, background: 'var(--navy-mid)', borderRadius: 4, flexShrink: 0 }} />
+        )}
+        <span style={{ fontSize: 13, color: selected ? 'var(--gold)' : 'var(--text)', fontWeight: selected ? 600 : 400 }}>{opt}</span>
+      </div>
+    )
+  }
+
   return (
-    <div style={{ marginBottom: 12 }}>
-      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 8 }}>{label}</label>}
-      {groups ? groups.map(g => (
-        <div key={g.label} style={{ marginBottom: 10 }}>
-          <div style={{ fontSize: 11, color: 'var(--gold)', fontWeight: 700, letterSpacing: '0.08em', marginBottom: 6, textTransform: 'uppercase' }}>{g.label}</div>
-          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 8 }}>
-            {g.styles.map(opt => {
-              const img = imgMap?.[opt]
-              const selected = value === opt
-              return (
-                <div key={opt} onClick={() => onChange(opt)} style={{
-                  border: `2px solid ${selected ? 'var(--gold)' : 'var(--border)'}`,
-                  borderRadius: 8, overflow: 'hidden', cursor: 'pointer',
-                  background: selected ? 'rgba(200,151,58,0.1)' : 'var(--navy-light)',
-                  transition: 'border-color 0.15s'
-                }}>
-                  {img ? (
-                    <img src={img} alt={opt} style={{ width: '100%', height: 64, objectFit: 'contain', background: '#fff', display: 'block' }} />
-                  ) : (
-                    <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--navy-mid)' }}>
-                      <span style={{ fontSize: 10, color: 'var(--gray)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
-                    </div>
-                  )}
-                  <div style={{ padding: '4px 6px', fontSize: 10, fontWeight: selected ? 700 : 400, color: selected ? 'var(--gold)' : 'var(--gray)', textAlign: 'center', lineHeight: 1.3 }}>{opt}</div>
-                </div>
-              )
-            })}
-          </div>
-        </div>
-      )) : (
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(80px, 1fr))', gap: 8 }}>
-          {options.map(opt => {
-            const img = imgMap?.[opt]
-            const selected = value === opt
-            return (
-              <div key={opt} onClick={() => onChange(opt)} style={{
-                border: `2px solid ${selected ? 'var(--gold)' : 'var(--border)'}`,
-                borderRadius: 8, overflow: 'hidden', cursor: 'pointer',
-                background: selected ? 'rgba(200,151,58,0.1)' : 'var(--navy-light)',
-                transition: 'border-color 0.15s'
-              }}>
-                {img ? (
-                  <img src={img} alt={opt} style={{ width: '100%', height: 64, objectFit: 'contain', background: '#fff', display: 'block' }} />
-                ) : (
-                  <div style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--navy-mid)' }}>
-                    <span style={{ fontSize: 10, color: 'var(--gray)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
-                  </div>
-                )}
-                <div style={{ padding: '4px 6px', fontSize: 10, fontWeight: selected ? 700 : 400, color: selected ? 'var(--gold)' : 'var(--gray)', textAlign: 'center', lineHeight: 1.3 }}>{opt}</div>
-              </div>
-            )
-          })}
+    <div style={{ marginBottom: 12, position: 'relative' }} ref={ref}>
+      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
+      <div onClick={() => setOpen(o => !o)} style={{
+        display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+        background: 'var(--navy-light)', border: '1.5px solid var(--border)', borderRadius: 6,
+        cursor: 'pointer', minHeight: 44
+      }}>
+        {value ? (
+          <>
+            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 36, height: 30, objectFit: 'contain', background: '#fff', borderRadius: 3, flexShrink: 0 }} />}
+            <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{value}</span>
+          </>
+        ) : (
+          <span style={{ flex: 1, fontSize: 13, color: 'var(--gray)' }}>Select style...</span>
+        )}
+        <span style={{ color: 'var(--gold)', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
+      </div>
+      {open && (
+        <div style={{
+          position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 300,
+          background: 'var(--navy-mid)', border: '1.5px solid var(--gold)',
+          borderRadius: 8, marginTop: 4, maxHeight: 360, overflowY: 'auto',
+          boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
+        }}>
+          {groups ? groups.map(g => (
+            <div key={g.label}>
+              <div style={{ padding: '8px 12px 4px', fontSize: 10, fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: '1px solid rgba(200,151,58,0.2)' }}>{g.label}</div>
+              {g.styles.map(opt => renderOption(opt))}
+            </div>
+          )) : allOptions.map(opt => renderOption(opt))}
         </div>
       )}
     </div>
