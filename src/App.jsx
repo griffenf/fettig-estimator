@@ -205,7 +205,7 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
       }}>
         {value ? (
           <>
-            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 48, height: 40, objectFit: 'contain', background: '#fff', borderRadius: 3, flexShrink: 0 }} />}
+            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 48, height: 40, objectFit: 'cover', borderRadius: 3, flexShrink: 0 }} />}
             <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{value}</span>
           </>
         ) : (
@@ -229,7 +229,7 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,151,58,0.08)'}
                 onMouseLeave={e => e.currentTarget.style.background = selected ? 'rgba(200,151,58,0.15)' : 'transparent'}>
                 {img ? (
-                  <img src={img} alt={opt} style={{ width: 64, height: 52, objectFit: 'contain', background: '#fff', borderRadius: 4, flexShrink: 0 }} />
+                  <img src={img} alt={opt} style={{ width: 64, height: 52, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />
                 ) : (
                   <div style={{ width: 64, height: 52, background: 'var(--navy-light)', borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <span style={{ fontSize: 9, color: 'var(--gray)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
@@ -270,7 +270,7 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
       onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,151,58,0.08)'}
       onMouseLeave={e => e.currentTarget.style.background = selected ? 'rgba(200,151,58,0.15)' : 'transparent'}>
         {img ? (
-          <img src={img} alt={opt} style={{ width: 64, height: 52, objectFit: 'contain', background: '#fff', borderRadius: 4, flexShrink: 0 }} />
+          <img src={img} alt={opt} style={{ width: 64, height: 52, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />
         ) : (
           <div style={{ width: 44, height: 36, background: 'var(--navy-mid)', borderRadius: 4, flexShrink: 0 }} />
         )}
@@ -289,7 +289,7 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
       }}>
         {value ? (
           <>
-            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 48, height: 40, objectFit: 'contain', background: '#fff', borderRadius: 3, flexShrink: 0 }} />}
+            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 48, height: 40, objectFit: 'cover', borderRadius: 3, flexShrink: 0 }} />}
             <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{value}</span>
           </>
         ) : (
@@ -1053,26 +1053,19 @@ function WindowForm({ initial, onSave, onCancel }) {
                 )}
                 {base2Wide && form.topWindowWidth === 2 && !forceRound ? (
                   <>
-                    <Field label="Left Panel Style">
-                      <select value={form.topLeftStyle} onChange={e => set('topLeftStyle', e.target.value)}>
-                        <option value="">Select...</option>
-                        {topOpts.map(s => <option key={s}>{s}</option>)}
-                      </select>
-                    </Field>
-                    <Field label="Right Panel Style">
-                      <select value={form.topRightStyle} onChange={e => set('topRightStyle', e.target.value)}>
-                        <option value="">Select...</option>
-                        {topOpts.map(s => <option key={s}>{s}</option>)}
-                      </select>
-                    </Field>
+                    <SelectWithPreview label="Left Panel Style" value={form.topLeftStyle}
+                      onChange={v => set('topLeftStyle', v)} imgMap={IMG.windows}
+                      opts={topOpts} placeholder="Select..." />
+                    <SelectWithPreview label="Right Panel Style" value={form.topRightStyle}
+                      onChange={v => set('topRightStyle', v)} imgMap={IMG.windows}
+                      opts={topOpts} placeholder="Select..." />
                   </>
                 ) : (
-                  <Field label="Top Window Style" col="1/-1">
-                    <select value={form.topStyle} onChange={e => set('topStyle', e.target.value)}>
-                      <option value="">Select...</option>
-                      {(forceRound ? ROUND_TOP_WINDOW_STYLES : topOpts).map(s => <option key={s}>{s}</option>)}
-                    </select>
-                  </Field>
+                  <div style={{ gridColumn: '1/-1' }}>
+                    <SelectWithPreview label="Top Window Style" value={form.topStyle}
+                      onChange={v => set('topStyle', v)} imgMap={IMG.windows}
+                      opts={forceRound ? ROUND_TOP_WINDOW_STYLES : topOpts} placeholder="Select..." />
+                  </div>
                 )}
                 <SectionHeader>Measurements</SectionHeader>
                 {cfg.m.includes('w') && (
