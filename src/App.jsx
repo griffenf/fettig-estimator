@@ -221,7 +221,7 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
       onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,151,58,0.08)'}
       onMouseLeave={e => e.currentTarget.style.background = selected ? 'rgba(200,151,58,0.15)' : 'transparent'}>
         {img ? (
-          <img src={img} alt={opt} style={{ width: 44, height: 36, objectFit: 'contain', background: '#fff', borderRadius: 4, flexShrink: 0 }} />
+          <img src={img} alt={opt} style={{ width: 64, height: 52, objectFit: 'contain', background: '#fff', borderRadius: 4, flexShrink: 0 }} />
         ) : (
           <div style={{ width: 44, height: 36, background: 'var(--navy-mid)', borderRadius: 4, flexShrink: 0 }} />
         )}
@@ -240,7 +240,7 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
       }}>
         {value ? (
           <>
-            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 36, height: 30, objectFit: 'contain', background: '#fff', borderRadius: 3, flexShrink: 0 }} />}
+            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 48, height: 40, objectFit: 'contain', background: '#fff', borderRadius: 3, flexShrink: 0 }} />}
             <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{value}</span>
           </>
         ) : (
