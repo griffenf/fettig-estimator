@@ -59,6 +59,145 @@ function getTopOptions(baseStyle) {
 function canBe2Wide(baseWide) { return baseWide === 2 }
 function mustBe1Wide(baseWide) { return baseWide >= 3 }
 
+const IMG = {
+  windows: {
+    'Casement': '/images/windows/casement.jpg',
+    'Picture': '/images/windows/picture.jpg',
+    'Awning': '/images/windows/awning.jpg',
+    'Double Hung': '/images/windows/double-hung.jpg',
+    'Single Hung': '/images/windows/single-hung.jpg',
+    'Slider': '/images/windows/slider.jpg',
+    'Slider Triple Sash': '/images/windows/slider-triple-sash.jpg',
+    'Bow': '/images/windows/bow.jpg',
+    'Casement Bay': '/images/windows/casement-bay.jpg',
+    'Double Hung Bay': '/images/windows/double-hung-bay.jpg',
+    'Rectangle': '/images/windows/rectangle.jpg',
+    'Right Triangle': '/images/windows/right-triangle.jpg',
+    'Isosceles Triangle': '/images/windows/isosceles-triangle.jpg',
+    'Trapezoid': '/images/windows/trapezoid.jpg',
+    'Pentagon': '/images/windows/pentagon.jpg',
+    'Hexagon': '/images/windows/hexagon.jpg',
+    'Octagon': '/images/windows/octagon.jpg',
+    'Half Circle': '/images/windows/half-circle.jpg',
+    'Extended Half Round': '/images/windows/extended-half-round.jpg',
+    'Eyebrow': '/images/windows/eyebrow.jpg',
+    'Extended Eyebrow': '/images/windows/extended-eyebrow.jpg',
+    'Quarter Round': '/images/windows/quarter-round.jpg',
+    'Extended Quarter Round': '/images/windows/extended-quarter-round.jpg',
+    'Quarter Eyebrow': '/images/windows/quarter-eyebrow.jpg',
+    'Extended Quarter Eyebrow': '/images/windows/extended-quarter-eyebrow.jpg',
+    'Full Circle': '/images/windows/full-circle.jpg',
+  },
+  facing: {
+    'Right Triangle': { 'Left': '/images/facing/right-triangle-left.jpg', 'Right': '/images/facing/right-triangle-right.jpg' },
+    'Trapezoid': { 'Left': '/images/facing/trapezoid-left.jpg', 'Right': '/images/facing/trapezoid-right.jpg' },
+    'Quarter Round': { 'Left': '/images/facing/quarter-round-left.jpg', 'Right': '/images/facing/quarter-round-right.jpg' },
+    'Extended Quarter Round': { 'Left': '/images/facing/extended-quarter-round-left.jpg', 'Right': '/images/facing/extended-quarter-round-right.jpg' },
+    'Quarter Eyebrow': { 'Left': '/images/facing/quarter-eyebrow-left.jpg', 'Right': '/images/facing/quarter-eyebrow-right.jpg' },
+    'Extended Quarter Eyebrow': { 'Left': '/images/facing/extended-quarter-eyebrow-left.jpg', 'Right': '/images/facing/extended-quarter-eyebrow-right.jpg' },
+    'Casement': { 'Left': '/images/facing/casement-left.jpg', 'Right': '/images/facing/casement-right.jpg' },
+    'Slider': { 'XO': '/images/facing/slider-xo.jpg', 'OX': '/images/facing/slider-ox.jpg' },
+  },
+  exteriorColor: {
+    'Stone White': '/images/colors/ext-stone-white.jpg',
+    'Pebble Gray': '/images/colors/ext-pebble-gray.jpg',
+    'Sierra': '/images/colors/ext-sierra.jpg',
+    'Bronze': '/images/colors/ext-bronze.jpg',
+    'Cashmere': '/images/colors/ext-cashmere.jpg',
+    'Bahama Brown': '/images/colors/ext-bahama-brown.jpg',
+    'Ebony': '/images/colors/ext-ebony.jpg',
+  },
+  interiorColor: {
+    'Stone White': '/images/colors/int-stone-white.jpg',
+    'EverWood Pine': '/images/colors/int-everwood-pine.jpg',
+    'Sierra': '/images/colors/int-sierra.jpg',
+    'Bronze': '/images/colors/int-bronze.jpg',
+    'Ebony': '/images/colors/int-ebony.jpg',
+  },
+  glassSurface: {
+    'Clear': '/images/glass/clear.jpg',
+    'Low E1': '/images/glass/low-e1.jpg',
+    'Low E2': '/images/glass/low-e2.jpg',
+    'Low E3': '/images/glass/low-e3.jpg',
+    'Low E2/ERS': '/images/glass/low-e2-ers.jpg',
+    'Low E3/ERS': '/images/glass/low-e3-ers.jpg',
+    'Low E2/E1': '/images/glass/low-e2-e1.jpg',
+    'Low E3/E1': '/images/glass/low-e3-e1.jpg',
+    'Low E2/E1/ERS': '/images/glass/low-e2-e1-ers.jpg',
+    'Low E3/E1/ERS': '/images/glass/low-e3-e1-ers.jpg',
+  },
+  decorativeGlass: {
+    'Obscure': '/images/glass/deco-obscure.jpg',
+    'Glue Chip': '/images/glass/deco-glue-chip.jpg',
+    'Rain': '/images/glass/deco-rain.jpg',
+    'Reed': '/images/glass/deco-reed.jpg',
+    'Narrow Reed': '/images/glass/deco-narrow-reed.jpg',
+    'Frost': '/images/glass/deco-frost.jpg',
+  },
+  grilleType: {
+    'GBG': '/images/grille/gbg.jpg',
+    'SDL': '/images/grille/sdl.jpg',
+  },
+  grillePattern: {
+    'Rectangular': '/images/grille/pattern-rectangular.jpg',
+    'Prairie': '/images/grille/pattern-prairie.jpg',
+    'Checkrail': '/images/grille/pattern-checkrail.jpg',
+    'Cottage': '/images/grille/pattern-cottage.jpg',
+    'Oriel': '/images/grille/pattern-oriel.jpg',
+    'Sunburst': '/images/grille/pattern-sunburst.jpg',
+  },
+  hardwareColor: {
+    'Satin Taupe': '/images/hardware/satin-taupe.jpg',
+    'Sierra': '/images/hardware/sierra.jpg',
+    'White': '/images/hardware/white.jpg',
+    'Matte Black': '/images/hardware/matte-black.jpg',
+    'Oil Rubbed Bronze': '/images/hardware/oil-rubbed-bronze.jpg',
+    'Satin Nickel': '/images/hardware/satin-nickel.jpg',
+    'Brushed Chrome': '/images/hardware/brushed-chrome.jpg',
+    'Antique Brass': '/images/hardware/antique-brass.jpg',
+    'Brass': '/images/hardware/brass.jpg',
+  },
+  screenColor: {
+    'Stone White': '/images/screen/stone-white.jpg',
+    'EverWood Pine': '/images/screen/everwood-pine.jpg',
+    'Satin Taupe': '/images/screen/satin-taupe.jpg',
+    'Sierra': '/images/screen/sierra.jpg',
+    'Bronze': '/images/screen/bronze.jpg',
+    'Ebony': '/images/screen/ebony.jpg',
+  },
+  screenMesh: {
+    'Bright View Mesh': '/images/screen/bright-view-mesh.jpg',
+    'Charcoal Hi-Transparency Fiberglass Mesh': '/images/screen/charcoal-mesh.jpg',
+  },
+  casingStyle: {
+    'Ranch': '/images/casing/ranch.jpg',
+    'Colonial': '/images/casing/colonial.jpg',
+  },
+}
+
+function ImgPreview({ src, alt, size = 80 }) {
+  const [ok, setOk] = React.useState(true)
+  if (!src || !ok) return null
+  return (
+    <img src={src} alt={alt} onError={() => setOk(false)}
+      style={{ width: size, height: size, objectFit: 'cover', borderRadius: 6, border: '1.5px solid var(--border)', display: 'block', flexShrink: 0 }} />
+  )
+}
+
+function SelectWithPreview({ label, value, onChange, options, imgMap, required }) {
+  const imgSrc = imgMap?.[value]
+  return (
+    <div style={{ marginBottom: 12 }}>
+      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
+      <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+        <select value={value} onChange={onChange} style={{ flex: 1, margin: 0 }}>{options}</select>
+        {imgSrc && <ImgPreview src={imgSrc} alt={value} size={44} />}
+      </div>
+      {imgSrc && <div style={{ marginTop: 6 }}><ImgPreview src={imgSrc} alt={value} size={160} /></div>}
+    </div>
+  )
+}
+
 const JAMB_TYPES = ['Primed', 'Pine', 'Oak', 'Knotty Alder', 'Maple']
 const CASING_STYLES = ['Ranch', 'Colonial', 'Other']
 
