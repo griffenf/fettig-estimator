@@ -175,7 +175,7 @@ const IMG = {
 }
 
 function ImgPreview({ src, alt, size = 80 }) {
-  const [ok, setOk] = React.useState(true)
+  const [ok, setOk] = useState(true)
   if (!src || !ok) return null
   return (
     <img src={src} alt={alt} onError={() => setOk(false)}
