@@ -146,7 +146,7 @@ const IMG = {
     'Sunburst': '/images/grille/pattern-sunburst.jpg',
   },
   hardwareColor: {
-    'Satin Taupe': '/images/hardware/satin-taupe.jpg',
+    'Satin Taupe': '/images/hardware/satin-taupe.png',
     'Sierra': '/images/hardware/sierra.jpg',
     'White': '/images/hardware/white.jpg',
     'Matte Black': '/images/hardware/matte-black.jpg',
