@@ -498,50 +498,62 @@ function generatePDF(jobInfo, rooms) {
   const margin = 48
   let y = 0
 
+  // Colors matching JobTread theme
+  const CHARCOAL = [30, 36, 50]
+  const ORANGE   = [232, 98, 42]
+  const BLUE     = [74, 144, 217]
+  const WHITE    = [255, 255, 255]
+  const LGRAY    = [242, 244, 247]
+  const MGRAY    = [226, 230, 237]
+  const TEXTDK   = [26, 31, 46]
+  const TEXTMD   = [74, 85, 104]
+
   const addFooter = () => {
-    doc.setFillColor(90, 58, 31); doc.rect(0, pageH - 36, W, 36, 'F')
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(196, 154, 108)
-    doc.text('Fettig Millwork & Windows, Inc.  —  Window Estimate', margin, pageH - 14)
-    doc.setTextColor(122, 82, 48); doc.text('CONFIDENTIAL', W - margin, pageH - 14, { align: 'right' })
+    doc.setFillColor(...CHARCOAL); doc.rect(0, pageH - 32, W, 32, 'F')
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...MGRAY)
+    doc.text('Fettig Millwork & Windows, Inc.  —  Estimate', margin, pageH - 11)
+    doc.setTextColor(...ORANGE); doc.text('CONFIDENTIAL', W - margin, pageH - 11, { align: 'right' })
   }
 
-  // Header
-  doc.setFillColor(90, 58, 31); doc.rect(0, 0, W, 80, 'F')
-  doc.setFillColor(122, 82, 48); doc.rect(0, 80, W, 3, 'F')
-  doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(245, 243, 239)
-  doc.text('FETTIG MILLWORK & WINDOWS, INC.', margin, 34)
-  doc.setFontSize(11); doc.setFont('helvetica', 'normal'); doc.setTextColor(122, 82, 48)
-  doc.text('WINDOW ESTIMATE', margin, 56)
-  doc.setFontSize(10); doc.setTextColor(196, 154, 108)
-  doc.text(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), W - margin, 56, { align: 'right' })
-  y = 110
+  // Header — white bg with orange bottom border, charcoal text
+  doc.setFillColor(...WHITE); doc.rect(0, 0, W, 72, 'F')
+  doc.setFillColor(...ORANGE); doc.rect(0, 72, W, 4, 'F')
+  doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(...CHARCOAL)
+  doc.text('FETTIG MILLWORK & WINDOWS, INC.', margin, 32)
+  doc.setFontSize(10); doc.setFont('helvetica', 'normal'); doc.setTextColor(...TEXTMD)
+  doc.text('Window Estimate', margin, 52)
+  doc.setFontSize(10); doc.setTextColor(...TEXTMD)
+  doc.text(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), W - margin, 52, { align: 'right' })
+  y = 96
 
+  // Job info section
   const fields = [['Customer', jobInfo.customerName], ['Job Name', jobInfo.jobName], ['Job Address', jobInfo.address], ['Estimator', jobInfo.estimator]].filter(([, v]) => v)
-  doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(122, 82, 48)
-  doc.text('JOB INFORMATION', margin, y); y += 16
+  doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(...ORANGE)
+  doc.text('JOB INFORMATION', margin, y); y += 14
+  doc.setDrawColor(...ORANGE); doc.setLineWidth(0.5); doc.line(margin, y, W - margin, y); y += 10
   const col2 = W / 2; let leftY = y, rightY = y
   fields.forEach(([label, value], i) => {
     const cx = i % 2 === 0 ? margin : col2
     let cy = i % 2 === 0 ? leftY : rightY
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(196, 154, 108)
-    doc.text(label.toUpperCase(), cx, cy); cy += 13
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(90, 58, 31)
-    doc.text(value || '—', cx, cy); cy += 18
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(...BLUE)
+    doc.text(label.toUpperCase(), cx, cy); cy += 12
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10.5); doc.setTextColor(...TEXTDK)
+    doc.text(value || '—', cx, cy); cy += 17
     if (i % 2 === 0) leftY = cy; else rightY = cy
   })
-  y = Math.max(leftY, rightY) + 12
-  doc.setDrawColor(122, 82, 48); doc.setLineWidth(0.5); doc.line(margin, y, W - margin, y); y += 16
+  y = Math.max(leftY, rightY) + 10
+  doc.setDrawColor(...MGRAY); doc.setLineWidth(0.5); doc.line(margin, y, W - margin, y); y += 14
 
   let winNum = 1
   rooms.forEach(room => {
     if (!room.windows.length) return
     if (y > pageH - 80) { addFooter(); doc.addPage(); y = 40 }
 
-    // Room header
+    // Room header — blue accent
     if (room.name) {
-      doc.setFillColor(107, 77, 52); doc.rect(margin, y - 10, W - margin * 2, 20, 'F')
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(122, 82, 48)
-      doc.text(`ROOM: ${room.name.toUpperCase()}`, margin + 8, y + 4); y += 18
+      doc.setFillColor(...BLUE); doc.rect(margin, y - 10, W - margin * 2, 22, 'F')
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...WHITE)
+      doc.text(room.name.toUpperCase(), margin + 8, y + 5); y += 20
     }
 
     room.windows.forEach((win) => {
@@ -550,16 +562,16 @@ function generatePDF(jobInfo, rooms) {
       const rowH = Math.max(28, lines.length * 13 + 16)
       if (y + rowH > pageH - 60) { addFooter(); doc.addPage(); y = 40 }
 
-      const bg = winNum % 2 === 0 ? [245, 243, 239] : [235, 232, 226]
+      const bg = winNum % 2 === 0 ? [242, 244, 247] : [255, 255, 255]
       doc.setFillColor(...bg); doc.rect(margin, y - 10, W - margin * 2, rowH, 'F')
-      doc.setFillColor(122, 82, 48); doc.rect(margin, y - 10, 28, rowH, 'F')
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(90, 58, 31)
+      doc.setFillColor(...ORANGE); doc.rect(margin, y - 10, 28, rowH, 'F')
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...WHITE)
       doc.text(String(winNum), margin + 14, y + (rowH / 2) - 14, { align: 'center' })
-      doc.setFontSize(11); doc.text(`${win.style}${parseInt(win.qty) > 1 ? ` × ${win.qty}` : ''}`, margin + 36, y)
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(107, 82, 64)
+      doc.setFontSize(11); doc.setTextColor(...CHARCOAL); doc.text(`${win.style}${parseInt(win.qty) > 1 ? ` × ${win.qty}` : ''}`, margin + 36, y)
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...TEXTMD)
       lines.forEach((line, li) => doc.text(line, margin + 36, y + 13 + li * 12))
       if (win.notes) {
-        doc.setFontSize(8); doc.setTextColor(196, 154, 108)
+        doc.setFontSize(8); doc.setTextColor(...BLUE)
         doc.splitTextToSize(`Note: ${win.notes}`, W - margin * 2 - 60).forEach((line, li) => doc.text(line, margin + 36, y + 13 + lines.length * 12 + li * 11))
       }
       y += rowH + 4
@@ -572,8 +584,8 @@ function generatePDF(jobInfo, rooms) {
   const allWindows = rooms.flatMap(r => r.windows)
   if (allWindows.length > 0) {
     if (y + 30 > pageH - 60) { addFooter(); doc.addPage(); y = 40 }
-    doc.setFillColor(90, 58, 31); doc.rect(margin, y - 10, W - margin * 2, 22, 'F')
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(122, 82, 48)
+    doc.setFillColor(...CHARCOAL); doc.rect(margin, y - 10, W - margin * 2, 22, 'F')
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(...ORANGE)
     const totalQty = allWindows.reduce((sum, w) => sum + parseInt(w.qty || 1), 0)
     doc.text(`TOTAL: ${allWindows.length} line item(s)  |  ${totalQty} unit(s)`, margin + 8, y + 5)
     y += 20
@@ -581,9 +593,9 @@ function generatePDF(jobInfo, rooms) {
 
   if (jobInfo.notes) {
     y += 8
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(122, 82, 48)
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...ORANGE)
     doc.text('ADDITIONAL NOTES', margin, y); y += 14
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(90, 58, 31)
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(...TEXTDK)
     doc.splitTextToSize(jobInfo.notes, W - margin * 2).forEach(line => { doc.text(line, margin, y); y += 14 })
   }
 
