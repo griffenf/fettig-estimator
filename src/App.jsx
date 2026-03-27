@@ -489,6 +489,69 @@ function summarizeWindow(w) {
   return parts.join(' · ')
 }
 
+// ─── PDF Detail Builder (full unabbreviated lines for PDF)
+function buildPDFLines(w) {
+  const lines = []
+  if (w.insert) lines.push('INSERT WINDOW')
+  if (w.numberWide > 1) lines.push(`${w.numberWide} Wide`)
+  if (w.numberHigh === 2) lines.push('2 High')
+  if (w.facing) lines.push(`Facing: ${w.facing} (viewed from exterior)`)
+  if (w.sashSplit) lines.push(`Sash Split: ${w.sashSplit}`)
+  if (w.configuration) lines.push(`Configuration: ${w.configuration}`)
+  if (w.measurementType) lines.push(`Measurement Type: ${w.measurementType}`)
+  if (w.width) lines.push(`Width: ${fmtMeasurement(w.width, w.widthFrac)}`)
+  if (w.height && w.numberHigh !== 2) lines.push(`Height: ${fmtMeasurement(w.height, w.heightFrac)}`)
+  if (w.widthOrHeight) lines.push(`Width / Height: ${fmtMeasurement(w.widthOrHeight, w.widthOrHeightFrac)}`)
+  if (w.shortSideHeight) lines.push(`Short Side Height: ${fmtMeasurement(w.shortSideHeight, w.shortSideHeightFrac)}`)
+  if (w.numberHigh === 2) {
+    if (w.overallHeight) lines.push(`Overall Height: ${fmtMeasurement(w.overallHeight, w.overallHeightFrac)}`)
+    if (w.height) lines.push(`Bottom Window Height: ${fmtMeasurement(w.height, w.heightFrac)}`)
+    if (w.topHeight) lines.push(`Top Window Height: ${fmtMeasurement(w.topHeight, w.topHeightFrac)}`)
+    if (w.topShortSideHeight) lines.push(`Top Short Side Height: ${fmtMeasurement(w.topShortSideHeight, w.topShortSideHeightFrac)}`)
+    const topStyle = w.topWindowWidth === 2 ? `${w.topLeftStyle || '—'} | ${w.topRightStyle || '—'}` : (w.topStyle || '')
+    if (topStyle) lines.push(`Top Window Style: ${topStyle}`)
+    if (w.topFacing) lines.push(`Top Window Facing: ${w.topFacing}`)
+    if (w.topTempered && w.topTempered !== w.tempered) lines.push(`Top Window Tempered: ${w.topTempered}`)
+    if (w.topDecorativeGlass && w.topDecorativeGlass !== 'Same as bottom') lines.push(`Top Window Decorative Glass: ${w.topDecorativeGlass}`)
+    if (w.topGrilleType && w.topGrilleType !== 'Same as bottom') lines.push(`Top Window Grille Type: ${w.topGrilleType}`)
+    if (w.topGrillePattern && w.topGrillePattern !== 'Same as bottom') lines.push(`Top Window Grille Pattern: ${w.topGrillePattern}`)
+  }
+  if (w.angleOfDeflection) lines.push(`Angle of Deflection: ${w.angleOfDeflection}`)
+  if (w.flankerRatio) lines.push(`Flanker to Center Ratio: ${w.flankerRatio}`)
+  lines.push(`Exterior Color: ${w.exteriorColor || '—'}`)
+  lines.push(`Interior Color: ${w.interiorColor || '—'}`)
+  lines.push(`Pane: ${w.pane || 'Double'}`)
+  lines.push(`Glass Surface: ${w.glassSurface || '—'}`)
+  lines.push(`Tempered: ${w.tempered || 'No'}`)
+  if (w.decorativeGlass && w.decorativeGlass !== 'None') lines.push(`Decorative Glass: ${w.decorativeGlass}`)
+  // Grille
+  const isMultiPane = ['Double Hung','Single Hung','Double Hung Bay'].includes(w.style)
+  if (isMultiPane && w.grilleType) {
+    lines.push(`Grille Type: ${w.grilleType}`)
+    lines.push(`Pane Application: ${w.grillePaneApplication || 'Both Panes'}`)
+    if (w.grillePaneApplication === 'Both Panes') {
+      if (w.topPaneGrillePattern) lines.push(`Top Pane Grille Pattern: ${w.topPaneGrillePattern}`)
+      if (w.bottomPaneGrillePattern) lines.push(`Bottom Pane Grille Pattern: ${w.bottomPaneGrillePattern}`)
+    } else {
+      if (w.grillePattern) lines.push(`Grille Pattern: ${w.grillePattern}`)
+    }
+  } else if (w.grilleType) {
+    lines.push(`Grille Type: ${w.grilleType}`)
+    if (w.grillePattern) lines.push(`Grille Pattern: ${w.grillePattern}`)
+    if (w.simulatedRail) lines.push(`Simulated Rail: ${w.simulatedRail}`)
+  }
+  if (w.hardwareColor) lines.push(`Hardware Color: ${w.hardwareColor}`)
+  if (w.screenColor) lines.push(`Interior Screen Color: ${w.screenColor}`)
+  if (w.screenMesh) lines.push(`Screen Mesh: ${w.screenMesh}`)
+  if (w.jambDepth) lines.push(`Jamb Depth: ${fmtMeasurement(w.jambDepth, w.jambDepthFrac)}`)
+  if (w.jambType) lines.push(`Jamb Type: ${w.jambType === 'Other' ? (w.jambTypeOther || 'Other') : w.jambType}`)
+  if (w.casingWidth) lines.push(`Casing Width: ${fmtMeasurement(w.casingWidth, w.casingWidthFrac)}`)
+  if (w.casingType) lines.push(`Casing Type: ${w.casingType === 'Other' ? (w.casingTypeOther || 'Other') : w.casingType}`)
+  if (w.casingStyle) lines.push(`Casing Style: ${w.casingStyle}`)
+  if (w.lpTrimColor) lines.push(`LP Trim Color: ${w.lpTrimColor}`)
+  return lines
+}
+
 // ─── PDF Generator ───────────────────────────────────────────────────────────
 
 function generatePDF(jobInfo, rooms) {
@@ -557,24 +620,46 @@ function generatePDF(jobInfo, rooms) {
     }
 
     room.windows.forEach((win) => {
-      const summary = summarizeWindow(win)
-      const lines = doc.splitTextToSize(summary, W - margin * 2 - 60)
-      const rowH = Math.max(28, lines.length * 13 + 16)
+      const detailLines = buildPDFLines(win)
+      const titleText = `${win.style}${parseInt(win.qty) > 1 ? ` × ${win.qty}` : ''}`
+      // Each detail line is printed individually
+      const lineH = 13
+      const rowH = 24 + detailLines.length * lineH + (win.notes ? 14 : 0)
       if (y + rowH > pageH - 60) { addFooter(); doc.addPage(); y = 40 }
 
+      // Row background
       const bg = winNum % 2 === 0 ? [242, 244, 247] : [255, 255, 255]
       doc.setFillColor(...bg); doc.rect(margin, y - 10, W - margin * 2, rowH, 'F')
+      // Orange number badge
       doc.setFillColor(...ORANGE); doc.rect(margin, y - 10, 28, rowH, 'F')
       doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(...WHITE)
-      doc.text(String(winNum), margin + 14, y + (rowH / 2) - 14, { align: 'center' })
-      doc.setFontSize(11); doc.setTextColor(...CHARCOAL); doc.text(`${win.style}${parseInt(win.qty) > 1 ? ` × ${win.qty}` : ''}`, margin + 36, y)
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(...TEXTMD)
-      lines.forEach((line, li) => doc.text(line, margin + 36, y + 13 + li * 12))
+      doc.text(String(winNum), margin + 14, y + (rowH / 2) - 10, { align: 'center' })
+      // Window title
+      doc.setFontSize(11); doc.setTextColor(...CHARCOAL)
+      doc.text(titleText, margin + 36, y); y += 16
+      // Detail lines — label in blue, value in dark
+      detailLines.forEach(line => {
+        const colonIdx = line.indexOf(': ')
+        if (colonIdx > -1) {
+          const label = line.substring(0, colonIdx + 2)
+          const value = line.substring(colonIdx + 2)
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...BLUE)
+          const labelW = doc.getTextWidth(label)
+          doc.text(label, margin + 36, y)
+          doc.setFont('helvetica', 'normal'); doc.setTextColor(...TEXTDK)
+          doc.text(value, margin + 36 + labelW, y)
+        } else {
+          doc.setFont('helvetica', 'bold'); doc.setFontSize(8.5); doc.setTextColor(...ORANGE)
+          doc.text(line, margin + 36, y)
+        }
+        y += lineH
+      })
       if (win.notes) {
-        doc.setFontSize(8); doc.setTextColor(...BLUE)
-        doc.splitTextToSize(`Note: ${win.notes}`, W - margin * 2 - 60).forEach((line, li) => doc.text(line, margin + 36, y + 13 + lines.length * 12 + li * 11))
+        doc.setFont('helvetica', 'italic'); doc.setFontSize(8); doc.setTextColor(...TEXTMD)
+        doc.text(`Note: ${win.notes}`, margin + 36, y)
+        y += 12
       }
-      y += rowH + 4
+      y += 6
 
       winNum++
     })
