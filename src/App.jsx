@@ -317,7 +317,7 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
   )
 }
 
-const JAMB_TYPES = ['Primed', 'Pine', 'Oak', 'Knotty Alder', 'Maple']
+const JAMB_TYPES = ['Primed', 'Pine', 'Oak', 'Knotty Alder', 'Maple', 'Other']
 const CASING_STYLES = ['Ranch', 'Colonial', 'Other']
 
 const FRACTIONS = ['', '1/16"', '1/8"', '3/16"', '1/4"', '5/16"', '3/8"', '7/16"', '1/2"', '9/16"', '5/8"', '11/16"', '3/4"', '13/16"', '7/8"', '15/16"']
@@ -785,7 +785,8 @@ const EMPTY = {
   topRightStyle: '', topRightHeight: '', topRightHeightFrac: '',
   overallHeight: '', overallHeightFrac: '',
   jambDepth: '', jambDepthFrac: '', jambType: '',
-  casingWidth: '', casingWidthFrac: '', casingType: '', casingStyle: '', lpTrimColor: ''
+  casingWidth: '', casingWidthFrac: '', casingType: '', casingTypeOther: '', casingStyle: '', lpTrimColor: '',
+  jambTypeOther: ''
 }
 
 function WindowForm({ initial, onSave, onCancel }) {
@@ -1377,15 +1378,26 @@ function WindowForm({ initial, onSave, onCancel }) {
 
           {/* ── EXTENSION JAMB & CASING ── */}
           <SectionHeader>Extension Jamb & Casing</SectionHeader>
+          <div style={{ gridColumn: '1/-1', fontSize: 12, color: 'var(--gray)', marginBottom: 4, fontStyle: 'italic' }}>
+            Leave any section blank if not needed (e.g. no jamb, no casing, no LP trim).
+          </div>
           <Field label="Jamb Depth (inches)">
             <MeasurementInput value={form.jambDepth} frac={form.jambDepthFrac} onValue={v => set('jambDepth', v)} onFrac={v => set('jambDepthFrac', v)} />
           </Field>
           <Field label="Jamb Type">
-            <select value={form.jambType} onChange={e => { set('jambType', e.target.value); if (!form.casingType) set('casingType', e.target.value) }}>
+            <select value={form.jambType} onChange={e => {
+              set('jambType', e.target.value)
+              if (!form.casingType) set('casingType', e.target.value)
+            }}>
               <option value="">Select...</option>
               {JAMB_TYPES.map(t => <option key={t}>{t}</option>)}
             </select>
           </Field>
+          {form.jambType === 'Other' && (
+            <Field label="Jamb Type (specify)" col="1/-1">
+              <input placeholder="Describe jamb type..." value={form.jambTypeOther} onChange={e => set('jambTypeOther', e.target.value)} />
+            </Field>
+          )}
           <Field label="Casing Width (inches)">
             <MeasurementInput value={form.casingWidth} frac={form.casingWidthFrac} onValue={v => set('casingWidth', v)} onFrac={v => set('casingWidthFrac', v)} />
           </Field>
@@ -1395,11 +1407,16 @@ function WindowForm({ initial, onSave, onCancel }) {
               {JAMB_TYPES.map(t => <option key={t}>{t}</option>)}
             </select>
           </Field>
+          {form.casingType === 'Other' && (
+            <Field label="Casing Type (specify)" col="1/-1">
+              <input placeholder="Describe casing type..." value={form.casingTypeOther} onChange={e => set('casingTypeOther', e.target.value)} />
+            </Field>
+          )}
           <SelectWithPreview label="Casing Style" value={form.casingStyle}
             onChange={v => set('casingStyle', v)} imgMap={IMG.casingStyle}
             opts={CASING_STYLES} placeholder="Select..." />
           <Field label="LP Trim Color">
-            <input placeholder="e.g. White" value={form.lpTrimColor} onChange={e => set('lpTrimColor', e.target.value)} />
+            <input placeholder="e.g. White (leave blank if none)" value={form.lpTrimColor} onChange={e => set('lpTrimColor', e.target.value)} />
           </Field>
 
           {/* ── PHOTOS & NOTES ── */}
