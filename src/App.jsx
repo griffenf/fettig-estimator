@@ -822,8 +822,9 @@ function WindowForm({ initial, onSave, onCancel }) {
   }, [form.numberWide])
 
   useEffect(() => {
-    // Reset top window fields when switching 1-wide vs 2-wide top
-    setForm(f => ({ ...f, topStyle: '', topHeight: '', topHeightFrac: '', topShortSideHeight: '', topShortSideHeightFrac: '', topFacing: '', topLeftStyle: '', topRightStyle: '', topLeftFacing: '', topRightFacing: '', topLeftShortSide: '', topRightShortSide: '', topGrilleType: '', topGrillePattern: '' }))
+    // Reset top window style/facing fields when switching 1-wide vs 2-wide top
+    // but preserve topHeight since it's auto-calculated from overall - bottom
+    setForm(f => ({ ...f, topStyle: '', topShortSideHeight: '', topShortSideHeightFrac: '', topFacing: '', topLeftStyle: '', topRightStyle: '', topLeftFacing: '', topRightFacing: '', topLeftShortSide: '', topRightShortSide: '', topGrilleType: '', topGrillePattern: '' }))
   }, [form.topWindowWidth])
 
   useEffect(() => {
