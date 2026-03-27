@@ -205,7 +205,7 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
       }}>
         {value ? (
           <>
-            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 48, height: 40, objectFit: 'cover', borderRadius: 3, flexShrink: 0 }} />}
+            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 48, height: 40, objectFit: 'contain', borderRadius: 3, flexShrink: 0 }} />}
             <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{value}</span>
           </>
         ) : (
@@ -229,7 +229,7 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,151,58,0.08)'}
                 onMouseLeave={e => e.currentTarget.style.background = selected ? 'rgba(200,151,58,0.15)' : 'transparent'}>
                 {img ? (
-                  <img src={img} alt={opt} style={{ width: 64, height: 52, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />
+                  <img src={img} alt={opt} style={{ width: 64, height: 52, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }} />
                 ) : (
                   <div style={{ width: 64, height: 52, background: 'var(--navy-light)', borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <span style={{ fontSize: 9, color: 'var(--gray)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
@@ -270,7 +270,7 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
       onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,151,58,0.08)'}
       onMouseLeave={e => e.currentTarget.style.background = selected ? 'rgba(200,151,58,0.15)' : 'transparent'}>
         {img ? (
-          <img src={img} alt={opt} style={{ width: 64, height: 52, objectFit: 'cover', borderRadius: 4, flexShrink: 0 }} />
+          <img src={img} alt={opt} style={{ width: 64, height: 52, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }} />
         ) : (
           <div style={{ width: 44, height: 36, background: 'var(--navy-mid)', borderRadius: 4, flexShrink: 0 }} />
         )}
@@ -289,7 +289,7 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
       }}>
         {value ? (
           <>
-            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 48, height: 40, objectFit: 'cover', borderRadius: 3, flexShrink: 0 }} />}
+            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 48, height: 40, objectFit: 'contain', borderRadius: 3, flexShrink: 0 }} />}
             <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{value}</span>
           </>
         ) : (
