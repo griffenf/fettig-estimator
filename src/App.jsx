@@ -626,7 +626,7 @@ function CustomerJobSearch({ onSelect }) {
         <input placeholder="Start typing a customer name..." value={query} onChange={e => setQuery(e.target.value)} autoComplete="off" />
         {loading && <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--red)', fontSize: 12 }}>Searching...</div>}
       </div>
-      {error && <div style={{ marginTop: 8, padding: '10px 12px', background: '#fce8e6', border: '1px solid #e57373', borderRadius: 6, fontSize: 13, color: '#e74c3c' }}>⚠️ {error}</div>}
+      {error && <div style={{ marginTop: 8, padding: '10px 12px', background: 'rgba(224,85,85,0.12)', border: '1px solid rgba(224,85,85,0.3)', borderRadius: 6, fontSize: 13, color: '#e74c3c' }}>⚠️ {error}</div>}
       {results.length > 0 && (
         <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: 'var(--surface)', border: '1.5px solid var(--red)', borderRadius: 8, marginTop: 4, maxHeight: 340, overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
           {results.map(customer => (
@@ -1535,7 +1535,7 @@ export default function App() {
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 0 80px 0', background: 'var(--bg)', minHeight: '100vh' }}>
       <div style={{ background: 'var(--bg-mid)', borderBottom: '3px solid var(--red)', padding: '18px 20px', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 18, letterSpacing: '0.06em', color: '#ffffff', color: '#fff' }}>FETTIG MILLWORK & WINDOWS</div>
+        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 18, letterSpacing: '0.06em', color: 'var(--text)', color: '#fff' }}>FETTIG MILLWORK & WINDOWS</div>
         <div style={{ color: '#ffb3a7', fontSize: 11, letterSpacing: '0.12em', fontWeight: 600 }}>WINDOW ESTIMATOR</div>
         <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
           {[['job','1','Job Info'],['windows','2','Windows'],['review','3','Review & Submit']].map(([s,n,label]) => (
@@ -1663,7 +1663,7 @@ export default function App() {
                   {submitting ? '⏳ Posting to JobTread...' : `🔗 Post Estimate to ${jobInfo.jobName || 'JobTread Job'}`}
                 </button>
               ) : (
-                <div style={{ background: '#e8f5ec', border: '1.5px solid var(--green)', borderRadius: 8, padding: 16, textAlign: 'center' }}>
+                <div style={{ background: 'rgba(78,205,196,0.12)', border: '1.5px solid var(--accent)', borderRadius: 8, padding: 16, textAlign: 'center' }}>
                   <div style={{ fontSize: 24, marginBottom: 6 }}>✅</div>
                   <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>Sent to JobTread!</div>
                   <div style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>Estimate Notes.pdf uploaded to <strong>{jobInfo.jobName}</strong>.</div>
