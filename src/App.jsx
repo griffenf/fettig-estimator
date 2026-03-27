@@ -199,17 +199,17 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
     <div style={{ marginBottom: 12, position: 'relative' }} ref={ref}>
       {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
       <div onClick={() => setOpen(o => !o)} style={{
-        display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+        display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
         background: 'var(--navy-light)', border: '1.5px solid var(--border)', borderRadius: 6,
-        cursor: 'pointer', minHeight: 44
+        cursor: 'pointer', minHeight: 52
       }}>
         {value ? (
           <>
-            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 48, height: 40, objectFit: 'contain', borderRadius: 3, flexShrink: 0 }} />}
-            <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{value}</span>
+            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 60, height: 48, objectFit: 'contain', borderRadius: 3, flexShrink: 0 }} />}
+            <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>{value}</span>
           </>
         ) : (
-          <span style={{ flex: 1, fontSize: 13, color: 'var(--gray)' }}>{placeholder || 'Select...'}</span>
+          <span style={{ flex: 1, fontSize: 15, color: 'var(--gray)' }}>{placeholder || 'Select...'}</span>
         )}
         <span style={{ color: 'var(--gold)', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
       </div>
@@ -229,13 +229,13 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
                 onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,151,58,0.08)'}
                 onMouseLeave={e => e.currentTarget.style.background = selected ? 'rgba(200,151,58,0.15)' : 'transparent'}>
                 {img ? (
-                  <img src={img} alt={opt} style={{ width: 64, height: 52, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }} />
+                  <img src={img} alt={opt} style={{ width: 80, height: 64, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }} />
                 ) : (
                   <div style={{ width: 64, height: 52, background: 'var(--navy-light)', borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                     <span style={{ fontSize: 9, color: 'var(--gray)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
                   </div>
                 )}
-                <span style={{ fontSize: 13, color: selected ? 'var(--gold)' : 'var(--text)', fontWeight: selected ? 600 : 400 }}>{opt}</span>
+                <span style={{ fontSize: 15, color: selected ? 'var(--gold)' : 'var(--text)', fontWeight: selected ? 600 : 400 }}>{opt}</span>
               </div>
             )
           })}
@@ -270,11 +270,11 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
       onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,151,58,0.08)'}
       onMouseLeave={e => e.currentTarget.style.background = selected ? 'rgba(200,151,58,0.15)' : 'transparent'}>
         {img ? (
-          <img src={img} alt={opt} style={{ width: 64, height: 52, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }} />
+          <img src={img} alt={opt} style={{ width: 80, height: 64, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }} />
         ) : (
           <div style={{ width: 44, height: 36, background: 'var(--navy-mid)', borderRadius: 4, flexShrink: 0 }} />
         )}
-        <span style={{ fontSize: 13, color: selected ? 'var(--gold)' : 'var(--text)', fontWeight: selected ? 600 : 400 }}>{opt}</span>
+        <span style={{ fontSize: 15, color: selected ? 'var(--gold)' : 'var(--text)', fontWeight: selected ? 600 : 400 }}>{opt}</span>
       </div>
     )
   }
@@ -283,17 +283,17 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
     <div style={{ marginBottom: 12, position: 'relative' }} ref={ref}>
       {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
       <div onClick={() => setOpen(o => !o)} style={{
-        display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
+        display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
         background: 'var(--navy-light)', border: '1.5px solid var(--border)', borderRadius: 6,
-        cursor: 'pointer', minHeight: 44
+        cursor: 'pointer', minHeight: 52
       }}>
         {value ? (
           <>
-            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 48, height: 40, objectFit: 'contain', borderRadius: 3, flexShrink: 0 }} />}
-            <span style={{ flex: 1, fontSize: 13, color: 'var(--text)' }}>{value}</span>
+            {selectedImg && <img src={selectedImg} alt={value} style={{ width: 60, height: 48, objectFit: 'contain', borderRadius: 3, flexShrink: 0 }} />}
+            <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>{value}</span>
           </>
         ) : (
-          <span style={{ flex: 1, fontSize: 13, color: 'var(--gray)' }}>Select style...</span>
+          <span style={{ flex: 1, fontSize: 15, color: 'var(--gray)' }}>Select style...</span>
         )}
         <span style={{ color: 'var(--gold)', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
       </div>
@@ -872,7 +872,7 @@ function WindowForm({ initial, onSave, onCancel }) {
   return (
     <div style={{ background: 'var(--navy-mid)', border: '2px solid var(--gold)', borderRadius: 10, padding: '20px', marginBottom: 16 }}>
       <div style={{ fontFamily: 'var(--font-head)', fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--gold)', marginBottom: 16, textTransform: 'uppercase' }}>Window Details</div>
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 16px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
 
         <div style={{ gridColumn: '1/-1', display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 12 }}>
           <div style={{ flex: 1 }}>
@@ -1323,7 +1323,7 @@ export default function App() {
   let globalWinNum = 1
 
   return (
-    <div style={{ maxWidth: 680, margin: '0 auto', padding: '0 0 80px 0' }}>
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 0 80px 0' }}>
       <div style={{ background: 'var(--navy-light)', borderBottom: '3px solid var(--gold)', padding: '18px 20px', position: 'sticky', top: 0, zIndex: 100 }}>
         <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 18, letterSpacing: '0.06em' }}>FETTIG MILLWORK & WINDOWS</div>
         <div style={{ color: 'var(--gold)', fontSize: 11, letterSpacing: '0.12em', fontWeight: 600 }}>WINDOW ESTIMATOR</div>
