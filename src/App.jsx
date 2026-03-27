@@ -1663,7 +1663,7 @@ export default function App() {
                   {submitting ? '⏳ Posting to JobTread...' : `🔗 Post Estimate to ${jobInfo.jobName || 'JobTread Job'}`}
                 </button>
               ) : (
-                <div style={{ background: 'rgba(78,205,196,0.12)', border: '1.5px solid var(--accent)', borderRadius: 8, padding: 16, textAlign: 'center' }}>
+                <div style={{ background: 'rgba(212,149,106,0.12)', border: '1.5px solid var(--accent)', borderRadius: 8, padding: 16, textAlign: 'center' }}>
                   <div style={{ fontSize: 24, marginBottom: 6 }}>✅</div>
                   <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>Sent to JobTread!</div>
                   <div style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>Estimate Notes.pdf uploaded to <strong>{jobInfo.jobName}</strong>.</div>
