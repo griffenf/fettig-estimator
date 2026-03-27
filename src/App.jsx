@@ -94,8 +94,8 @@ const IMG = {
     'Extended Quarter Round': { 'Left': '/images/facing/extended-quarter-round-left.png', 'Right': '/images/facing/extended-quarter-round-right.png' },
     'Quarter Eyebrow': { 'Left': '/images/facing/quarter-eyebrow-left.png', 'Right': '/images/facing/quarter-eyebrow-right.png' },
     'Extended Quarter Eyebrow': { 'Left': '/images/facing/extended-quarter-eyebrow-left.png', 'Right': '/images/facing/extended-quarter-eyebrow-right.png' },
-    'Casement': { 'Left': '/images/facing/casement-left.jpg', 'Right': '/images/facing/casement-right.jpg' },
-    'Slider': { 'XO': '/images/facing/slider-xo.jpg', 'OX': '/images/facing/slider-ox.jpg' },
+    'Casement': { 'Left': '/images/facing/casement-left.png', 'Right': '/images/facing/casement-right.png' },
+    'Slider': { 'XO': '/images/facing/slider-xo.png', 'OX': '/images/facing/slider-ox.png' },
   },
   exteriorColor: {
     'Stone White': '/images/colors/ext-stone-white.jpg',
