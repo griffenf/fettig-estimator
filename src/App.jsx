@@ -322,6 +322,25 @@ const CASING_STYLES = ['Ranch', 'Colonial', 'Other']
 
 const FRACTIONS = ['', '1/16"', '1/8"', '3/16"', '1/4"', '5/16"', '3/8"', '7/16"', '1/2"', '9/16"', '5/8"', '11/16"', '3/4"', '13/16"', '7/8"', '15/16"']
 
+// Convert fraction string like "3/8\"" to decimal
+function fracToDecimal(frac) {
+  if (!frac) return 0
+  const m = frac.match(/(\d+)\/(\d+)/)
+  if (!m) return 0
+  return parseInt(m[1]) / parseInt(m[2])
+}
+
+// Convert decimal inches to whole + fraction string
+function decimalToFrac(dec) {
+  const whole = Math.floor(dec)
+  const remainder = dec - whole
+  const sixteenths = Math.round(remainder * 16)
+  if (sixteenths === 0) return { whole: String(whole), frac: '' }
+  if (sixteenths === 16) return { whole: String(whole + 1), frac: '' }
+  const fracs = { 1:'1/16"', 2:'1/8"', 3:'3/16"', 4:'1/4"', 5:'5/16"', 6:'3/8"', 7:'7/16"', 8:'1/2"', 9:'9/16"', 10:'5/8"', 11:'11/16"', 12:'3/4"', 13:'13/16"', 14:'7/8"', 15:'15/16"' }
+  return { whole: String(whole), frac: fracs[sixteenths] || '' }
+}
+
 const WIN = {
   'Casement':               { wide:[1,2,3,4], mt:2, m:['w','h'],     pt:'cas', g:['GBG','SDL'], gp:STD_PATTERNS,   hw:1,sc:1,sm:1 },
   'Picture':                { wide:[1,2,3,4], mt:2, m:['w','h'],     pt:'pic', g:['GBG','SDL'], gp:STD_PATTERNS,   hw:0,sc:0,sm:0 },
@@ -760,6 +779,7 @@ const EMPTY = {
   numberHigh: 1,
   topWindowWidth: 1,
   topStyle: '', topHeight: '', topHeightFrac: '', topShortSideHeight: '', topShortSideHeightFrac: '',
+  topFacing: '', topLeftFacing: '', topRightFacing: '', topLeftShortSide: '', topLeftShortSideFrac: '', topRightShortSide: '', topRightShortSideFrac: '',
   topTempered: '', topDecorativeGlass: '', topGrilleType: '', topGrillePattern: '',
   topLeftStyle: '', topLeftHeight: '', topLeftHeightFrac: '',
   topRightStyle: '', topRightHeight: '', topRightHeightFrac: '',
@@ -802,6 +822,11 @@ function WindowForm({ initial, onSave, onCancel }) {
   }, [form.numberWide])
 
   useEffect(() => {
+    // Reset top window fields when switching 1-wide vs 2-wide top
+    setForm(f => ({ ...f, topStyle: '', topHeight: '', topHeightFrac: '', topShortSideHeight: '', topShortSideHeightFrac: '', topFacing: '', topLeftStyle: '', topRightStyle: '', topLeftFacing: '', topRightFacing: '', topLeftShortSide: '', topRightShortSide: '', topGrilleType: '', topGrillePattern: '' }))
+  }, [form.topWindowWidth])
+
+  useEffect(() => {
     setForm(f => ({ ...f, glassSurface: '', decorativeGlass: 'None' }))
   }, [form.pane])
 
@@ -814,6 +839,17 @@ function WindowForm({ initial, onSave, onCancel }) {
       set('interiorColor', '')
     }
   }, [form.exteriorColor])
+
+  // Auto-calculate top window height from overall - bottom
+  useEffect(() => {
+    if (!form.overallHeight || !form.height) return
+    const overall = parseFloat(form.overallHeight) + fracToDecimal(form.overallHeightFrac)
+    const bottom = parseFloat(form.height) + fracToDecimal(form.heightFrac)
+    if (isNaN(overall) || isNaN(bottom) || bottom >= overall) return
+    const topDec = overall - bottom
+    const { whole, frac } = decimalToFrac(topDec)
+    setForm(f => ({ ...f, topHeight: whole, topHeightFrac: frac }))
+  }, [form.overallHeight, form.overallHeightFrac, form.height, form.heightFrac])
 
   // Auto-sync casing type from jamb type
   useEffect(() => {
@@ -919,55 +955,35 @@ function WindowForm({ initial, onSave, onCancel }) {
       return (
         <>
           <SelectWithPreview label="Grille Type" value={form.grilleType}
-            onChange={v => { set('grilleType', v); set('grillePattern', ''); set('topPaneGrilleType', ''); set('topPaneGrillePattern', ''); set('bottomPaneGrilleType', ''); set('bottomPaneGrillePattern', '') }}
+            onChange={v => { set('grilleType', v); set('grillePattern', ''); set('topPaneGrillePattern', ''); set('bottomPaneGrillePattern', '') }}
             imgMap={IMG.grilleType} opts={['', ...cfg.g]} placeholder="None" />
           {form.grilleType && (
             <>
-              <SelectWithPreview label="Grille Pattern" value={form.grillePattern}
-                onChange={v => set('grillePattern', v)} imgMap={IMG.grillePattern}
-                opts={grillePatterns} placeholder="Select..." />
-              {form.grillePattern && (
-                <>
-                  <Field label="Pane Application" col="1/-1">
-                    <select value={form.grillePaneApplication} onChange={e => {
-                      set('grillePaneApplication', e.target.value)
-                      set('topPaneGrilleType', ''); set('topPaneGrillePattern', '')
-                      set('bottomPaneGrilleType', ''); set('bottomPaneGrillePattern', '')
-                    }}>
-                      <option>Both Panes</option>
-                      <option>Top Pane Only</option>
-                      <option>Bottom Pane Only</option>
-                    </select>
-                  </Field>
-                  {form.grillePaneApplication !== 'Both Panes' && (
-                    <div style={{ gridColumn: '1/-1', fontSize: 12, color: 'var(--gray)', marginBottom: 8 }}>
-                      Using grille type: <strong>{form.grilleType}</strong>, pattern: <strong>{form.grillePattern}</strong> on {form.grillePaneApplication}
-                    </div>
-                  )}
-                  {form.grillePaneApplication === 'Both Panes' && (
-                    <div style={{ gridColumn: '1/-1' }}>
-                      <div style={{ fontSize: 12, color: 'var(--gold)', fontWeight: 700, marginBottom: 6, textTransform: 'uppercase' }}>Override per pane (optional)</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
-                        <SelectWithPreview label="Top Pane Type" value={form.topPaneGrilleType}
-                          onChange={v => set('topPaneGrilleType', v)} imgMap={IMG.grilleType}
-                          opts={['Same', ...cfg.g]} placeholder="Same" />
-                        {form.topPaneGrilleType && form.topPaneGrilleType !== 'Same' && (
-                          <SelectWithPreview label="Top Pane Pattern" value={form.topPaneGrillePattern}
-                            onChange={v => set('topPaneGrillePattern', v)} imgMap={IMG.grillePattern}
-                            opts={gp} placeholder="Select..." />
-                        )}
-                        <SelectWithPreview label="Bottom Pane Type" value={form.bottomPaneGrilleType}
-                          onChange={v => set('bottomPaneGrilleType', v)} imgMap={IMG.grilleType}
-                          opts={['Same', ...cfg.g]} placeholder="Same" />
-                        {form.bottomPaneGrilleType && form.bottomPaneGrilleType !== 'Same' && (
-                          <SelectWithPreview label="Bottom Pane Pattern" value={form.bottomPaneGrillePattern}
-                            onChange={v => set('bottomPaneGrillePattern', v)} imgMap={IMG.grillePattern}
-                            opts={gp} placeholder="Select..." />
-                        )}
-                      </div>
-                    </div>
-                  )}
-                </>
+              <Field label="Pane Application" col="1/-1">
+                <select value={form.grillePaneApplication} onChange={e => {
+                  set('grillePaneApplication', e.target.value)
+                  set('grillePattern', ''); set('topPaneGrillePattern', ''); set('bottomPaneGrillePattern', '')
+                }}>
+                  <option>Both Panes</option>
+                  <option>Top Pane Only</option>
+                  <option>Bottom Pane Only</option>
+                </select>
+              </Field>
+              {form.grillePaneApplication === 'Both Panes' ? (
+                <div style={{ gridColumn: '1/-1' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
+                    <SelectWithPreview label="Top Pane Pattern" value={form.topPaneGrillePattern}
+                      onChange={v => set('topPaneGrillePattern', v)} imgMap={IMG.grillePattern}
+                      opts={gp} placeholder="Select..." />
+                    <SelectWithPreview label="Bottom Pane Pattern" value={form.bottomPaneGrillePattern}
+                      onChange={v => set('bottomPaneGrillePattern', v)} imgMap={IMG.grillePattern}
+                      opts={gp} placeholder="Select..." />
+                  </div>
+                </div>
+              ) : (
+                <SelectWithPreview label="Grille Pattern" value={form.grillePattern}
+                  onChange={v => set('grillePattern', v)} imgMap={IMG.grillePattern}
+                  opts={gp} placeholder="Select..." />
               )}
             </>
           )}
@@ -1287,6 +1303,28 @@ function WindowForm({ initial, onSave, onCancel }) {
                   <SelectWithPreview label="Right Panel Style" value={form.topRightStyle}
                     onChange={v => set('topRightStyle', v)} imgMap={IMG.windows}
                     opts={topOpts} placeholder="Select..." />
+                  {WIN[form.topLeftStyle]?.facing && (
+                    <SelectWithPreview label="Left Panel Facing (from exterior)"
+                      value={form.topLeftFacing || ''} onChange={v => set('topLeftFacing', v)}
+                      imgMap={IMG.facing[form.topLeftStyle] || {}}
+                      opts={['Left', 'Right']} placeholder="Select..." />
+                  )}
+                  {WIN[form.topRightStyle]?.facing && (
+                    <SelectWithPreview label="Right Panel Facing (from exterior)"
+                      value={form.topRightFacing || ''} onChange={v => set('topRightFacing', v)}
+                      imgMap={IMG.facing[form.topRightStyle] || {}}
+                      opts={['Left', 'Right']} placeholder="Select..." />
+                  )}
+                  {WIN[form.topLeftStyle]?.m.includes('s') && (
+                    <Field label="Left Panel Short Side Height (in) *">
+                      <MeasurementInput value={form.topLeftShortSide} frac={form.topLeftShortSideFrac} onValue={v => set('topLeftShortSide', v)} onFrac={v => set('topLeftShortSideFrac', v)} />
+                    </Field>
+                  )}
+                  {WIN[form.topRightStyle]?.m.includes('s') && (
+                    <Field label="Right Panel Short Side Height (in) *">
+                      <MeasurementInput value={form.topRightShortSide} frac={form.topRightShortSideFrac} onValue={v => set('topRightShortSide', v)} onFrac={v => set('topRightShortSideFrac', v)} />
+                    </Field>
+                  )}
                 </>
               ) : (
                 <div style={{ gridColumn: '1/-1' }}>
