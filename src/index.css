@@ -1,24 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap');
 
 :root {
-  --bg:         #e8eaed;   /* medium-light gray page bg */
-  --surface:    #f4f5f7;   /* card/panel surfaces — slightly lighter */
-  --field:      #ffffff;   /* input/dropdown fields — white */
-  --field-alt:  #eef0f3;   /* alternate field / dropdown options */
+  --bg:         #1c2333;   /* dark slate blue page bg */
+  --surface:    #242e42;   /* card/panel */
+  --surface-2:  #2d3a52;   /* slightly lighter surface */
+  --field:      #1a2030;   /* input/dropdown fields — darker than surface */
 
-  --accent:     #2e6da4;   /* clear blue accent */
-  --accent-dk:  #1d4f78;   /* darker blue hover */
-  --accent-lt:  #5b9fd4;   /* lighter blue for muted highlights */
+  --accent:     #4ecdc4;   /* teal accent */
+  --accent-dk:  #35a89f;   /* darker teal hover */
+  --accent-lt:  #7eddd7;   /* lighter teal highlight */
 
-  --text:       #1a1f2e;   /* near-black for all text on light bg */
-  --text-mid:   #444c5c;   /* secondary text */
-  --text-muted: #6b7689;   /* placeholders/hints */
+  --text:       #e8edf5;   /* near-white primary text */
+  --text-mid:   #a8b4c8;   /* secondary text */
+  --text-muted: #6a7a94;   /* placeholders/hints */
 
-  --border:     #b0b8c4;   /* visible but not harsh borders */
-  --border-focus: #2e6da4;
+  --border:     rgba(78,205,196,0.2);
+  --border-field: rgba(78,205,196,0.3);
 
-  --green:  #2e7d4f;
-  --red:    #c0392b;
+  --green:  #4ecdc4;
+  --red:    #e05555;
 
   --font-head: 'Barlow Condensed', sans-serif;
   --font-body: 'Barlow', sans-serif;
@@ -38,7 +38,7 @@ input, select, textarea {
   width: 100%;
   padding: 11px 14px;
   background: var(--field);
-  border: 1.5px solid var(--border);
+  border: 1.5px solid var(--border-field);
   border-radius: 6px;
   color: var(--text);
   font-family: var(--font-body);
@@ -49,27 +49,28 @@ input, select, textarea {
 }
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: var(--border-focus);
-  box-shadow: 0 0 0 3px rgba(46,109,164,0.15);
+  border-color: var(--accent);
+  box-shadow: 0 0 0 3px rgba(78,205,196,0.15);
 }
 input::placeholder, textarea::placeholder { color: var(--text-muted); }
 input[type="checkbox"] { width: auto; padding: 0; }
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button { opacity: 1; height: 28px; }
 input:disabled, select:disabled {
-  background: var(--field-alt);
+  background: var(--surface);
   color: var(--text-muted);
   cursor: not-allowed;
+  opacity: 0.7;
 }
 select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%232e6da4' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234ecdc4' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   padding-right: 36px;
   cursor: pointer;
 }
-select option { background: var(--field); color: var(--text); }
-select optgroup { background: var(--field-alt); color: var(--accent-dk); font-weight: 700; }
+select option { background: #1a2030; color: #e8edf5; }
+select optgroup { background: #1c2333; color: #4ecdc4; font-weight: 700; }
 textarea { resize: vertical; min-height: 80px; }
 
 label {
@@ -93,23 +94,23 @@ button {
 }
 button:active { transform: scale(0.97); }
 
-.btn-gold { background: var(--accent); color: #fff; }
-.btn-gold:hover { background: var(--accent-dk); }
+.btn-gold { background: var(--accent); color: #1c2333; }
+.btn-gold:hover { background: var(--accent-lt); }
 
 .btn-outline {
-  background: var(--field);
-  color: var(--accent);
-  border: 1.5px solid var(--border);
+  background: transparent;
+  color: var(--text);
+  border: 1.5px solid var(--border-field);
 }
 .btn-outline:hover {
-  background: var(--field-alt);
   border-color: var(--accent);
+  color: var(--accent);
 }
 
 .btn-danger {
-  background: rgba(192,57,43,0.08);
-  color: var(--red);
-  border: 1px solid rgba(192,57,43,0.3);
+  background: rgba(224,85,85,0.12);
+  color: #f08080;
+  border: 1px solid rgba(224,85,85,0.3);
   padding: 8px 12px;
 }
 
