@@ -1,41 +1,45 @@
-*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+@import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap');
 
 :root {
   --navy: #1a2332;
-  --navy-light: #243044;
-  --navy-mid: #2d3c52;
+  --navy-mid: #1e2d40;
+  --navy-light: #243448;
   --gold: #c8973a;
-  --gold-light: #e8b44a;
-  --white: #f5f3ef;
   --gray: #8a9ab0;
-  --red: #c0392b;
+  --border: rgba(138,154,176,0.25);
   --green: #27ae60;
-  --border: rgba(200,151,58,0.25);
+  --text: #f5f3ef;
   --font-head: 'Barlow Condensed', sans-serif;
   --font-body: 'Barlow', sans-serif;
 }
 
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+html {
+  font-size: 17px; /* base bump for iPad */
+}
+
 body {
   background: var(--navy);
-  color: var(--white);
+  color: var(--text);
   font-family: var(--font-body);
-  font-size: 15px;
-  min-height: 100vh;
-  -webkit-font-smoothing: antialiased;
+  font-size: 1rem;
+  -webkit-text-size-adjust: 100%;
 }
 
 input, select, textarea {
-  font-family: var(--font-body);
-  font-size: 15px;
+  width: 100%;
+  padding: 12px 14px;
   background: var(--navy-light);
   border: 1.5px solid var(--border);
-  color: var(--white);
   border-radius: 6px;
-  padding: 10px 12px;
-  width: 100%;
-  transition: border-color 0.2s;
-  -webkit-appearance: none;
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: 1rem;
+  margin-bottom: 0;
   appearance: none;
+  -webkit-appearance: none;
+  transition: border-color 0.15s;
 }
 
 input:focus, select:focus, textarea:focus {
@@ -43,63 +47,64 @@ input:focus, select:focus, textarea:focus {
   border-color: var(--gold);
 }
 
+input[type="checkbox"] {
+  width: auto;
+  padding: 0;
+}
+
+input[type="number"]::-webkit-inner-spin-button,
+input[type="number"]::-webkit-outer-spin-button {
+  opacity: 1;
+  height: 28px;
+}
+
 select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c8973a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
-  background-position: right 12px center;
+  background-position: right 14px center;
   padding-right: 36px;
+  cursor: pointer;
 }
 
-input::placeholder, textarea::placeholder { color: var(--gray); }
+textarea { resize: vertical; min-height: 80px; }
 
-label {
-  display: block;
-  font-size: 11px;
-  font-weight: 600;
-  letter-spacing: 0.08em;
-  text-transform: uppercase;
-  color: var(--gold);
-  margin-bottom: 5px;
-}
+label { font-size: 0.75rem; }
 
 button {
-  font-family: var(--font-head);
-  letter-spacing: 0.05em;
-  cursor: pointer;
-  border: none;
+  font-family: var(--font-body);
+  font-size: 1rem;
   border-radius: 6px;
-  font-size: 15px;
+  border: none;
+  cursor: pointer;
+  padding: 12px 20px;
   font-weight: 600;
-  padding: 11px 20px;
-  transition: all 0.15s;
+  transition: opacity 0.15s, transform 0.1s;
+  -webkit-tap-highlight-color: transparent;
 }
 
 button:active { transform: scale(0.97); }
 
-.btn-gold {
-  background: var(--gold);
-  color: var(--navy);
-}
-.btn-gold:hover { background: var(--gold-light); }
-
-.btn-outline {
-  background: transparent;
-  border: 1.5px solid var(--border);
-  color: var(--white);
-}
+.btn-gold { background: var(--gold); color: var(--navy); }
+.btn-gold:hover { opacity: 0.9; }
+.btn-outline { background: transparent; color: var(--text); border: 1.5px solid var(--border); }
 .btn-outline:hover { border-color: var(--gold); color: var(--gold); }
+.btn-danger { background: rgba(192,57,43,0.2); color: #e74c3c; border: 1px solid rgba(192,57,43,0.3); padding: 8px 12px; }
 
-.btn-danger {
-  background: transparent;
-  border: 1.5px solid rgba(192,57,43,0.4);
-  color: #e74c3c;
-  padding: 6px 12px;
-  font-size: 13px;
-}
-.btn-danger:hover { background: rgba(192,57,43,0.15); }
+/* iPad specific optimizations */
+@media (min-width: 768px) {
+  html { font-size: 18px; }
+  
+  input, select, textarea {
+    padding: 13px 16px;
+    font-size: 1rem;
+  }
 
-.btn-green {
-  background: var(--green);
-  color: white;
+  button {
+    padding: 13px 22px;
+    min-height: 48px;
+  }
 }
-.btn-green:hover { background: #2ecc71; }
+
+@media (min-width: 1024px) {
+  html { font-size: 17px; }
+}
