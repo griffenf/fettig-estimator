@@ -198,7 +198,7 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
 
   return (
     <div style={{ marginBottom: 12, position: 'relative' }} ref={ref}>
-      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
+      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
       <div onClick={() => setOpen(o => !o)} style={{
         display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
         background: 'var(--surface)', border: '1.5px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderRadius: 6,
@@ -207,10 +207,10 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
         {value ? (
           <>
             {selectedImg && <img src={selectedImg} alt={value} style={{ width: 60, height: 48, objectFit: 'contain', borderRadius: 3, flexShrink: 0 }} />}
-            <span style={{ flex: 1, fontSize: 15, color: '#f5ede0' }}>{value}</span>
+            <span style={{ flex: 1, fontSize: 15, color: 'var(--field-text)' }}>{value}</span>
           </>
         ) : (
-          <span style={{ flex: 1, fontSize: 15, color: 'rgba(245,237,224,0.45)' }}>{placeholder || 'Select...'}</span>
+          <span style={{ flex: 1, fontSize: 15, color: 'var(--field-ph)' }}>{placeholder || 'Select...'}</span>
         )}
         <span style={{ color: 'var(--red)', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
       </div>
@@ -233,7 +233,7 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
                   <img src={img} alt={opt} style={{ width: 80, height: 64, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }} />
                 ) : (
                   <div style={{ width: 64, height: 52, background: 'var(--bg-mid)', borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 9, color: 'rgba(245,237,224,0.6)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
+                    <span style={{ fontSize: 9, color: 'var(--field-ph)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
                   </div>
                 )}
                 <span style={{ fontSize: 15, color: selected ? 'var(--red)' : 'var(--text)', fontWeight: selected ? 600 : 400 }}>{opt}</span>
@@ -282,7 +282,7 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
 
   return (
     <div style={{ marginBottom: 12, position: 'relative' }} ref={ref}>
-      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
+      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
       <div onClick={() => setOpen(o => !o)} style={{
         display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
         background: 'var(--surface)', border: '1.5px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderRadius: 6,
@@ -291,10 +291,10 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
         {value ? (
           <>
             {selectedImg && <img src={selectedImg} alt={value} style={{ width: 60, height: 48, objectFit: 'contain', borderRadius: 3, flexShrink: 0 }} />}
-            <span style={{ flex: 1, fontSize: 15, color: '#f5ede0' }}>{value}</span>
+            <span style={{ flex: 1, fontSize: 15, color: 'var(--field-text)' }}>{value}</span>
           </>
         ) : (
-          <span style={{ flex: 1, fontSize: 15, color: 'rgba(245,237,224,0.45)' }}>Select style...</span>
+          <span style={{ flex: 1, fontSize: 15, color: 'var(--field-ph)' }}>Select style...</span>
         )}
         <span style={{ color: 'var(--red)', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
       </div>
@@ -633,24 +633,24 @@ function CustomerJobSearch({ onSelect }) {
             <div key={customer.id}>
               <div onClick={() => setExpanded(expanded === customer.id ? null : customer.id)} style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(192,57,43,0.12)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
-                  <div style={{ fontWeight: 600, fontSize: 14 }}>{customer.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 2 }}>{customer.jobs?.nodes?.length || 0} job{customer.jobs?.nodes?.length !== 1 ? 's' : ''}</div>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: 'var(--text)' }}>{customer.name}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>{customer.jobs?.nodes?.length || 0} job{customer.jobs?.nodes?.length !== 1 ? 's' : ''}</div>
                 </div>
                 <div style={{ color: 'var(--red)', fontSize: 12 }}>{expanded === customer.id ? '▲' : '▼'}</div>
               </div>
               {expanded === customer.id && customer.jobs?.nodes?.map(job => (
                 <div key={job.id} onClick={() => handleSelectJob(customer, job)} style={{ padding: '10px 14px 10px 28px', cursor: 'pointer', borderBottom: '1px solid rgba(192,57,43,0.06)', background: 'rgba(192,57,43,0.05)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(192,57,43,0.12)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(192,57,43,0.05)'}>
                   <div style={{ fontWeight: 500, fontSize: 13 }}>{job.name || `Job #${job.id}`}</div>
-                  {job.address?.street && <div style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 2 }}>📍 {[job.address.street, job.address.city, job.address.state].filter(Boolean).join(', ')}</div>}
+                  {job.address?.street && <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>📍 {[job.address.street, job.address.city, job.address.state].filter(Boolean).join(', ')}</div>}
                   {job.status && <div style={{ fontSize: 11, color: 'var(--red)', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{job.status}</div>}
                 </div>
               ))}
-              {expanded === customer.id && !customer.jobs?.nodes?.length && <div style={{ padding: '10px 28px', fontSize: 13, color: 'var(--text-light)', fontStyle: 'italic' }}>No jobs found.</div>}
+              {expanded === customer.id && !customer.jobs?.nodes?.length && <div style={{ padding: '10px 28px', fontSize: 13, color: 'var(--text-muted)', fontStyle: 'italic' }}>No jobs found.</div>}
             </div>
           ))}
         </div>
       )}
-      {query.length >= 2 && !loading && results.length === 0 && !error && <div style={{ marginTop: 8, padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, color: 'var(--text-light)' }}>No customers found matching "{query}"</div>}
+      {query.length >= 2 && !loading && results.length === 0 && !error && <div style={{ marginTop: 8, padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, color: 'var(--text-muted)' }}>No customers found matching "{query}"</div>}
     </div>
   )
 }
@@ -660,7 +660,7 @@ function CustomerJobSearch({ onSelect }) {
 function Field({ label, children, col }) {
   return (
     <div style={{ marginBottom: 12, gridColumn: col }}>
-      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>
+      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>
       {children}
     </div>
   )
@@ -691,11 +691,11 @@ function WindowCard({ win, index, onEdit, onRemove }) {
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
             <span style={{ background: 'var(--red)', color: 'var(--bg)', borderRadius: 4, padding: '2px 7px', fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 12 }}>#{index + 1}</span>
-            <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 15 }}>{win.style}</span>
-            {parseInt(win.qty) > 1 && <span style={{ color: 'var(--text-light)', fontSize: 13 }}>× {win.qty}</span>}
+            <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 15, color: 'var(--text)' }}>{win.style}</span>
+            {parseInt(win.qty) > 1 && <span style={{ color: 'var(--text-muted)', fontSize: 13 }}>× {win.qty}</span>}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--text-light)', lineHeight: 1.6 }}>{summary}</div>
-          {win.notes && <div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-light)', fontStyle: 'italic' }}>"{win.notes}"</div>}
+          <div style={{ fontSize: 12, color: 'var(--text-muted)', lineHeight: 1.6 }}>{summary}</div>
+          {win.notes && <div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-muted)', fontStyle: 'italic' }}>"{win.notes}"</div>}
           {win.photos && win.photos.length > 0 && (
             <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
               {win.photos.map((p, i) => <img key={i} src={p} alt="" style={{ width: 56, height: 44, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)' }} />)}
@@ -721,7 +721,7 @@ function TopWindowUnit({ label, value, onChange, options }) {
       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--red)', letterSpacing: '0.07em', marginBottom: 8 }}>{label}</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 12px' }}>
         <div style={{ gridColumn: '1/-1', marginBottom: 10 }}>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Style</label>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Style</label>
           <select value={value.style} onChange={e => onChange({ style: e.target.value, width: '', widthFrac: '', height: '', heightFrac: '', shortSideHeight: '', shortSideHeightFrac: '', facing: '' })}>
             <option value="">Select...</option>
             {options.map(o => <option key={o}>{o}</option>)}
@@ -729,7 +729,7 @@ function TopWindowUnit({ label, value, onChange, options }) {
         </div>
         {facing && (
           <div style={{ gridColumn: '1/-1', marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Facing</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Facing</label>
             <select value={value.facing} onChange={e => set('facing', e.target.value)}>
               <option value="">Select...</option>
               <option>Left</option><option>Right</option>
@@ -738,19 +738,19 @@ function TopWindowUnit({ label, value, onChange, options }) {
         )}
         {m.includes('w') && (
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Width (in) *</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Width (in) *</label>
             <MeasurementInput value={value.width} frac={value.widthFrac} onValue={v => set('width', v)} onFrac={v => set('widthFrac', v)} />
           </div>
         )}
         {m.includes('h') && (
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Height (in) *</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Height (in) *</label>
             <MeasurementInput value={value.height} frac={value.heightFrac} onValue={v => set('height', v)} onFrac={v => set('heightFrac', v)} />
           </div>
         )}
         {m.includes('s') && (
           <div style={{ gridColumn: '1/-1', marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Short Side Height (in) *</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Short Side Height (in) *</label>
             <MeasurementInput value={value.shortSideHeight} frac={value.shortSideHeightFrac} onValue={v => set('shortSideHeight', v)} onFrac={v => set('shortSideHeightFrac', v)} />
           </div>
         )}
@@ -1045,7 +1045,7 @@ function WindowForm({ initial, onSave, onCancel }) {
                 onChange={v => set('style', v)} imgMap={IMG.windows} groups={WINDOW_STYLE_GROUPS} />
             </div>
             <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer', userSelect: 'none', flexShrink: 0 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
               <div onClick={() => set('insert', !form.insert)} style={{ width: 32, height: 32, borderRadius: 6, border: `2px solid ${form.insert ? 'var(--red)' : 'var(--border)'}`, background: form.insert ? 'var(--red)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}>
                 {form.insert && <span style={{ color: '#fff', fontSize: 18, fontWeight: 900, lineHeight: 1 }}>✓</span>}
               </div>
@@ -1068,7 +1068,7 @@ function WindowForm({ initial, onSave, onCancel }) {
                   ]} />
               </div>
               <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer', userSelect: 'none', flexShrink: 0 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
                 <div onClick={() => set('insert', !form.insert)} style={{ width: 32, height: 32, borderRadius: 6, border: `2px solid ${form.insert ? 'var(--red)' : 'var(--border)'}`, background: form.insert ? 'var(--red)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}>
                   {form.insert && <span style={{ color: '#fff', fontSize: 18, fontWeight: 900, lineHeight: 1 }}>✓</span>}
                 </div>
@@ -1152,7 +1152,7 @@ function WindowForm({ initial, onSave, onCancel }) {
                           const names = getPanelNames(panelCfg.panels)
                           return (
                             <div key={i}>
-                              <div style={{ fontSize: 10, color: 'var(--text-light)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{names[i]}</div>
+                              <div style={{ fontSize: 10, color: 'var(--text-muted)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{names[i]}</div>
                               <select value={form.panelConfigs[i] || ''} onChange={e => {
                                 const pc = [...form.panelConfigs]; pc[i] = e.target.value; set('panelConfigs', pc)
                               }}>
@@ -1285,7 +1285,7 @@ function WindowForm({ initial, onSave, onCancel }) {
             <>
               <div style={{ gridColumn: '1/-1', background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.25)', borderRadius: 8, padding: '10px 14px', marginTop: 12, marginBottom: 4 }}>
                 <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 13, color: 'var(--red)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Top Window</div>
-                <div style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 2 }}>Color, glass surface, pane, hardware & screen match the bottom window unless changed below.</div>
+                <div style={{ fontSize: 12, color: 'var(--text-muted)', marginTop: 2 }}>Color, glass surface, pane, hardware & screen match the bottom window unless changed below.</div>
               </div>
 
               {/* Top window style */}
@@ -1378,7 +1378,7 @@ function WindowForm({ initial, onSave, onCancel }) {
 
           {/* ── EXTENSION JAMB & CASING ── */}
           <SectionHeader>Extension Jamb & Casing</SectionHeader>
-          <div style={{ gridColumn: '1/-1', fontSize: 12, color: 'var(--text-light)', marginBottom: 4, fontStyle: 'italic' }}>
+          <div style={{ gridColumn: '1/-1', fontSize: 12, color: 'var(--text-muted)', marginBottom: 4, fontStyle: 'italic' }}>
             Leave any section blank if not needed (e.g. no jamb, no casing, no LP trim).
           </div>
           <Field label="Jamb Depth (inches)">
@@ -1533,9 +1533,9 @@ export default function App() {
   let globalWinNum = 1
 
   return (
-    <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 0 80px 0' }}>
+    <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 0 80px 0', background: 'var(--bg)', minHeight: '100vh' }}>
       <div style={{ background: 'var(--bg-mid)', borderBottom: '3px solid var(--red)', padding: '18px 20px', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 18, letterSpacing: '0.06em', color: '#fff' }}>FETTIG MILLWORK & WINDOWS</div>
+        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 18, letterSpacing: '0.06em', color: '#fff', color: '#fff' }}>FETTIG MILLWORK & WINDOWS</div>
         <div style={{ color: '#ffb3a7', fontSize: 11, letterSpacing: '0.12em', fontWeight: 600 }}>WINDOW ESTIMATOR</div>
         <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
           {[['job','1','Job Info'],['windows','2','Windows'],['review','3','Review & Submit']].map(([s,n,label]) => (
@@ -1550,28 +1550,28 @@ export default function App() {
         {step === 'job' && (
           <div>
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4 }}>Job Information</div>
-              <div style={{ color: 'var(--text-light)', fontSize: 13 }}>Search for a customer to pull their jobs from JobTread.</div>
+              <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4, color: '#fff' }}>Job Information</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>Search for a customer to pull their jobs from JobTread.</div>
             </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Search Customer</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Search Customer</label>
               <CustomerJobSearch onSelect={handleJobSelect} />
             </div>
             {jobInfo.customerName && (
               <div style={{ background: 'rgba(192,57,43,0.08)', border: '1.5px solid var(--red)', borderRadius: 8, padding: '12px 16px', marginBottom: 16 }}>
                 <div style={{ fontSize: 11, color: 'var(--red)', fontWeight: 700, letterSpacing: '0.08em', marginBottom: 6 }}>SELECTED JOB</div>
                 <div style={{ fontWeight: 700, fontSize: 15 }}>{jobInfo.customerName}</div>
-                {jobInfo.jobName && <div style={{ fontSize: 13, color: 'var(--text-light)', marginTop: 3 }}>📋 {jobInfo.jobName}</div>}
-                {jobInfo.address && <div style={{ fontSize: 13, color: 'var(--text-light)', marginTop: 2 }}>📍 {jobInfo.address}</div>}
+                {jobInfo.jobName && <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 3 }}>📋 {jobInfo.jobName}</div>}
+                {jobInfo.address && <div style={{ fontSize: 13, color: 'var(--text-muted)', marginTop: 2 }}>📍 {jobInfo.address}</div>}
                 <button className="btn-outline" style={{ marginTop: 10, padding: '5px 12px', fontSize: 12 }} onClick={() => setJobInfo({ customerName: '', jobId: '', jobName: '', address: '', estimator: jobInfo.estimator, notes: jobInfo.notes })}>✕ Clear & search again</button>
               </div>
             )}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Estimator Name</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Estimator Name</label>
               <input placeholder="Your name" value={jobInfo.estimator} onChange={e => setJob('estimator', e.target.value)} />
             </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>General Job Notes</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>General Job Notes</label>
               <textarea rows={3} placeholder="Any general notes about this job..." value={jobInfo.notes} onChange={e => setJob('notes', e.target.value)} style={{ resize: 'vertical' }} />
             </div>
             <button className="btn-gold" style={{ width: '100%', fontSize: 16, padding: 14, opacity: jobValid ? 1 : 0.5 }} onClick={() => jobValid && setStep('windows')}>Next: Add Windows →</button>
@@ -1582,8 +1582,8 @@ export default function App() {
         {step === 'windows' && (
           <div>
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4 }}>Windows</div>
-              <div style={{ color: 'var(--text-light)', fontSize: 13 }}>Organize windows by room for <span style={{ color: 'var(--red)' }}>{jobInfo.customerName}</span>.</div>
+              <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4, color: '#fff' }}>Windows</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>Organize windows by room for <span style={{ color: 'var(--red)' }}>{jobInfo.customerName}</span>.</div>
             </div>
 
             {rooms.map((room, ri) => (
@@ -1632,18 +1632,18 @@ export default function App() {
         {step === 'review' && (
           <div>
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4 }}>Review & Submit</div>
-              <div style={{ color: 'var(--text-light)', fontSize: 13 }}>Review everything, then send straight to JobTread.</div>
+              <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4, color: '#fff' }}>Review & Submit</div>
+              <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>Review everything, then send straight to JobTread.</div>
             </div>
             <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderRadius: 10, padding: '16px 18px', marginBottom: 20 }}>
-              <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 15, color: 'var(--red)', letterSpacing: '0.06em', marginBottom: 10 }}>ESTIMATE SUMMARY</div>
+              <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 15, color: 'var(--text)', color: 'var(--red)', letterSpacing: '0.06em', marginBottom: 10 }}>ESTIMATE SUMMARY</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', fontSize: 13 }}>
-                <div><span style={{ color: 'var(--text-light)' }}>Customer:</span> <strong>{jobInfo.customerName}</strong></div>
-                {jobInfo.jobName && <div><span style={{ color: 'var(--text-light)' }}>Job:</span> {jobInfo.jobName}</div>}
-                {jobInfo.address && <div style={{ gridColumn: '1/-1' }}><span style={{ color: 'var(--text-light)' }}>Address:</span> {jobInfo.address}</div>}
-                {jobInfo.estimator && <div><span style={{ color: 'var(--text-light)' }}>Estimator:</span> {jobInfo.estimator}</div>}
-                <div><span style={{ color: 'var(--text-light)' }}>Rooms:</span> <strong>{rooms.filter(r => r.windows.length > 0).length}</strong></div>
-                <div><span style={{ color: 'var(--text-light)' }}>Total Units:</span> <strong>{allWindows.reduce((s, w) => s + parseInt(w.qty || 1), 0)}</strong></div>
+                <div><span style={{ color: 'var(--text-muted)' }}>Customer:</span> <strong>{jobInfo.customerName}</strong></div>
+                {jobInfo.jobName && <div><span style={{ color: 'var(--text-muted)' }}>Job:</span> {jobInfo.jobName}</div>}
+                {jobInfo.address && <div style={{ gridColumn: '1/-1' }}><span style={{ color: 'var(--text-muted)' }}>Address:</span> {jobInfo.address}</div>}
+                {jobInfo.estimator && <div><span style={{ color: 'var(--text-muted)' }}>Estimator:</span> {jobInfo.estimator}</div>}
+                <div><span style={{ color: 'var(--text-muted)' }}>Rooms:</span> <strong>{rooms.filter(r => r.windows.length > 0).length}</strong></div>
+                <div><span style={{ color: 'var(--text-muted)' }}>Total Units:</span> <strong>{allWindows.reduce((s, w) => s + parseInt(w.qty || 1), 0)}</strong></div>
               </div>
             </div>
 
@@ -1663,10 +1663,10 @@ export default function App() {
                   {submitting ? '⏳ Posting to JobTread...' : `🔗 Post Estimate to ${jobInfo.jobName || 'JobTread Job'}`}
                 </button>
               ) : (
-                <div style={{ background: 'rgba(39,174,96,0.15)', border: '1.5px solid var(--green)', borderRadius: 8, padding: 16, textAlign: 'center' }}>
+                <div style={{ background: 'rgba(74,154,90,0.15)', border: '1.5px solid var(--green)', borderRadius: 8, padding: 16, textAlign: 'center' }}>
                   <div style={{ fontSize: 24, marginBottom: 6 }}>✅</div>
                   <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>Sent to JobTread!</div>
-                  <div style={{ color: 'var(--text-light)', fontSize: 13, marginTop: 4 }}>Estimate Notes.pdf uploaded to <strong>{jobInfo.jobName}</strong>.</div>
+                  <div style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>Estimate Notes.pdf uploaded to <strong>{jobInfo.jobName}</strong>.</div>
                 </div>
               )}
               <button className="btn-outline" style={{ width: '100%', fontSize: 14, padding: 12 }} onClick={() => { setStep('job'); setJobInfo({ customerName: '', jobId: '', jobName: '', address: '', estimator: '', notes: '' }); setRooms([newRoom()]); setSubmitted(false) }}>Start New Estimate</button>
