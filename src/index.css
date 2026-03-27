@@ -1,23 +1,25 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap');
 
 :root {
-  --bg:         #f0ebe3;       /* warm off-white page background */
-  --surface:    #ffffff;       /* card/form surfaces */
-  --surface-2:  #e8e0d5;       /* section headers, info boxes */
-  --surface-3:  #d9cfc2;       /* input/dropdown background — clearly distinct from white */
+  --bg:         #f0ebe3;
+  --surface:    #ffffff;
+  --surface-2:  #e8e0d5;
+  --surface-3:  #3d2810;       /* dark brown for inputs/dropdowns */
 
-  --brown:      #7a5230;       /* primary accent */
-  --brown-dark: #5a3a1f;       /* hover/active */
-  --brown-light:#c49a6c;       /* lighter tan */
-  --brown-muted:#b8956e;       /* borders */
+  --brown:      #7a5230;
+  --brown-dark: #5a3a1f;
+  --brown-light:#c49a6c;
+  --brown-muted:#b8956e;
 
-  --text:       #1e1008;       /* very dark brown — maximum readability */
-  --text-mid:   #4a3020;       /* medium brown for labels */
-  --text-light: #7a5c42;       /* hints/placeholders */
+  --text:       #1e1008;       /* dark text on light backgrounds */
+  --text-on-dark: #f5ede0;     /* light text on dark brown fields */
+  --text-mid:   #4a3020;
+  --text-light: #7a5c42;
 
   --green:      #3a7a4a;
   --red:        #c0392b;
   --border:     rgba(122,82,48,0.3);
+  --border-dark: rgba(255,255,255,0.15);
 
   --font-head: 'Barlow Condensed', sans-serif;
   --font-body: 'Barlow', sans-serif;
@@ -37,10 +39,10 @@ body {
 input, select, textarea {
   width: 100%;
   padding: 11px 14px;
-  background: var(--surface-3);   /* noticeably darker than page bg */
-  border: 1.5px solid var(--brown-muted);
+  background: var(--surface-3);
+  border: 1.5px solid rgba(61,40,16,0.8);
   border-radius: 6px;
-  color: var(--text);
+  color: var(--text-on-dark);
   font-family: var(--font-body);
   font-size: 1rem;
   margin-bottom: 0;
@@ -51,13 +53,12 @@ input, select, textarea {
 
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: var(--brown);
-  box-shadow: 0 0 0 3px rgba(122,82,48,0.15);
-  background: #fff;
+  border-color: var(--brown-light);
+  box-shadow: 0 0 0 3px rgba(196,154,108,0.25);
 }
 
 input::placeholder, textarea::placeholder {
-  color: var(--text-light);
+  color: rgba(245,237,224,0.45);
 }
 
 input[type="checkbox"] { width: auto; padding: 0; }
@@ -69,18 +70,28 @@ input[type="number"]::-webkit-outer-spin-button {
 }
 
 input:disabled, select:disabled {
-  background: var(--surface-2);
-  color: var(--text-light);
+  background: #2a1a08;
+  color: rgba(245,237,224,0.4);
   cursor: not-allowed;
-  border-color: var(--border);
 }
 
 select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a5230' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c49a6c' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   padding-right: 36px;
   cursor: pointer;
+}
+
+/* Fix select option text on dark background */
+select option {
+  background: #3d2810;
+  color: #f5ede0;
+}
+select optgroup {
+  background: #2a1a08;
+  color: #c49a6c;
+  font-weight: 700;
 }
 
 textarea { resize: vertical; min-height: 80px; }
@@ -115,18 +126,18 @@ button:active { transform: scale(0.97); }
 
 .btn-outline {
   background: var(--surface-3);
-  color: var(--brown-dark);
-  border: 1.5px solid var(--brown-muted);
+  color: var(--text-on-dark);
+  border: 1.5px solid rgba(196,154,108,0.5);
 }
 .btn-outline:hover {
-  border-color: var(--brown);
-  background: var(--surface-2);
+  border-color: var(--brown-light);
+  background: #4a3015;
 }
 
 .btn-danger {
-  background: rgba(192,57,43,0.1);
-  color: var(--red);
-  border: 1px solid rgba(192,57,43,0.3);
+  background: rgba(192,57,43,0.15);
+  color: #e05040;
+  border: 1px solid rgba(192,57,43,0.4);
   padding: 8px 12px;
 }
 
