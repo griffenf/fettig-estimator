@@ -983,9 +983,12 @@ function WindowForm({ initial, onSave, onCancel }) {
   const getMissingFields = () => {
     if (!cfg) return []
     const missing = []
+    const is2High = form.numberHigh === 2
     if (cfg.m.includes('w') && !form.width) missing.push('Width')
-    if (cfg.m.includes('h') && !form.height) missing.push('Height')
-    if (cfg.m.includes('s') && !form.shortSideHeight) missing.push('Short Side Height')
+    if (cfg.m.includes('h') && !is2High && !form.height) missing.push('Height')
+    if (cfg.m.includes('h') && is2High && !form.overallHeight) missing.push('Overall Height')
+    if (cfg.m.includes('s') && !is2High && !form.shortSideHeight) missing.push('Short Side Height')
+    if (is2High && WIN[form.topStyle]?.m.includes('s') && !form.topShortSideHeight) missing.push('Top Short Side Height')
     if (cfg.m.includes('wo') && !form.widthOrHeight) missing.push('Width or Height')
     if (!form.exteriorColor) missing.push('Exterior Color')
     if (!form.interiorColor) missing.push('Interior Color')
