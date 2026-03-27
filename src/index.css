@@ -16,7 +16,7 @@
   --text:       #1a1f2e;   /* near-black text */
   --text-mid:   #4a5568;   /* secondary text */
   --text-muted: #8a95a8;   /* placeholder/hint */
-  --text-label: #374151;   /* field labels */
+  --text-label: #4a90d9;   /* field labels — JobTread blue */
 
   --border:     #e2e6ed;   /* card/panel borders */
   --green:      #38a169;
@@ -77,7 +77,7 @@ textarea { resize: vertical; min-height: 80px; }
 label {
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--text-label);
+  color: var(--blue);
   text-transform: uppercase;
   letter-spacing: 0.06em;
 }
