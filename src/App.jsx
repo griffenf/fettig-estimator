@@ -30,6 +30,7 @@ const SCREEN_COLORS  = ['Stone White', 'EverWood Pine', 'Satin Taupe', 'Sierra',
 const SCREEN_MESHES  = ['Bright View Mesh', 'Charcoal Hi-Transparency Fiberglass Mesh']
 const ROUND_TOP_STYLES = ['Half Circle', 'Extended Half Round', 'Eyebrow', 'Extended Eyebrow', 'Quarter Round', 'Extended Quarter Round', 'Quarter Eyebrow', 'Extended Quarter Eyebrow']
 
+const MULTI_PANE_STYLES = ['Double Hung', 'Single Hung', 'Double Hung Bay']
 const TWO_HIGH_STYLES = ['Casement', 'Picture', 'Double Hung', 'Single Hung', 'Awning']
 
 function getTopWindowOptions(baseStyle) {
@@ -422,9 +423,18 @@ function summarizeWindow(w) {
   if (w.glassSurface) parts.push(w.glassSurface)
   if (w.tempered === 'Yes') parts.push('Tempered')
   if (w.decorativeGlass && w.decorativeGlass !== 'None') parts.push(w.decorativeGlass)
-  if (w.grilleType) parts.push(w.grilleType)
-  if (w.grillePattern) parts.push(w.grillePattern)
-  if (w.simulatedRail) parts.push(`Sim Rail: ${w.simulatedRail}`)
+  if (w.grillePaneApplication && w.grillePaneApplication !== 'Both Panes' && ['Double Hung','Single Hung','Double Hung Bay'].includes(w.style)) {
+    parts.push(w.grillePaneApplication)
+    if (w.topPaneGrilleType) parts.push(`Top: ${w.topPaneGrilleType}${w.topPaneGrillePattern ? '/' + w.topPaneGrillePattern : ''}`)
+    if (w.bottomPaneGrilleType) parts.push(`Bot: ${w.bottomPaneGrilleType}${w.bottomPaneGrillePattern ? '/' + w.bottomPaneGrillePattern : ''}`)
+  } else if (['Double Hung','Single Hung','Double Hung Bay'].includes(w.style) && (w.topPaneGrilleType || w.bottomPaneGrilleType)) {
+    if (w.topPaneGrilleType) parts.push(`Top Pane: ${w.topPaneGrilleType}${w.topPaneGrillePattern ? '/' + w.topPaneGrillePattern : ''}`)
+    if (w.bottomPaneGrilleType) parts.push(`Bot Pane: ${w.bottomPaneGrilleType}${w.bottomPaneGrillePattern ? '/' + w.bottomPaneGrillePattern : ''}`)
+  } else {
+    if (w.grilleType) parts.push(w.grilleType)
+    if (w.grillePattern) parts.push(w.grillePattern)
+    if (w.simulatedRail) parts.push(`Sim Rail: ${w.simulatedRail}`)
+  }
   if (w.hardwareColor) parts.push(`HW: ${w.hardwareColor}`)
   if (w.screenColor) parts.push(`Screen: ${w.screenColor}`)
   if (w.screenMesh) parts.push(w.screenMesh)
@@ -434,6 +444,9 @@ function summarizeWindow(w) {
     if (w.topHeight) parts.push(`Top H: ${fmtMeasurement(w.topHeight, w.topHeightFrac)}`)
     if (w.topShortSideHeight) parts.push(`Top SSH: ${fmtMeasurement(w.topShortSideHeight, w.topShortSideHeightFrac)}`)
     if (w.overallHeight) parts.push(`Overall H: ${fmtMeasurement(w.overallHeight, w.overallHeightFrac)}`)
+    if (w.topTempered && w.topTempered !== w.tempered) parts.push(`Top Tempered: ${w.topTempered}`)
+    if (w.topDecorativeGlass && w.topDecorativeGlass !== 'Same as bottom') parts.push(`Top Deco: ${w.topDecorativeGlass}`)
+    if (w.topGrilleType && w.topGrilleType !== 'Same as bottom') parts.push(`Top Grille: ${w.topGrilleType}${w.topGrillePattern && w.topGrillePattern !== 'Same as bottom' ? '/' + w.topGrillePattern : ''}`)
   }
   if (w.jambDepth) parts.push(`Jamb: ${fmtMeasurement(w.jambDepth, w.jambDepthFrac)}`)
   if (w.jambType) parts.push(w.jambType)
@@ -738,12 +751,16 @@ const EMPTY = {
   exteriorColor: '', interiorColor: '', pane: 'Double',
   glassSurface: '', tempered: 'No', decorativeGlass: 'None',
   grilleType: '', grillePattern: '', simulatedRail: '',
+  grillePaneApplication: 'Both Panes',
+  topPaneGrilleType: '', topPaneGrillePattern: '',
+  bottomPaneGrilleType: '', bottomPaneGrillePattern: '',
   hardwareColor: '', screenColor: '', screenMesh: '',
   photos: [], qty: '1', notes: '',
   insert: false,
   numberHigh: 1,
   topWindowWidth: 1,
   topStyle: '', topHeight: '', topHeightFrac: '', topShortSideHeight: '', topShortSideHeightFrac: '',
+  topTempered: '', topDecorativeGlass: '', topGrilleType: '', topGrillePattern: '',
   topLeftStyle: '', topLeftHeight: '', topLeftHeightFrac: '',
   topRightStyle: '', topRightHeight: '', topRightHeightFrac: '',
   overallHeight: '', overallHeightFrac: '',
@@ -774,6 +791,9 @@ function WindowForm({ initial, onSave, onCancel }) {
       panelConfigs: Array(c.wide[0]).fill(''),
       facing: '', sashSplit: '',
       grilleType: '', grillePattern: '', simulatedRail: '',
+  grillePaneApplication: 'Both Panes',
+  topPaneGrilleType: '', topPaneGrillePattern: '',
+  bottomPaneGrilleType: '', bottomPaneGrillePattern: '',
     }))
   }, [form.style])
 
@@ -1059,6 +1079,28 @@ function WindowForm({ initial, onSave, onCancel }) {
                     <SelectWithPreview label="Right Panel Style" value={form.topRightStyle}
                       onChange={v => set('topRightStyle', v)} imgMap={IMG.windows}
                       opts={topOpts} placeholder="Select..." />
+                  <SectionHeader>Top Window Options</SectionHeader>
+                  <div style={{ gridColumn: '1/-1', padding: '8px 12px', background: 'rgba(200,151,58,0.08)', border: '1px solid rgba(200,151,58,0.2)', borderRadius: 6, fontSize: 12, color: 'var(--gray)', marginBottom: 8 }}>
+                    All other settings match the bottom window. Change only what differs below.
+                  </div>
+                  <Field label="Tempered">
+                    <select value={form.topTempered || ''} onChange={e => set('topTempered', e.target.value)}>
+                      <option value="">Same as bottom ({form.tempered})</option>
+                      <option value="Yes">Yes</option>
+                      <option value="No">No</option>
+                    </select>
+                  </Field>
+                  <SelectWithPreview label="Decorative Glass" value={form.topDecorativeGlass || ''}
+                    onChange={v => set('topDecorativeGlass', v)} imgMap={IMG.decorativeGlass}
+                    opts={['Same as bottom', ...decorGlasses.filter(g => g !== 'None')]} placeholder={`Same as bottom (${form.decorativeGlass})`} />
+                  <SelectWithPreview label="Grille Type" value={form.topGrilleType || ''}
+                    onChange={v => set('topGrilleType', v)} imgMap={IMG.grilleType}
+                    opts={['Same as bottom', ...cfg.g]} placeholder={`Same as bottom (${form.grilleType || 'None'})`} />
+                  {(form.topGrilleType && form.topGrilleType !== 'Same as bottom') && (
+                    <SelectWithPreview label="Grille Pattern" value={form.topGrillePattern || ''}
+                      onChange={v => set('topGrillePattern', v)} imgMap={IMG.grillePattern}
+                      opts={['Same as bottom', ...grillePatterns]} placeholder={`Same as bottom (${form.grillePattern || 'None'})`} />
+                  )}
                   </>
                 ) : (
                   <div style={{ gridColumn: '1/-1' }}>
@@ -1066,6 +1108,28 @@ function WindowForm({ initial, onSave, onCancel }) {
                       onChange={v => set('topStyle', v)} imgMap={IMG.windows}
                       opts={forceRound ? ROUND_TOP_WINDOW_STYLES : topOpts} placeholder="Select..." />
                   </div>
+                  <SectionHeader>Top Window Options</SectionHeader>
+                  <div style={{ gridColumn: '1/-1', padding: '8px 12px', background: 'rgba(200,151,58,0.08)', border: '1px solid rgba(200,151,58,0.2)', borderRadius: 6, fontSize: 12, color: 'var(--gray)', marginBottom: 8 }}>
+                    All other settings (color, glass surface, hardware, etc.) match the bottom window. Change only what differs below.
+                  </div>
+                  <Field label="Tempered">
+                    <select value={form.topTempered || form.tempered} onChange={e => set('topTempered', e.target.value)}>
+                      <option value="">Same as bottom ({form.tempered})</option>
+                      <option value="Yes">Yes</option>
+                      <option value="No">No</option>
+                    </select>
+                  </Field>
+                  <SelectWithPreview label="Decorative Glass" value={form.topDecorativeGlass || ''}
+                    onChange={v => set('topDecorativeGlass', v)} imgMap={IMG.decorativeGlass}
+                    opts={['Same as bottom', ...decorGlasses.filter(g => g !== 'None')]} placeholder={`Same as bottom (${form.decorativeGlass})`} />
+                  <SelectWithPreview label="Grille Type" value={form.topGrilleType || ''}
+                    onChange={v => set('topGrilleType', v)} imgMap={IMG.grilleType}
+                    opts={['Same as bottom', ...cfg.g]} placeholder={`Same as bottom (${form.grilleType || 'None'})`} />
+                  {(form.topGrilleType && form.topGrilleType !== 'Same as bottom') && (
+                    <SelectWithPreview label="Grille Pattern" value={form.topGrillePattern || ''}
+                      onChange={v => set('topGrillePattern', v)} imgMap={IMG.grillePattern}
+                      opts={['Same as bottom', ...grillePatterns]} placeholder={`Same as bottom (${form.grillePattern || 'None'})`} />
+                  )}
                 )}
                 <SectionHeader>Measurements</SectionHeader>
                 {cfg.m.includes('w') && (
@@ -1145,27 +1209,79 @@ function WindowForm({ initial, onSave, onCancel }) {
             opts={decorGlasses} />
 
           <SectionHeader>Grille</SectionHeader>
-          <SelectWithPreview label="Grille Type" value={form.grilleType}
-            onChange={v => set('grilleType', v)} imgMap={IMG.grilleType}
-            opts={['', ...cfg.g]} placeholder="None" />
-          {form.grilleType && (
-            <SelectWithPreview label="Grille Pattern" value={form.grillePattern}
-              onChange={v => set('grillePattern', v)} imgMap={IMG.grillePattern}
-              opts={grillePatterns} placeholder="Select..." />
-          )}
-          {form.grilleType === 'SDL' && (
-            <Field label="Simulated Rail">
-              <select value={form.simulatedRail} onChange={e => set('simulatedRail', e.target.value)}>
-                <option value="">Select...</option>
-                <option>Yes</option>
-                <option>No</option>
-              </select>
-            </Field>
-          )}
-          {cfg.sunburst && form.grillePattern === 'Sunburst' && (
-            <Field label="Below Sunburst" col="1/-1">
-              <input value="Rectangular (required with Sunburst)" disabled style={{ opacity: 0.6 }} />
-            </Field>
+          {MULTI_PANE_STYLES.includes(form.style) ? (
+            <>
+              <Field label="Pane Application" col="1/-1">
+                <select value={form.grillePaneApplication} onChange={e => {
+                  set('grillePaneApplication', e.target.value)
+                  set('grilleType', ''); set('grillePattern', '')
+                  set('topPaneGrilleType', ''); set('topPaneGrillePattern', '')
+                  set('bottomPaneGrilleType', ''); set('bottomPaneGrillePattern', '')
+                }}>
+                  <option>Both Panes</option>
+                  <option>Top Pane Only</option>
+                  <option>Bottom Pane Only</option>
+                </select>
+              </Field>
+              {form.grillePaneApplication === 'Both Panes' ? (
+                <>
+                  <div style={{ gridColumn: '1/-1' }}>
+                    <div style={{ fontSize: 11, color: 'var(--gold)', fontWeight: 700, marginBottom: 6, textTransform: 'uppercase' }}>Top Pane</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
+                      <SelectWithPreview label="Grille Type" value={form.topPaneGrilleType}
+                        onChange={v => set('topPaneGrilleType', v)} imgMap={IMG.grilleType}
+                        opts={['', ...cfg.g]} placeholder="None" />
+                      {form.topPaneGrilleType && <SelectWithPreview label="Grille Pattern" value={form.topPaneGrillePattern}
+                        onChange={v => set('topPaneGrillePattern', v)} imgMap={IMG.grillePattern}
+                        opts={grillePatterns} placeholder="Select..." />}
+                    </div>
+                    <div style={{ fontSize: 11, color: 'var(--gold)', fontWeight: 700, marginBottom: 6, marginTop: 8, textTransform: 'uppercase' }}>Bottom Pane</div>
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
+                      <SelectWithPreview label="Grille Type" value={form.bottomPaneGrilleType}
+                        onChange={v => set('bottomPaneGrilleType', v)} imgMap={IMG.grilleType}
+                        opts={['', ...cfg.g]} placeholder="None" />
+                      {form.bottomPaneGrilleType && <SelectWithPreview label="Grille Pattern" value={form.bottomPaneGrillePattern}
+                        onChange={v => set('bottomPaneGrillePattern', v)} imgMap={IMG.grillePattern}
+                        opts={grillePatterns} placeholder="Select..." />}
+                    </div>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <SelectWithPreview label="Grille Type" value={form.grilleType}
+                    onChange={v => set('grilleType', v)} imgMap={IMG.grilleType}
+                    opts={['', ...cfg.g]} placeholder="None" />
+                  {form.grilleType && <SelectWithPreview label="Grille Pattern" value={form.grillePattern}
+                    onChange={v => set('grillePattern', v)} imgMap={IMG.grillePattern}
+                    opts={grillePatterns} placeholder="Select..." />}
+                </>
+              )}
+            </>
+          ) : (
+            <>
+              <SelectWithPreview label="Grille Type" value={form.grilleType}
+                onChange={v => set('grilleType', v)} imgMap={IMG.grilleType}
+                opts={['', ...cfg.g]} placeholder="None" />
+              {form.grilleType && (
+                <SelectWithPreview label="Grille Pattern" value={form.grillePattern}
+                  onChange={v => set('grillePattern', v)} imgMap={IMG.grillePattern}
+                  opts={grillePatterns} placeholder="Select..." />
+              )}
+              {form.grilleType === 'SDL' && (
+                <Field label="Simulated Rail">
+                  <select value={form.simulatedRail} onChange={e => set('simulatedRail', e.target.value)}>
+                    <option value="">Select...</option>
+                    <option>Yes</option>
+                    <option>No</option>
+                  </select>
+                </Field>
+              )}
+              {cfg.sunburst && form.grillePattern === 'Sunburst' && (
+                <Field label="Below Sunburst" col="1/-1">
+                  <input value="Rectangular (required with Sunburst)" disabled style={{ opacity: 0.6 }} />
+                </Field>
+              )}
+            </>
           )}
 
           {(cfg.hw || cfg.sc || cfg.sm) && <SectionHeader>Hardware & Screen</SectionHeader>}
