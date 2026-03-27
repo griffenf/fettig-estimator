@@ -1,26 +1,40 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap');
 
 :root {
-  --navy: #1a2332;
-  --navy-mid: #1e2d40;
-  --navy-light: #243448;
-  --gold: #c8973a;
-  --gray: #8a9ab0;
-  --border: rgba(138,154,176,0.25);
-  --green: #27ae60;
-  --text: #f5f3ef;
+  /* Light background palette inspired by Fettig Millwork website */
+  --bg:         #f5f2ee;       /* warm off-white page background */
+  --surface:    #ffffff;       /* card/form surfaces */
+  --surface-2:  #ede9e3;       /* slightly deeper surface */
+  --surface-3:  #e4dfd7;       /* inputs, dropdowns */
+
+  /* Brown wood-tone accents */
+  --brown:      #7a5230;       /* primary accent — warm medium brown */
+  --brown-dark: #5a3a1f;       /* darker brown for hover/active */
+  --brown-light:#c49a6c;       /* lighter tan/caramel */
+  --brown-muted:#d4b896;       /* soft tan for borders and dividers */
+
+  /* Text */
+  --text:       #2c1f0f;       /* dark warm brown for primary text */
+  --text-mid:   #6b5240;       /* medium brown for labels */
+  --text-light: #9c7e66;       /* light brown for hints/placeholders */
+
+  /* Status */
+  --green:      #3a7a4a;
+  --red:        #c0392b;
+
+  /* Border */
+  --border:     rgba(122,82,48,0.2);
+
   --font-head: 'Barlow Condensed', sans-serif;
   --font-body: 'Barlow', sans-serif;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
 
-html {
-  font-size: 17px; /* base bump for iPad */
-}
+html { font-size: 17px; }
 
 body {
-  background: var(--navy);
+  background: var(--bg);
   color: var(--text);
   font-family: var(--font-body);
   font-size: 1rem;
@@ -29,9 +43,9 @@ body {
 
 input, select, textarea {
   width: 100%;
-  padding: 12px 14px;
-  background: var(--navy-light);
-  border: 1.5px solid var(--border);
+  padding: 11px 14px;
+  background: var(--surface);
+  border: 1.5px solid var(--brown-muted);
   border-radius: 6px;
   color: var(--text);
   font-family: var(--font-body);
@@ -39,18 +53,20 @@ input, select, textarea {
   margin-bottom: 0;
   appearance: none;
   -webkit-appearance: none;
-  transition: border-color 0.15s;
+  transition: border-color 0.15s, box-shadow 0.15s;
 }
 
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: var(--gold);
+  border-color: var(--brown);
+  box-shadow: 0 0 0 3px rgba(122,82,48,0.12);
 }
 
-input[type="checkbox"] {
-  width: auto;
-  padding: 0;
+input::placeholder, textarea::placeholder {
+  color: var(--text-light);
 }
+
+input[type="checkbox"] { width: auto; padding: 0; }
 
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button {
@@ -58,17 +74,30 @@ input[type="number"]::-webkit-outer-spin-button {
   height: 28px;
 }
 
+input:disabled, select:disabled {
+  background: var(--surface-2);
+  color: var(--text-light);
+  cursor: not-allowed;
+}
+
 select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23c8973a' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a5230' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
+  background-color: var(--surface);
   padding-right: 36px;
   cursor: pointer;
 }
 
 textarea { resize: vertical; min-height: 80px; }
 
-label { font-size: 0.75rem; }
+label {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-mid);
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+}
 
 button {
   font-family: var(--font-body);
@@ -78,31 +107,39 @@ button {
   cursor: pointer;
   padding: 12px 20px;
   font-weight: 600;
-  transition: opacity 0.15s, transform 0.1s;
+  transition: opacity 0.15s, transform 0.1s, background 0.15s;
   -webkit-tap-highlight-color: transparent;
 }
 
 button:active { transform: scale(0.97); }
 
-.btn-gold { background: var(--gold); color: var(--navy); }
-.btn-gold:hover { opacity: 0.9; }
-.btn-outline { background: transparent; color: var(--text); border: 1.5px solid var(--border); }
-.btn-outline:hover { border-color: var(--gold); color: var(--gold); }
-.btn-danger { background: rgba(192,57,43,0.2); color: #e74c3c; border: 1px solid rgba(192,57,43,0.3); padding: 8px 12px; }
+.btn-gold {
+  background: var(--brown);
+  color: #fff;
+}
+.btn-gold:hover { background: var(--brown-dark); }
 
-/* iPad specific optimizations */
+.btn-outline {
+  background: transparent;
+  color: var(--brown);
+  border: 1.5px solid var(--brown-muted);
+}
+.btn-outline:hover {
+  border-color: var(--brown);
+  background: rgba(122,82,48,0.06);
+}
+
+.btn-danger {
+  background: rgba(192,57,43,0.1);
+  color: var(--red);
+  border: 1px solid rgba(192,57,43,0.25);
+  padding: 8px 12px;
+}
+
 @media (min-width: 768px) {
   html { font-size: 18px; }
-  
-  input, select, textarea {
-    padding: 13px 16px;
-    font-size: 1rem;
-  }
-
-  button {
-    padding: 13px 22px;
-    min-height: 48px;
-  }
+  input, select, textarea { padding: 12px 16px; }
+  button { padding: 13px 22px; min-height: 48px; }
 }
 
 @media (min-width: 1024px) {
