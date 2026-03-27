@@ -1,36 +1,29 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap');
 
 :root {
-  /* Light background palette inspired by Fettig Millwork website */
-  --bg:         #f5f2ee;       /* warm off-white page background */
+  --bg:         #f0ebe3;       /* warm off-white page background */
   --surface:    #ffffff;       /* card/form surfaces */
-  --surface-2:  #ede9e3;       /* slightly deeper surface */
-  --surface-3:  #e4dfd7;       /* inputs, dropdowns */
+  --surface-2:  #e8e0d5;       /* section headers, info boxes */
+  --surface-3:  #d9cfc2;       /* input/dropdown background — clearly distinct from white */
 
-  /* Brown wood-tone accents */
-  --brown:      #7a5230;       /* primary accent — warm medium brown */
-  --brown-dark: #5a3a1f;       /* darker brown for hover/active */
-  --brown-light:#c49a6c;       /* lighter tan/caramel */
-  --brown-muted:#d4b896;       /* soft tan for borders and dividers */
+  --brown:      #7a5230;       /* primary accent */
+  --brown-dark: #5a3a1f;       /* hover/active */
+  --brown-light:#c49a6c;       /* lighter tan */
+  --brown-muted:#b8956e;       /* borders */
 
-  /* Text */
-  --text:       #2c1f0f;       /* dark warm brown for primary text */
-  --text-mid:   #6b5240;       /* medium brown for labels */
-  --text-light: #9c7e66;       /* light brown for hints/placeholders */
+  --text:       #1e1008;       /* very dark brown — maximum readability */
+  --text-mid:   #4a3020;       /* medium brown for labels */
+  --text-light: #7a5c42;       /* hints/placeholders */
 
-  /* Status */
   --green:      #3a7a4a;
   --red:        #c0392b;
-
-  /* Border */
-  --border:     rgba(122,82,48,0.2);
+  --border:     rgba(122,82,48,0.3);
 
   --font-head: 'Barlow Condensed', sans-serif;
   --font-body: 'Barlow', sans-serif;
 }
 
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 html { font-size: 17px; }
 
 body {
@@ -44,7 +37,7 @@ body {
 input, select, textarea {
   width: 100%;
   padding: 11px 14px;
-  background: var(--surface);
+  background: var(--surface-3);   /* noticeably darker than page bg */
   border: 1.5px solid var(--brown-muted);
   border-radius: 6px;
   color: var(--text);
@@ -59,7 +52,8 @@ input, select, textarea {
 input:focus, select:focus, textarea:focus {
   outline: none;
   border-color: var(--brown);
-  box-shadow: 0 0 0 3px rgba(122,82,48,0.12);
+  box-shadow: 0 0 0 3px rgba(122,82,48,0.15);
+  background: #fff;
 }
 
 input::placeholder, textarea::placeholder {
@@ -78,13 +72,13 @@ input:disabled, select:disabled {
   background: var(--surface-2);
   color: var(--text-light);
   cursor: not-allowed;
+  border-color: var(--border);
 }
 
 select {
   background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%237a5230' stroke-width='1.5' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
-  background-color: var(--surface);
   padding-right: 36px;
   cursor: pointer;
 }
@@ -120,19 +114,19 @@ button:active { transform: scale(0.97); }
 .btn-gold:hover { background: var(--brown-dark); }
 
 .btn-outline {
-  background: transparent;
-  color: var(--brown);
+  background: var(--surface-3);
+  color: var(--brown-dark);
   border: 1.5px solid var(--brown-muted);
 }
 .btn-outline:hover {
   border-color: var(--brown);
-  background: rgba(122,82,48,0.06);
+  background: var(--surface-2);
 }
 
 .btn-danger {
   background: rgba(192,57,43,0.1);
   color: var(--red);
-  border: 1px solid rgba(192,57,43,0.25);
+  border: 1px solid rgba(192,57,43,0.3);
   padding: 8px 12px;
 }
 
