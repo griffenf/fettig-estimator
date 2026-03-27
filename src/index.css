@@ -6,19 +6,19 @@
   --surface-2:  #2d3a52;   /* slightly lighter surface */
   --field:      #1a2030;   /* input/dropdown fields — darker than surface */
 
-  --accent:     #4ecdc4;   /* teal accent */
-  --accent-dk:  #35a89f;   /* darker teal hover */
-  --accent-lt:  #7eddd7;   /* lighter teal highlight */
+  --accent:     #d4956a;   /* warm amber/copper */
+  --accent-dk:  #b07040;   /* darker hover */
+  --accent-lt:  #e8b88a;   /* lighter highlight */
 
-  --text:       #e8edf5;   /* near-white primary text */
-  --text-mid:   #a8b4c8;   /* secondary text */
-  --text-muted: #6a7a94;   /* placeholders/hints */
+  --text:       #edf0f5;   /* near-white primary text */
+  --text-mid:   #c8d0de;   /* field labels — bright enough to read easily */
+  --text-muted: #7a8898;   /* placeholders/hints */
 
-  --border:     rgba(78,205,196,0.2);
-  --border-field: rgba(78,205,196,0.3);
+  --border:     rgba(212,149,106,0.25);
+  --border-field: rgba(212,149,106,0.4);
 
-  --green:  #4ecdc4;
-  --red:    #e05555;
+  --green:  #6abf8a;
+  --red:    #e07060;
 
   --font-head: 'Barlow Condensed', sans-serif;
   --font-body: 'Barlow', sans-serif;
@@ -63,14 +63,14 @@ input:disabled, select:disabled {
   opacity: 0.7;
 }
 select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%234ecdc4' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23d4956a' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   padding-right: 36px;
   cursor: pointer;
 }
-select option { background: #1a2030; color: #e8edf5; }
-select optgroup { background: #1c2333; color: #4ecdc4; font-weight: 700; }
+select option { background: #1a2030; color: #edf0f5; }
+select optgroup { background: #1c2333; color: #d4956a; font-weight: 700; }
 textarea { resize: vertical; min-height: 80px; }
 
 label {
@@ -94,8 +94,8 @@ button {
 }
 button:active { transform: scale(0.97); }
 
-.btn-gold { background: var(--accent); color: #1c2333; }
-.btn-gold:hover { background: var(--accent-lt); }
+.btn-gold { background: var(--accent); color: #fff; }
+.btn-gold:hover { background: var(--accent-dk); }
 
 .btn-outline {
   background: transparent;
