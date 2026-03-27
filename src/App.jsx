@@ -1079,7 +1079,7 @@ function WindowForm({ initial, onSave, onCancel }) {
                     <SelectWithPreview label="Right Panel Style" value={form.topRightStyle}
                       onChange={v => set('topRightStyle', v)} imgMap={IMG.windows}
                       opts={topOpts} placeholder="Select..." />
-                  <SectionHeader>Top Window Options</SectionHeader>
+                  <div style={{ gridColumn: '1/-1', fontFamily: 'var(--font-head)', fontSize: 12, fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: '1px solid rgba(200,151,58,0.3)', paddingBottom: 6, marginTop: 8, marginBottom: 4 }}>Top Window Options</div>
                   <div style={{ gridColumn: '1/-1', padding: '8px 12px', background: 'rgba(200,151,58,0.08)', border: '1px solid rgba(200,151,58,0.2)', borderRadius: 6, fontSize: 12, color: 'var(--gray)', marginBottom: 8 }}>
                     All other settings match the bottom window. Change only what differs below.
                   </div>
@@ -1103,12 +1103,13 @@ function WindowForm({ initial, onSave, onCancel }) {
                   )}
                   </>
                 ) : (
+                  <>
                   <div style={{ gridColumn: '1/-1' }}>
                     <SelectWithPreview label="Top Window Style" value={form.topStyle}
                       onChange={v => set('topStyle', v)} imgMap={IMG.windows}
                       opts={forceRound ? ROUND_TOP_WINDOW_STYLES : topOpts} placeholder="Select..." />
                   </div>
-                  <SectionHeader>Top Window Options</SectionHeader>
+                  <div style={{ gridColumn: '1/-1', fontFamily: 'var(--font-head)', fontSize: 12, fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: '1px solid rgba(200,151,58,0.3)', paddingBottom: 6, marginTop: 8, marginBottom: 4 }}>Top Window Options</div>
                   <div style={{ gridColumn: '1/-1', padding: '8px 12px', background: 'rgba(200,151,58,0.08)', border: '1px solid rgba(200,151,58,0.2)', borderRadius: 6, fontSize: 12, color: 'var(--gray)', marginBottom: 8 }}>
                     All other settings (color, glass surface, hardware, etc.) match the bottom window. Change only what differs below.
                   </div>
@@ -1130,6 +1131,7 @@ function WindowForm({ initial, onSave, onCancel }) {
                       onChange={v => set('topGrillePattern', v)} imgMap={IMG.grillePattern}
                       opts={['Same as bottom', ...grillePatterns]} placeholder={`Same as bottom (${form.grillePattern || 'None'})`} />
                   )}
+                  </>
                 )}
                 <SectionHeader>Measurements</SectionHeader>
                 {cfg.m.includes('w') && (
