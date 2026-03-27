@@ -1538,9 +1538,8 @@ export default function App() {
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 0 80px 0', background: 'var(--bg)', minHeight: '100vh' }}>
-      <div style={{ background: 'var(--bg-mid)', borderBottom: '3px solid var(--red)', padding: '18px 20px', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 18, letterSpacing: '0.06em', color: 'var(--charcoal)', color: '#fff' }}>FETTIG MILLWORK & WINDOWS</div>
-        <div style={{ color: '#ffb3a7', fontSize: 11, letterSpacing: '0.12em', fontWeight: 600 }}>WINDOW ESTIMATOR</div>
+      <div style={{ background: 'var(--surface)', borderBottom: '3px solid var(--orange)', boxShadow: '0 2px 8px rgba(0,0,0,0.08)', padding: '18px 20px', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 18, letterSpacing: '0.06em', color: 'var(--charcoal)' }}>FETTIG MILLWORK & WINDOWS</div>
         <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
           {[['job','1','Job Info'],['windows','2','Windows'],['review','3','Review & Submit']].map(([s,n,label]) => (
             <button key={s} className={step===s?'btn-gold':'btn-outline'} onClick={()=>{if(s==='windows'&&!jobValid)return;setStep(s)}} style={{flex:1,fontSize:12,padding:'7px 8px',opacity:(s==='windows'&&!jobValid)?0.4:1}}>{n}. {label}</button>
