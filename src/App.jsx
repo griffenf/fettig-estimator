@@ -207,10 +207,10 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
         {value ? (
           <>
             {selectedImg && <img src={selectedImg} alt={value} style={{ width: 60, height: 48, objectFit: 'contain', borderRadius: 3, flexShrink: 0 }} />}
-            <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>{value}</span>
+            <span style={{ flex: 1, fontSize: 15, color: '#f5ede0' }}>{value}</span>
           </>
         ) : (
-          <span style={{ flex: 1, fontSize: 15, color: 'var(--text-light)' }}>{placeholder || 'Select...'}</span>
+          <span style={{ flex: 1, fontSize: 15, color: 'rgba(245,237,224,0.45)' }}>{placeholder || 'Select...'}</span>
         )}
         <span style={{ color: 'var(--red)', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
       </div>
@@ -233,7 +233,7 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
                   <img src={img} alt={opt} style={{ width: 80, height: 64, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }} />
                 ) : (
                   <div style={{ width: 64, height: 52, background: 'var(--bg-mid)', borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 9, color: 'var(--text-light)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
+                    <span style={{ fontSize: 9, color: 'rgba(245,237,224,0.6)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
                   </div>
                 )}
                 <span style={{ fontSize: 15, color: selected ? 'var(--red)' : 'var(--text)', fontWeight: selected ? 600 : 400 }}>{opt}</span>
@@ -291,10 +291,10 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
         {value ? (
           <>
             {selectedImg && <img src={selectedImg} alt={value} style={{ width: 60, height: 48, objectFit: 'contain', borderRadius: 3, flexShrink: 0 }} />}
-            <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>{value}</span>
+            <span style={{ flex: 1, fontSize: 15, color: '#f5ede0' }}>{value}</span>
           </>
         ) : (
-          <span style={{ flex: 1, fontSize: 15, color: 'var(--text-light)' }}>Select style...</span>
+          <span style={{ flex: 1, fontSize: 15, color: 'rgba(245,237,224,0.45)' }}>Select style...</span>
         )}
         <span style={{ color: 'var(--red)', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
       </div>
