@@ -1240,8 +1240,12 @@ function WindowForm({ initial, onSave, onCancel }) {
           <SelectWithPreview label="Exterior Color *" value={form.exteriorColor}
             onChange={v => set('exteriorColor', v)} imgMap={IMG.exteriorColor}
             opts={EXT_COLORS} placeholder="Select..." />
-          <SelectWithPreview label="Pane" value={form.pane}
-            onChange={v => set('pane', v)} imgMap={{}} opts={['Double', 'Triple']} />
+          <Field label="Pane">
+            <select value={form.pane} onChange={e => set('pane', e.target.value)}>
+              <option>Double</option>
+              <option>Triple</option>
+            </select>
+          </Field>
           <SelectWithPreview label="Interior Color *" value={form.interiorColor}
             onChange={v => set('interiorColor', v)} imgMap={IMG.interiorColor}
             opts={intColors} placeholder="Select..." />
@@ -1535,7 +1539,7 @@ export default function App() {
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 0 80px 0', background: 'var(--bg)', minHeight: '100vh' }}>
       <div style={{ background: 'var(--bg-mid)', borderBottom: '3px solid var(--red)', padding: '18px 20px', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 18, letterSpacing: '0.06em', color: '#ffffff', color: '#fff' }}>FETTIG MILLWORK & WINDOWS</div>
+        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 18, letterSpacing: '0.06em', color: 'var(--charcoal)', color: '#fff' }}>FETTIG MILLWORK & WINDOWS</div>
         <div style={{ color: '#ffb3a7', fontSize: 11, letterSpacing: '0.12em', fontWeight: 600 }}>WINDOW ESTIMATOR</div>
         <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
           {[['job','1','Job Info'],['windows','2','Windows'],['review','3','Review & Submit']].map(([s,n,label]) => (
