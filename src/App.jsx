@@ -180,7 +180,7 @@ function ImgPreview({ src, alt, size = 80 }) {
   if (!src || !ok) return null
   return (
     <img src={src} alt={alt} onError={() => setOk(false)}
-      style={{ width: size, height: size, objectFit: 'contain', borderRadius: 6, border: '1.5px solid var(--border)', display: 'block', flexShrink: 0, background: '#fff' }} />
+      style={{ width: size, height: size, objectFit: 'contain', borderRadius: 6, border: '1.5px solid var(--border)', display: 'block', flexShrink: 0, background: 'var(--surface)' }} />
   )
 }
 
@@ -198,10 +198,10 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
 
   return (
     <div style={{ marginBottom: 12, position: 'relative' }} ref={ref}>
-      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
+      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
       <div onClick={() => setOpen(o => !o)} style={{
         display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
-        background: 'var(--navy-light)', border: '1.5px solid var(--border)', borderRadius: 6,
+        background: 'var(--surface)', border: '1.5px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderRadius: 6,
         cursor: 'pointer', minHeight: 52
       }}>
         {value ? (
@@ -210,14 +210,14 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
             <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>{value}</span>
           </>
         ) : (
-          <span style={{ flex: 1, fontSize: 15, color: 'var(--gray)' }}>{placeholder || 'Select...'}</span>
+          <span style={{ flex: 1, fontSize: 15, color: 'var(--text-light)' }}>{placeholder || 'Select...'}</span>
         )}
-        <span style={{ color: 'var(--gold)', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
+        <span style={{ color: 'var(--red)', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
       </div>
       {open && (
         <div style={{
           position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 300,
-          background: 'var(--navy-mid)', border: '1.5px solid var(--gold)',
+          background: 'var(--surface)', border: '1.5px solid var(--red)',
           borderRadius: 8, marginTop: 4, maxHeight: 320, overflowY: 'auto',
           boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
         }}>
@@ -226,17 +226,17 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
             const selected = value === opt
             return (
               <div key={opt} onClick={() => { onChange(opt); setOpen(false) }}
-                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', background: selected ? 'rgba(200,151,58,0.15)' : 'transparent', borderLeft: selected ? '3px solid var(--gold)' : '3px solid transparent' }}
-                onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,151,58,0.08)'}
-                onMouseLeave={e => e.currentTarget.style.background = selected ? 'rgba(200,151,58,0.15)' : 'transparent'}>
+                style={{ display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px', cursor: 'pointer', background: selected ? 'rgba(192,57,43,0.12)' : 'transparent', borderLeft: selected ? '3px solid var(--red)' : '3px solid transparent' }}
+                onMouseEnter={e => e.currentTarget.style.background = 'rgba(192,57,43,0.06)'}
+                onMouseLeave={e => e.currentTarget.style.background = selected ? 'rgba(192,57,43,0.12)' : 'transparent'}>
                 {img ? (
                   <img src={img} alt={opt} style={{ width: 80, height: 64, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }} />
                 ) : (
-                  <div style={{ width: 64, height: 52, background: 'var(--navy-light)', borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 9, color: 'var(--gray)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
+                  <div style={{ width: 64, height: 52, background: 'var(--bg-mid)', borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <span style={{ fontSize: 9, color: 'var(--text-light)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
                   </div>
                 )}
-                <span style={{ fontSize: 15, color: selected ? 'var(--gold)' : 'var(--text)', fontWeight: selected ? 600 : 400 }}>{opt}</span>
+                <span style={{ fontSize: 15, color: selected ? 'var(--red)' : 'var(--text)', fontWeight: selected ? 600 : 400 }}>{opt}</span>
               </div>
             )
           })}
@@ -265,27 +265,27 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
     return (
       <div key={opt} onClick={() => { onChange(opt); setOpen(false) }} style={{
         display: 'flex', alignItems: 'center', gap: 10, padding: '8px 12px',
-        cursor: 'pointer', background: selected ? 'rgba(200,151,58,0.15)' : 'transparent',
-        borderLeft: selected ? '3px solid var(--gold)' : '3px solid transparent',
+        cursor: 'pointer', background: selected ? 'rgba(192,57,43,0.12)' : 'transparent',
+        borderLeft: selected ? '3px solid var(--red)' : '3px solid transparent',
       }}
-      onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,151,58,0.08)'}
-      onMouseLeave={e => e.currentTarget.style.background = selected ? 'rgba(200,151,58,0.15)' : 'transparent'}>
+      onMouseEnter={e => e.currentTarget.style.background = 'rgba(192,57,43,0.06)'}
+      onMouseLeave={e => e.currentTarget.style.background = selected ? 'rgba(192,57,43,0.12)' : 'transparent'}>
         {img ? (
           <img src={img} alt={opt} style={{ width: 80, height: 64, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }} />
         ) : (
-          <div style={{ width: 44, height: 36, background: 'var(--navy-mid)', borderRadius: 4, flexShrink: 0 }} />
+          <div style={{ width: 44, height: 36, background: 'var(--bg-card)', borderRadius: 4, flexShrink: 0 }} />
         )}
-        <span style={{ fontSize: 15, color: selected ? 'var(--gold)' : 'var(--text)', fontWeight: selected ? 600 : 400 }}>{opt}</span>
+        <span style={{ fontSize: 15, color: selected ? 'var(--red)' : 'var(--text)', fontWeight: selected ? 600 : 400 }}>{opt}</span>
       </div>
     )
   }
 
   return (
     <div style={{ marginBottom: 12, position: 'relative' }} ref={ref}>
-      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
+      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
       <div onClick={() => setOpen(o => !o)} style={{
         display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
-        background: 'var(--navy-light)', border: '1.5px solid var(--border)', borderRadius: 6,
+        background: 'var(--surface)', border: '1.5px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderRadius: 6,
         cursor: 'pointer', minHeight: 52
       }}>
         {value ? (
@@ -294,20 +294,20 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
             <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>{value}</span>
           </>
         ) : (
-          <span style={{ flex: 1, fontSize: 15, color: 'var(--gray)' }}>Select style...</span>
+          <span style={{ flex: 1, fontSize: 15, color: 'var(--text-light)' }}>Select style...</span>
         )}
-        <span style={{ color: 'var(--gold)', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
+        <span style={{ color: 'var(--red)', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
       </div>
       {open && (
         <div style={{
           position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 300,
-          background: 'var(--navy-mid)', border: '1.5px solid var(--gold)',
+          background: 'var(--surface)', border: '1.5px solid var(--red)',
           borderRadius: 8, marginTop: 4, maxHeight: 360, overflowY: 'auto',
           boxShadow: '0 8px 32px rgba(0,0,0,0.5)'
         }}>
           {groups ? groups.map(g => (
             <div key={g.label}>
-              <div style={{ padding: '8px 12px 4px', fontSize: 10, fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: '1px solid rgba(200,151,58,0.2)' }}>{g.label}</div>
+              <div style={{ padding: '8px 12px 4px', fontSize: 10, fontWeight: 700, color: 'var(--red)', letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: '1px solid rgba(192,57,43,0.2)' }}>{g.label}</div>
               {g.styles.map(opt => renderOption(opt))}
             </div>
           )) : allOptions.map(opt => renderOption(opt))}
@@ -499,38 +499,38 @@ function generatePDF(jobInfo, rooms) {
   let y = 0
 
   const addFooter = () => {
-    doc.setFillColor(26, 35, 50); doc.rect(0, pageH - 36, W, 36, 'F')
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(138, 154, 176)
+    doc.setFillColor(90, 58, 31); doc.rect(0, pageH - 36, W, 36, 'F')
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(196, 154, 108)
     doc.text('Fettig Millwork & Windows, Inc.  —  Window Estimate', margin, pageH - 14)
-    doc.setTextColor(200, 151, 58); doc.text('CONFIDENTIAL', W - margin, pageH - 14, { align: 'right' })
+    doc.setTextColor(122, 82, 48); doc.text('CONFIDENTIAL', W - margin, pageH - 14, { align: 'right' })
   }
 
   // Header
-  doc.setFillColor(26, 35, 50); doc.rect(0, 0, W, 80, 'F')
-  doc.setFillColor(200, 151, 58); doc.rect(0, 80, W, 3, 'F')
+  doc.setFillColor(90, 58, 31); doc.rect(0, 0, W, 80, 'F')
+  doc.setFillColor(122, 82, 48); doc.rect(0, 80, W, 3, 'F')
   doc.setFont('helvetica', 'bold'); doc.setFontSize(22); doc.setTextColor(245, 243, 239)
   doc.text('FETTIG MILLWORK & WINDOWS, INC.', margin, 34)
-  doc.setFontSize(11); doc.setFont('helvetica', 'normal'); doc.setTextColor(200, 151, 58)
+  doc.setFontSize(11); doc.setFont('helvetica', 'normal'); doc.setTextColor(122, 82, 48)
   doc.text('WINDOW ESTIMATE', margin, 56)
-  doc.setFontSize(10); doc.setTextColor(138, 154, 176)
+  doc.setFontSize(10); doc.setTextColor(196, 154, 108)
   doc.text(new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' }), W - margin, 56, { align: 'right' })
   y = 110
 
   const fields = [['Customer', jobInfo.customerName], ['Job Name', jobInfo.jobName], ['Job Address', jobInfo.address], ['Estimator', jobInfo.estimator]].filter(([, v]) => v)
-  doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(200, 151, 58)
+  doc.setFontSize(9); doc.setFont('helvetica', 'bold'); doc.setTextColor(122, 82, 48)
   doc.text('JOB INFORMATION', margin, y); y += 16
   const col2 = W / 2; let leftY = y, rightY = y
   fields.forEach(([label, value], i) => {
     const cx = i % 2 === 0 ? margin : col2
     let cy = i % 2 === 0 ? leftY : rightY
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(138, 154, 176)
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(8); doc.setTextColor(196, 154, 108)
     doc.text(label.toUpperCase(), cx, cy); cy += 13
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(26, 35, 50)
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(11); doc.setTextColor(90, 58, 31)
     doc.text(value || '—', cx, cy); cy += 18
     if (i % 2 === 0) leftY = cy; else rightY = cy
   })
   y = Math.max(leftY, rightY) + 12
-  doc.setDrawColor(200, 151, 58); doc.setLineWidth(0.5); doc.line(margin, y, W - margin, y); y += 16
+  doc.setDrawColor(122, 82, 48); doc.setLineWidth(0.5); doc.line(margin, y, W - margin, y); y += 16
 
   let winNum = 1
   rooms.forEach(room => {
@@ -539,8 +539,8 @@ function generatePDF(jobInfo, rooms) {
 
     // Room header
     if (room.name) {
-      doc.setFillColor(40, 55, 78); doc.rect(margin, y - 10, W - margin * 2, 20, 'F')
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(200, 151, 58)
+      doc.setFillColor(107, 77, 52); doc.rect(margin, y - 10, W - margin * 2, 20, 'F')
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(122, 82, 48)
       doc.text(`ROOM: ${room.name.toUpperCase()}`, margin + 8, y + 4); y += 18
     }
 
@@ -552,14 +552,14 @@ function generatePDF(jobInfo, rooms) {
 
       const bg = winNum % 2 === 0 ? [245, 243, 239] : [235, 232, 226]
       doc.setFillColor(...bg); doc.rect(margin, y - 10, W - margin * 2, rowH, 'F')
-      doc.setFillColor(200, 151, 58); doc.rect(margin, y - 10, 28, rowH, 'F')
-      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(26, 35, 50)
+      doc.setFillColor(122, 82, 48); doc.rect(margin, y - 10, 28, rowH, 'F')
+      doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(90, 58, 31)
       doc.text(String(winNum), margin + 14, y + (rowH / 2) - 14, { align: 'center' })
       doc.setFontSize(11); doc.text(`${win.style}${parseInt(win.qty) > 1 ? ` × ${win.qty}` : ''}`, margin + 36, y)
-      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(80, 90, 110)
+      doc.setFont('helvetica', 'normal'); doc.setFontSize(8.5); doc.setTextColor(107, 82, 64)
       lines.forEach((line, li) => doc.text(line, margin + 36, y + 13 + li * 12))
       if (win.notes) {
-        doc.setFontSize(8); doc.setTextColor(138, 154, 176)
+        doc.setFontSize(8); doc.setTextColor(196, 154, 108)
         doc.splitTextToSize(`Note: ${win.notes}`, W - margin * 2 - 60).forEach((line, li) => doc.text(line, margin + 36, y + 13 + lines.length * 12 + li * 11))
       }
       y += rowH + 4
@@ -572,8 +572,8 @@ function generatePDF(jobInfo, rooms) {
   const allWindows = rooms.flatMap(r => r.windows)
   if (allWindows.length > 0) {
     if (y + 30 > pageH - 60) { addFooter(); doc.addPage(); y = 40 }
-    doc.setFillColor(26, 35, 50); doc.rect(margin, y - 10, W - margin * 2, 22, 'F')
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(200, 151, 58)
+    doc.setFillColor(90, 58, 31); doc.rect(margin, y - 10, W - margin * 2, 22, 'F')
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(10); doc.setTextColor(122, 82, 48)
     const totalQty = allWindows.reduce((sum, w) => sum + parseInt(w.qty || 1), 0)
     doc.text(`TOTAL: ${allWindows.length} line item(s)  |  ${totalQty} unit(s)`, margin + 8, y + 5)
     y += 20
@@ -581,9 +581,9 @@ function generatePDF(jobInfo, rooms) {
 
   if (jobInfo.notes) {
     y += 8
-    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(200, 151, 58)
+    doc.setFont('helvetica', 'bold'); doc.setFontSize(9); doc.setTextColor(122, 82, 48)
     doc.text('ADDITIONAL NOTES', margin, y); y += 14
-    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(26, 35, 50)
+    doc.setFont('helvetica', 'normal'); doc.setFontSize(10); doc.setTextColor(90, 58, 31)
     doc.splitTextToSize(jobInfo.notes, W - margin * 2).forEach(line => { doc.text(line, margin, y); y += 14 })
   }
 
@@ -624,33 +624,33 @@ function CustomerJobSearch({ onSelect }) {
     <div style={{ position: 'relative' }}>
       <div style={{ position: 'relative' }}>
         <input placeholder="Start typing a customer name..." value={query} onChange={e => setQuery(e.target.value)} autoComplete="off" />
-        {loading && <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--gold)', fontSize: 12 }}>Searching...</div>}
+        {loading && <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--red)', fontSize: 12 }}>Searching...</div>}
       </div>
       {error && <div style={{ marginTop: 8, padding: '10px 12px', background: 'rgba(192,57,43,0.15)', border: '1px solid rgba(192,57,43,0.4)', borderRadius: 6, fontSize: 13, color: '#e74c3c' }}>⚠️ {error}</div>}
       {results.length > 0 && (
-        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: 'var(--navy-mid)', border: '1.5px solid var(--gold)', borderRadius: 8, marginTop: 4, maxHeight: 340, overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
+        <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: 'var(--surface)', border: '1.5px solid var(--red)', borderRadius: 8, marginTop: 4, maxHeight: 340, overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
           {results.map(customer => (
             <div key={customer.id}>
-              <div onClick={() => setExpanded(expanded === customer.id ? null : customer.id)} style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(200,151,58,0.15)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div onClick={() => setExpanded(expanded === customer.id ? null : customer.id)} style={{ padding: '10px 14px', cursor: 'pointer', borderBottom: '1px solid rgba(192,57,43,0.12)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div>
                   <div style={{ fontWeight: 600, fontSize: 14 }}>{customer.name}</div>
-                  <div style={{ fontSize: 12, color: 'var(--gray)', marginTop: 2 }}>{customer.jobs?.nodes?.length || 0} job{customer.jobs?.nodes?.length !== 1 ? 's' : ''}</div>
+                  <div style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 2 }}>{customer.jobs?.nodes?.length || 0} job{customer.jobs?.nodes?.length !== 1 ? 's' : ''}</div>
                 </div>
-                <div style={{ color: 'var(--gold)', fontSize: 12 }}>{expanded === customer.id ? '▲' : '▼'}</div>
+                <div style={{ color: 'var(--red)', fontSize: 12 }}>{expanded === customer.id ? '▲' : '▼'}</div>
               </div>
               {expanded === customer.id && customer.jobs?.nodes?.map(job => (
-                <div key={job.id} onClick={() => handleSelectJob(customer, job)} style={{ padding: '10px 14px 10px 28px', cursor: 'pointer', borderBottom: '1px solid rgba(200,151,58,0.08)', background: 'rgba(200,151,58,0.05)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(200,151,58,0.15)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(200,151,58,0.05)'}>
+                <div key={job.id} onClick={() => handleSelectJob(customer, job)} style={{ padding: '10px 14px 10px 28px', cursor: 'pointer', borderBottom: '1px solid rgba(192,57,43,0.06)', background: 'rgba(192,57,43,0.05)' }} onMouseEnter={e => e.currentTarget.style.background = 'rgba(192,57,43,0.12)'} onMouseLeave={e => e.currentTarget.style.background = 'rgba(192,57,43,0.05)'}>
                   <div style={{ fontWeight: 500, fontSize: 13 }}>{job.name || `Job #${job.id}`}</div>
-                  {job.address?.street && <div style={{ fontSize: 12, color: 'var(--gray)', marginTop: 2 }}>📍 {[job.address.street, job.address.city, job.address.state].filter(Boolean).join(', ')}</div>}
-                  {job.status && <div style={{ fontSize: 11, color: 'var(--gold)', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{job.status}</div>}
+                  {job.address?.street && <div style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 2 }}>📍 {[job.address.street, job.address.city, job.address.state].filter(Boolean).join(', ')}</div>}
+                  {job.status && <div style={{ fontSize: 11, color: 'var(--red)', marginTop: 2, textTransform: 'uppercase', letterSpacing: '0.06em' }}>{job.status}</div>}
                 </div>
               ))}
-              {expanded === customer.id && !customer.jobs?.nodes?.length && <div style={{ padding: '10px 28px', fontSize: 13, color: 'var(--gray)', fontStyle: 'italic' }}>No jobs found.</div>}
+              {expanded === customer.id && !customer.jobs?.nodes?.length && <div style={{ padding: '10px 28px', fontSize: 13, color: 'var(--text-light)', fontStyle: 'italic' }}>No jobs found.</div>}
             </div>
           ))}
         </div>
       )}
-      {query.length >= 2 && !loading && results.length === 0 && !error && <div style={{ marginTop: 8, padding: '10px 12px', background: 'var(--navy-mid)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, color: 'var(--gray)' }}>No customers found matching "{query}"</div>}
+      {query.length >= 2 && !loading && results.length === 0 && !error && <div style={{ marginTop: 8, padding: '10px 12px', background: 'var(--bg-card)', border: '1px solid var(--border)', borderRadius: 6, fontSize: 13, color: 'var(--text-light)' }}>No customers found matching "{query}"</div>}
     </div>
   )
 }
@@ -660,14 +660,14 @@ function CustomerJobSearch({ onSelect }) {
 function Field({ label, children, col }) {
   return (
     <div style={{ marginBottom: 12, gridColumn: col }}>
-      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>
+      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>
       {children}
     </div>
   )
 }
 
 function SectionHeader({ children }) {
-  return <div style={{ gridColumn: '1/-1', fontFamily: 'var(--font-head)', fontSize: 12, fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: '1px solid rgba(200,151,58,0.3)', paddingBottom: 6, marginTop: 8, marginBottom: 4 }}>{children}</div>
+  return <div style={{ gridColumn: '1/-1', fontFamily: 'var(--font-head)', fontSize: 12, fontWeight: 700, color: 'var(--red)', letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: '1px solid rgba(192,57,43,0.25)', paddingBottom: 6, marginTop: 8, marginBottom: 4 }}>{children}</div>
 }
 
 function MeasurementInput({ value, frac, onValue, onFrac, placeholder }) {
@@ -686,16 +686,16 @@ function MeasurementInput({ value, frac, onValue, onFrac, placeholder }) {
 function WindowCard({ win, index, onEdit, onRemove }) {
   const summary = summarizeWindow(win)
   return (
-    <div style={{ background: 'var(--navy-light)', border: '1.5px solid var(--border)', borderRadius: 8, padding: '12px 14px', marginBottom: 8 }}>
+    <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderRadius: 8, padding: '12px 14px', marginBottom: 8 }}>
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 8 }}>
         <div style={{ flex: 1 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
-            <span style={{ background: 'var(--gold)', color: 'var(--navy)', borderRadius: 4, padding: '2px 7px', fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 12 }}>#{index + 1}</span>
+            <span style={{ background: 'var(--red)', color: 'var(--bg)', borderRadius: 4, padding: '2px 7px', fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 12 }}>#{index + 1}</span>
             <span style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 15 }}>{win.style}</span>
-            {parseInt(win.qty) > 1 && <span style={{ color: 'var(--gray)', fontSize: 13 }}>× {win.qty}</span>}
+            {parseInt(win.qty) > 1 && <span style={{ color: 'var(--text-light)', fontSize: 13 }}>× {win.qty}</span>}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--gray)', lineHeight: 1.6 }}>{summary}</div>
-          {win.notes && <div style={{ marginTop: 4, fontSize: 11, color: 'var(--gray)', fontStyle: 'italic' }}>"{win.notes}"</div>}
+          <div style={{ fontSize: 12, color: 'var(--text-light)', lineHeight: 1.6 }}>{summary}</div>
+          {win.notes && <div style={{ marginTop: 4, fontSize: 11, color: 'var(--text-light)', fontStyle: 'italic' }}>"{win.notes}"</div>}
           {win.photos && win.photos.length > 0 && (
             <div style={{ display: 'flex', gap: 6, marginTop: 8, flexWrap: 'wrap' }}>
               {win.photos.map((p, i) => <img key={i} src={p} alt="" style={{ width: 56, height: 44, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)' }} />)}
@@ -718,10 +718,10 @@ function TopWindowUnit({ label, value, onChange, options }) {
   const set = (k, v) => onChange({ ...value, [k]: v })
   return (
     <div style={{ background: 'rgba(0,0,0,0.15)', borderRadius: 8, padding: '12px', marginBottom: 8 }}>
-      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.07em', marginBottom: 8 }}>{label}</div>
+      <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--red)', letterSpacing: '0.07em', marginBottom: 8 }}>{label}</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 12px' }}>
         <div style={{ gridColumn: '1/-1', marginBottom: 10 }}>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Style</label>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Style</label>
           <select value={value.style} onChange={e => onChange({ style: e.target.value, width: '', widthFrac: '', height: '', heightFrac: '', shortSideHeight: '', shortSideHeightFrac: '', facing: '' })}>
             <option value="">Select...</option>
             {options.map(o => <option key={o}>{o}</option>)}
@@ -729,7 +729,7 @@ function TopWindowUnit({ label, value, onChange, options }) {
         </div>
         {facing && (
           <div style={{ gridColumn: '1/-1', marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Facing</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Facing</label>
             <select value={value.facing} onChange={e => set('facing', e.target.value)}>
               <option value="">Select...</option>
               <option>Left</option><option>Right</option>
@@ -738,19 +738,19 @@ function TopWindowUnit({ label, value, onChange, options }) {
         )}
         {m.includes('w') && (
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Width (in) *</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Width (in) *</label>
             <MeasurementInput value={value.width} frac={value.widthFrac} onValue={v => set('width', v)} onFrac={v => set('widthFrac', v)} />
           </div>
         )}
         {m.includes('h') && (
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Height (in) *</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Height (in) *</label>
             <MeasurementInput value={value.height} frac={value.heightFrac} onValue={v => set('height', v)} onFrac={v => set('heightFrac', v)} />
           </div>
         )}
         {m.includes('s') && (
           <div style={{ gridColumn: '1/-1', marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Short Side Height (in) *</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Short Side Height (in) *</label>
             <MeasurementInput value={value.shortSideHeight} frac={value.shortSideHeightFrac} onValue={v => set('shortSideHeight', v)} onFrac={v => set('shortSideHeightFrac', v)} />
           </div>
         )}
@@ -1024,8 +1024,8 @@ function WindowForm({ initial, onSave, onCancel }) {
   }
 
   return (
-    <div style={{ background: 'var(--navy-mid)', border: '2px solid var(--gold)', borderRadius: 10, padding: '20px', marginBottom: 16 }}>
-      <div style={{ fontFamily: 'var(--font-head)', fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--gold)', marginBottom: 16, textTransform: 'uppercase' }}>Window Details</div>
+    <div style={{ background: 'var(--surface)', border: '2px solid var(--red)', boxShadow: 'var(--shadow-lg)', borderRadius: 10, padding: '20px', marginBottom: 16 }}>
+      <div style={{ fontFamily: 'var(--font-head)', fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--red)', marginBottom: 16, textTransform: 'uppercase' }}>Window Details</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
 
         {/* ── Number High first ── */}
@@ -1045,9 +1045,9 @@ function WindowForm({ initial, onSave, onCancel }) {
                 onChange={v => set('style', v)} imgMap={IMG.windows} groups={WINDOW_STYLE_GROUPS} />
             </div>
             <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer', userSelect: 'none', flexShrink: 0 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
-              <div onClick={() => set('insert', !form.insert)} style={{ width: 32, height: 32, borderRadius: 6, border: `2px solid ${form.insert ? 'var(--gold)' : 'var(--border)'}`, background: form.insert ? 'var(--gold)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}>
-                {form.insert && <span style={{ color: 'var(--navy)', fontSize: 18, fontWeight: 900, lineHeight: 1 }}>✓</span>}
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
+              <div onClick={() => set('insert', !form.insert)} style={{ width: 32, height: 32, borderRadius: 6, border: `2px solid ${form.insert ? 'var(--red)' : 'var(--border)'}`, background: form.insert ? 'var(--red)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}>
+                {form.insert && <span style={{ color: '#fff', fontSize: 18, fontWeight: 900, lineHeight: 1 }}>✓</span>}
               </div>
             </label>
           </div>
@@ -1056,8 +1056,8 @@ function WindowForm({ initial, onSave, onCancel }) {
         {/* ── 2 HIGH: bottom style first ── */}
         {form.numberHigh === 2 && (
           <>
-            <div style={{ gridColumn: '1/-1', background: 'rgba(200,151,58,0.08)', border: '1px solid rgba(200,151,58,0.3)', borderRadius: 8, padding: '10px 14px', marginBottom: 4 }}>
-              <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 13, color: 'var(--gold)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Bottom Window Style</div>
+            <div style={{ gridColumn: '1/-1', background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.25)', borderRadius: 8, padding: '10px 14px', marginBottom: 4 }}>
+              <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 13, color: 'var(--red)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Bottom Window Style</div>
             </div>
             <div style={{ gridColumn: '1/-1', display: 'flex', gap: 12, alignItems: 'flex-start' }}>
               <div style={{ flex: 1 }}>
@@ -1068,9 +1068,9 @@ function WindowForm({ initial, onSave, onCancel }) {
                   ]} />
               </div>
               <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer', userSelect: 'none', flexShrink: 0 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
-                <div onClick={() => set('insert', !form.insert)} style={{ width: 32, height: 32, borderRadius: 6, border: `2px solid ${form.insert ? 'var(--gold)' : 'var(--border)'}`, background: form.insert ? 'var(--gold)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}>
-                  {form.insert && <span style={{ color: 'var(--navy)', fontSize: 18, fontWeight: 900, lineHeight: 1 }}>✓</span>}
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
+                <div onClick={() => set('insert', !form.insert)} style={{ width: 32, height: 32, borderRadius: 6, border: `2px solid ${form.insert ? 'var(--red)' : 'var(--border)'}`, background: form.insert ? 'var(--red)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}>
+                  {form.insert && <span style={{ color: '#fff', fontSize: 18, fontWeight: 900, lineHeight: 1 }}>✓</span>}
                 </div>
               </label>
             </div>
@@ -1146,13 +1146,13 @@ function WindowForm({ initial, onSave, onCancel }) {
                   )}
                   {form.configType === 'custom' && (
                     <Field label="Custom Panel Configuration (viewed from exterior)" col="1/-1">
-                      <div style={{ fontSize: 11, color: 'var(--gold)', marginBottom: 6, fontStyle: 'italic' }}>Viewed from exterior</div>
+                      <div style={{ fontSize: 11, color: 'var(--red)', marginBottom: 6, fontStyle: 'italic' }}>Viewed from exterior</div>
                       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(panelCfg.panels, 3)}, 1fr)`, gap: 8 }}>
                         {Array.from({ length: panelCfg.panels }).map((_, i) => {
                           const names = getPanelNames(panelCfg.panels)
                           return (
                             <div key={i}>
-                              <div style={{ fontSize: 10, color: 'var(--gray)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{names[i]}</div>
+                              <div style={{ fontSize: 10, color: 'var(--text-light)', marginBottom: 3, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{names[i]}</div>
                               <select value={form.panelConfigs[i] || ''} onChange={e => {
                                 const pc = [...form.panelConfigs]; pc[i] = e.target.value; set('panelConfigs', pc)
                               }}>
@@ -1182,7 +1182,7 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           ) : (
             <Field label="Measurement Type" col="1/-1">
-              <div style={{ padding: '10px 14px', background: 'rgba(200,151,58,0.1)', border: '1px solid rgba(200,151,58,0.4)', borderRadius: 6, fontSize: 14, color: 'var(--gold)', fontWeight: 600 }}>
+              <div style={{ padding: '10px 14px', background: 'rgba(192,57,43,0.08)', border: '1px solid rgba(192,57,43,0.3)', borderRadius: 6, fontSize: 14, color: 'var(--red)', fontWeight: 600 }}>
                 📐 Use Rough Opening measurements for this window type
               </div>
             </Field>
@@ -1283,9 +1283,9 @@ function WindowForm({ initial, onSave, onCancel }) {
           {/* ══ TOP WINDOW (only when 2 high) ══ */}
           {form.numberHigh === 2 && cfg.m.includes('h') && (
             <>
-              <div style={{ gridColumn: '1/-1', background: 'rgba(200,151,58,0.08)', border: '1px solid rgba(200,151,58,0.3)', borderRadius: 8, padding: '10px 14px', marginTop: 12, marginBottom: 4 }}>
-                <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 13, color: 'var(--gold)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Top Window</div>
-                <div style={{ fontSize: 12, color: 'var(--gray)', marginTop: 2 }}>Color, glass surface, pane, hardware & screen match the bottom window unless changed below.</div>
+              <div style={{ gridColumn: '1/-1', background: 'rgba(192,57,43,0.06)', border: '1px solid rgba(192,57,43,0.25)', borderRadius: 8, padding: '10px 14px', marginTop: 12, marginBottom: 4 }}>
+                <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 13, color: 'var(--red)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>Top Window</div>
+                <div style={{ fontSize: 12, color: 'var(--text-light)', marginTop: 2 }}>Color, glass surface, pane, hardware & screen match the bottom window unless changed below.</div>
               </div>
 
               {/* Top window style */}
@@ -1378,7 +1378,7 @@ function WindowForm({ initial, onSave, onCancel }) {
 
           {/* ── EXTENSION JAMB & CASING ── */}
           <SectionHeader>Extension Jamb & Casing</SectionHeader>
-          <div style={{ gridColumn: '1/-1', fontSize: 12, color: 'var(--gray)', marginBottom: 4, fontStyle: 'italic' }}>
+          <div style={{ gridColumn: '1/-1', fontSize: 12, color: 'var(--text-light)', marginBottom: 4, fontStyle: 'italic' }}>
             Leave any section blank if not needed (e.g. no jamb, no casing, no LP trim).
           </div>
           <Field label="Jamb Depth (inches)">
@@ -1534,9 +1534,9 @@ export default function App() {
 
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 0 80px 0' }}>
-      <div style={{ background: 'var(--navy-light)', borderBottom: '3px solid var(--gold)', padding: '18px 20px', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 18, letterSpacing: '0.06em' }}>FETTIG MILLWORK & WINDOWS</div>
-        <div style={{ color: 'var(--gold)', fontSize: 11, letterSpacing: '0.12em', fontWeight: 600 }}>WINDOW ESTIMATOR</div>
+      <div style={{ background: 'var(--bg-mid)', borderBottom: '3px solid var(--red)', padding: '18px 20px', position: 'sticky', top: 0, zIndex: 100 }}>
+        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 18, letterSpacing: '0.06em', color: '#fff' }}>FETTIG MILLWORK & WINDOWS</div>
+        <div style={{ color: '#ffb3a7', fontSize: 11, letterSpacing: '0.12em', fontWeight: 600 }}>WINDOW ESTIMATOR</div>
         <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
           {[['job','1','Job Info'],['windows','2','Windows'],['review','3','Review & Submit']].map(([s,n,label]) => (
             <button key={s} className={step===s?'btn-gold':'btn-outline'} onClick={()=>{if(s==='windows'&&!jobValid)return;setStep(s)}} style={{flex:1,fontSize:12,padding:'7px 8px',opacity:(s==='windows'&&!jobValid)?0.4:1}}>{n}. {label}</button>
@@ -1551,27 +1551,27 @@ export default function App() {
           <div>
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4 }}>Job Information</div>
-              <div style={{ color: 'var(--gray)', fontSize: 13 }}>Search for a customer to pull their jobs from JobTread.</div>
+              <div style={{ color: 'var(--text-light)', fontSize: 13 }}>Search for a customer to pull their jobs from JobTread.</div>
             </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Search Customer</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Search Customer</label>
               <CustomerJobSearch onSelect={handleJobSelect} />
             </div>
             {jobInfo.customerName && (
-              <div style={{ background: 'rgba(200,151,58,0.1)', border: '1.5px solid var(--gold)', borderRadius: 8, padding: '12px 16px', marginBottom: 16 }}>
-                <div style={{ fontSize: 11, color: 'var(--gold)', fontWeight: 700, letterSpacing: '0.08em', marginBottom: 6 }}>SELECTED JOB</div>
+              <div style={{ background: 'rgba(192,57,43,0.08)', border: '1.5px solid var(--red)', borderRadius: 8, padding: '12px 16px', marginBottom: 16 }}>
+                <div style={{ fontSize: 11, color: 'var(--red)', fontWeight: 700, letterSpacing: '0.08em', marginBottom: 6 }}>SELECTED JOB</div>
                 <div style={{ fontWeight: 700, fontSize: 15 }}>{jobInfo.customerName}</div>
-                {jobInfo.jobName && <div style={{ fontSize: 13, color: 'var(--gray)', marginTop: 3 }}>📋 {jobInfo.jobName}</div>}
-                {jobInfo.address && <div style={{ fontSize: 13, color: 'var(--gray)', marginTop: 2 }}>📍 {jobInfo.address}</div>}
+                {jobInfo.jobName && <div style={{ fontSize: 13, color: 'var(--text-light)', marginTop: 3 }}>📋 {jobInfo.jobName}</div>}
+                {jobInfo.address && <div style={{ fontSize: 13, color: 'var(--text-light)', marginTop: 2 }}>📍 {jobInfo.address}</div>}
                 <button className="btn-outline" style={{ marginTop: 10, padding: '5px 12px', fontSize: 12 }} onClick={() => setJobInfo({ customerName: '', jobId: '', jobName: '', address: '', estimator: jobInfo.estimator, notes: jobInfo.notes })}>✕ Clear & search again</button>
               </div>
             )}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Estimator Name</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Estimator Name</label>
               <input placeholder="Your name" value={jobInfo.estimator} onChange={e => setJob('estimator', e.target.value)} />
             </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--gray)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>General Job Notes</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>General Job Notes</label>
               <textarea rows={3} placeholder="Any general notes about this job..." value={jobInfo.notes} onChange={e => setJob('notes', e.target.value)} style={{ resize: 'vertical' }} />
             </div>
             <button className="btn-gold" style={{ width: '100%', fontSize: 16, padding: 14, opacity: jobValid ? 1 : 0.5 }} onClick={() => jobValid && setStep('windows')}>Next: Add Windows →</button>
@@ -1583,14 +1583,14 @@ export default function App() {
           <div>
             <div style={{ marginBottom: 16 }}>
               <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4 }}>Windows</div>
-              <div style={{ color: 'var(--gray)', fontSize: 13 }}>Organize windows by room for <span style={{ color: 'var(--gold)' }}>{jobInfo.customerName}</span>.</div>
+              <div style={{ color: 'var(--text-light)', fontSize: 13 }}>Organize windows by room for <span style={{ color: 'var(--red)' }}>{jobInfo.customerName}</span>.</div>
             </div>
 
             {rooms.map((room, ri) => (
-              <div key={room.id} style={{ background: 'var(--navy-light)', border: '1.5px solid var(--border)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
+              <div key={room.id} style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderRadius: 10, padding: '14px 16px', marginBottom: 16 }}>
                 {/* Room header */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-                  <div style={{ background: 'var(--gold)', color: 'var(--navy)', borderRadius: 4, padding: '3px 10px', fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 12, letterSpacing: '0.06em', flexShrink: 0 }}>ROOM {ri + 1}</div>
+                  <div style={{ background: 'var(--red)', color: 'var(--bg)', borderRadius: 4, padding: '3px 10px', fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 12, letterSpacing: '0.06em', flexShrink: 0 }}>ROOM {ri + 1}</div>
                   <input
                     placeholder="Room name (e.g. Living Room, Kitchen...)"
                     value={room.name}
@@ -1633,23 +1633,23 @@ export default function App() {
           <div>
             <div style={{ marginBottom: 20 }}>
               <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4 }}>Review & Submit</div>
-              <div style={{ color: 'var(--gray)', fontSize: 13 }}>Review everything, then send straight to JobTread.</div>
+              <div style={{ color: 'var(--text-light)', fontSize: 13 }}>Review everything, then send straight to JobTread.</div>
             </div>
-            <div style={{ background: 'var(--navy-light)', border: '1.5px solid var(--border)', borderRadius: 10, padding: '16px 18px', marginBottom: 20 }}>
-              <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 15, color: 'var(--gold)', letterSpacing: '0.06em', marginBottom: 10 }}>ESTIMATE SUMMARY</div>
+            <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderRadius: 10, padding: '16px 18px', marginBottom: 20 }}>
+              <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 15, color: 'var(--red)', letterSpacing: '0.06em', marginBottom: 10 }}>ESTIMATE SUMMARY</div>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '8px 16px', fontSize: 13 }}>
-                <div><span style={{ color: 'var(--gray)' }}>Customer:</span> <strong>{jobInfo.customerName}</strong></div>
-                {jobInfo.jobName && <div><span style={{ color: 'var(--gray)' }}>Job:</span> {jobInfo.jobName}</div>}
-                {jobInfo.address && <div style={{ gridColumn: '1/-1' }}><span style={{ color: 'var(--gray)' }}>Address:</span> {jobInfo.address}</div>}
-                {jobInfo.estimator && <div><span style={{ color: 'var(--gray)' }}>Estimator:</span> {jobInfo.estimator}</div>}
-                <div><span style={{ color: 'var(--gray)' }}>Rooms:</span> <strong>{rooms.filter(r => r.windows.length > 0).length}</strong></div>
-                <div><span style={{ color: 'var(--gray)' }}>Total Units:</span> <strong>{allWindows.reduce((s, w) => s + parseInt(w.qty || 1), 0)}</strong></div>
+                <div><span style={{ color: 'var(--text-light)' }}>Customer:</span> <strong>{jobInfo.customerName}</strong></div>
+                {jobInfo.jobName && <div><span style={{ color: 'var(--text-light)' }}>Job:</span> {jobInfo.jobName}</div>}
+                {jobInfo.address && <div style={{ gridColumn: '1/-1' }}><span style={{ color: 'var(--text-light)' }}>Address:</span> {jobInfo.address}</div>}
+                {jobInfo.estimator && <div><span style={{ color: 'var(--text-light)' }}>Estimator:</span> {jobInfo.estimator}</div>}
+                <div><span style={{ color: 'var(--text-light)' }}>Rooms:</span> <strong>{rooms.filter(r => r.windows.length > 0).length}</strong></div>
+                <div><span style={{ color: 'var(--text-light)' }}>Total Units:</span> <strong>{allWindows.reduce((s, w) => s + parseInt(w.qty || 1), 0)}</strong></div>
               </div>
             </div>
 
             {(() => { let n = 1; return rooms.filter(r => r.windows.length > 0).map(room => (
               <div key={room.id} style={{ marginBottom: 16 }}>
-                <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 13, color: 'var(--gold)', letterSpacing: '0.08em', marginBottom: 8, textTransform: 'uppercase' }}>
+                <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 13, color: 'var(--red)', letterSpacing: '0.08em', marginBottom: 8, textTransform: 'uppercase' }}>
                   {room.name || 'Unnamed Room'}
                 </div>
                 {room.windows.map((win, wi) => <WindowCard key={wi} win={win} index={n++ - 1} onEdit={() => { setStep('windows'); setTimeout(() => setEditInfo({ roomId: room.id, winIndex: wi }), 50) }} onRemove={() => removeWindow(room.id, wi)} />)}
@@ -1666,7 +1666,7 @@ export default function App() {
                 <div style={{ background: 'rgba(39,174,96,0.15)', border: '1.5px solid var(--green)', borderRadius: 8, padding: 16, textAlign: 'center' }}>
                   <div style={{ fontSize: 24, marginBottom: 6 }}>✅</div>
                   <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>Sent to JobTread!</div>
-                  <div style={{ color: 'var(--gray)', fontSize: 13, marginTop: 4 }}>Estimate Notes.pdf uploaded to <strong>{jobInfo.jobName}</strong>.</div>
+                  <div style={{ color: 'var(--text-light)', fontSize: 13, marginTop: 4 }}>Estimate Notes.pdf uploaded to <strong>{jobInfo.jobName}</strong>.</div>
                 </div>
               )}
               <button className="btn-outline" style={{ width: '100%', fontSize: 14, padding: 12 }} onClick={() => { setStep('job'); setJobInfo({ customerName: '', jobId: '', jobName: '', address: '', estimator: '', notes: '' }); setRooms([newRoom()]); setSubmitted(false) }}>Start New Estimate</button>
