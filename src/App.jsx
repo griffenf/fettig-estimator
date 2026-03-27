@@ -198,7 +198,7 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
 
   return (
     <div style={{ marginBottom: 12, position: 'relative' }} ref={ref}>
-      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
+      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
       <div onClick={() => setOpen(o => !o)} style={{
         display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
         background: 'var(--surface)', border: '1.5px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderRadius: 6,
@@ -282,7 +282,7 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
 
   return (
     <div style={{ marginBottom: 12, position: 'relative' }} ref={ref}>
-      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
+      {label && <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>}
       <div onClick={() => setOpen(o => !o)} style={{
         display: 'flex', alignItems: 'center', gap: 10, padding: '10px 14px',
         background: 'var(--surface)', border: '1.5px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderRadius: 6,
@@ -660,7 +660,7 @@ function CustomerJobSearch({ onSelect }) {
 function Field({ label, children, col }) {
   return (
     <div style={{ marginBottom: 12, gridColumn: col }}>
-      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>
+      <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>{label}</label>
       {children}
     </div>
   )
@@ -721,7 +721,7 @@ function TopWindowUnit({ label, value, onChange, options }) {
       <div style={{ fontSize: 11, fontWeight: 700, color: 'var(--red)', letterSpacing: '0.07em', marginBottom: 8 }}>{label}</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 12px' }}>
         <div style={{ gridColumn: '1/-1', marginBottom: 10 }}>
-          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Style</label>
+          <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Style</label>
           <select value={value.style} onChange={e => onChange({ style: e.target.value, width: '', widthFrac: '', height: '', heightFrac: '', shortSideHeight: '', shortSideHeightFrac: '', facing: '' })}>
             <option value="">Select...</option>
             {options.map(o => <option key={o}>{o}</option>)}
@@ -729,7 +729,7 @@ function TopWindowUnit({ label, value, onChange, options }) {
         </div>
         {facing && (
           <div style={{ gridColumn: '1/-1', marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Facing</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Facing</label>
             <select value={value.facing} onChange={e => set('facing', e.target.value)}>
               <option value="">Select...</option>
               <option>Left</option><option>Right</option>
@@ -738,19 +738,19 @@ function TopWindowUnit({ label, value, onChange, options }) {
         )}
         {m.includes('w') && (
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Width (in) *</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Width (in) *</label>
             <MeasurementInput value={value.width} frac={value.widthFrac} onValue={v => set('width', v)} onFrac={v => set('widthFrac', v)} />
           </div>
         )}
         {m.includes('h') && (
           <div style={{ marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Height (in) *</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Height (in) *</label>
             <MeasurementInput value={value.height} frac={value.heightFrac} onValue={v => set('height', v)} onFrac={v => set('heightFrac', v)} />
           </div>
         )}
         {m.includes('s') && (
           <div style={{ gridColumn: '1/-1', marginBottom: 10 }}>
-            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Short Side Height (in) *</label>
+            <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Short Side Height (in) *</label>
             <MeasurementInput value={value.shortSideHeight} frac={value.shortSideHeightFrac} onValue={v => set('shortSideHeight', v)} onFrac={v => set('shortSideHeightFrac', v)} />
           </div>
         )}
@@ -1045,7 +1045,7 @@ function WindowForm({ initial, onSave, onCancel }) {
                 onChange={v => set('style', v)} imgMap={IMG.windows} groups={WINDOW_STYLE_GROUPS} />
             </div>
             <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer', userSelect: 'none', flexShrink: 0 }}>
-              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
+              <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
               <div onClick={() => set('insert', !form.insert)} style={{ width: 32, height: 32, borderRadius: 6, border: `2px solid ${form.insert ? 'var(--red)' : 'var(--border)'}`, background: form.insert ? 'var(--red)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}>
                 {form.insert && <span style={{ color: '#fff', fontSize: 18, fontWeight: 900, lineHeight: 1 }}>✓</span>}
               </div>
@@ -1068,7 +1068,7 @@ function WindowForm({ initial, onSave, onCancel }) {
                   ]} />
               </div>
               <label style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, cursor: 'pointer', userSelect: 'none', flexShrink: 0 }}>
-                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
+                <span style={{ fontSize: 11, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.07em' }}>Insert</span>
                 <div onClick={() => set('insert', !form.insert)} style={{ width: 32, height: 32, borderRadius: 6, border: `2px solid ${form.insert ? 'var(--red)' : 'var(--border)'}`, background: form.insert ? 'var(--red)' : 'transparent', display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', transition: 'all 0.15s' }}>
                   {form.insert && <span style={{ color: '#fff', fontSize: 18, fontWeight: 900, lineHeight: 1 }}>✓</span>}
                 </div>
@@ -1557,7 +1557,7 @@ export default function App() {
               <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>Search for a customer to pull their jobs from JobTread.</div>
             </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Search Customer</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Search Customer</label>
               <CustomerJobSearch onSelect={handleJobSelect} />
             </div>
             {jobInfo.customerName && (
@@ -1570,11 +1570,11 @@ export default function App() {
               </div>
             )}
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Estimator Name</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>Estimator Name</label>
               <input placeholder="Your name" value={jobInfo.estimator} onChange={e => setJob('estimator', e.target.value)} />
             </div>
             <div style={{ marginBottom: 14 }}>
-              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>General Job Notes</label>
+              <label style={{ display: 'block', fontSize: 11, fontWeight: 700, color: 'var(--blue)', textTransform: 'uppercase', letterSpacing: '0.07em', marginBottom: 5 }}>General Job Notes</label>
               <textarea rows={3} placeholder="Any general notes about this job..." value={jobInfo.notes} onChange={e => setJob('notes', e.target.value)} style={{ resize: 'vertical' }} />
             </div>
             <button className="btn-gold" style={{ width: '100%', fontSize: 16, padding: 14, opacity: jobValid ? 1 : 0.5 }} onClick={() => jobValid && setStep('windows')}>Next: Add Windows →</button>
