@@ -894,7 +894,17 @@ function WindowForm({ initial, onSave, onCancel }) {
       <div style={{ fontFamily: 'var(--font-head)', fontSize: 16, fontWeight: 700, letterSpacing: '0.08em', color: 'var(--gold)', marginBottom: 16, textTransform: 'uppercase' }}>Window Details</div>
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
 
-        <div style={{ gridColumn: '1/-1', display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 12 }}>
+        {/* ── Row 1: Number High (before style so layout is clear) ── */}
+        <Field label="Number High">
+          <select value={form.numberHigh} onChange={e => set('numberHigh', parseInt(e.target.value))}>
+            <option value={1}>1 High</option>
+            <option value={2}>2 High</option>
+          </select>
+        </Field>
+        <div />
+
+        {/* ── Row 2: Window Style + Insert ── */}
+        <div style={{ gridColumn: '1/-1', display: 'flex', gap: 12, alignItems: 'flex-start', marginBottom: 4 }}>
           <div style={{ flex: 1 }}>
             <ImagePicker
               label="Window Style *"
@@ -918,14 +928,7 @@ function WindowForm({ initial, onSave, onCancel }) {
         </div>
 
         {cfg && <>
-          {cfg.wide.length === 1 && TWO_HIGH_STYLES.includes(form.style) && (
-            <Field label="Number High">
-              <select value={form.numberHigh} onChange={e => set('numberHigh', parseInt(e.target.value))}>
-                <option value={1}>1 High</option>
-                <option value={2}>2 High</option>
-              </select>
-            </Field>
-          )}
+          {/* ── Number Wide ── */}
           {cfg.wide.length > 1 && (
             <Field label="Number Wide">
               <select value={form.numberWide} onChange={e => set('numberWide', parseInt(e.target.value))}>
@@ -933,16 +936,9 @@ function WindowForm({ initial, onSave, onCancel }) {
               </select>
             </Field>
           )}
-          {TWO_HIGH_STYLES.includes(form.style) && (
-            <Field label="Number High">
-              <select value={form.numberHigh} onChange={e => set('numberHigh', parseInt(e.target.value))}>
-                <option value={1}>1 High</option>
-                <option value={2}>2 High</option>
-              </select>
-            </Field>
-          )}
+          {cfg.wide.length > 1 && <div />}
 
-
+          {/* ── Facing ── */}
           {cfg.facing && (
             <div style={{ gridColumn: 'auto' }}>
               <SelectWithPreview
@@ -955,6 +951,7 @@ function WindowForm({ initial, onSave, onCancel }) {
             </div>
           )}
 
+          {/* ── Sash Split ── */}
           {cfg.sash && (
             <Field label="Sash Split" col="1/-1">
               <select value={form.sashSplit} onChange={e => set('sashSplit', e.target.value)}>
@@ -965,6 +962,7 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           )}
 
+          {/* ── Configuration ── */}
           {panelCfg && (
             <>
               <SectionHeader>Configuration</SectionHeader>
@@ -1003,8 +1001,8 @@ function WindowForm({ initial, onSave, onCancel }) {
                     </Field>
                   )}
                   {form.configType === 'custom' && (
-                    <Field label="Custom Panel Configuration" col="1/-1">
-                        <div style={{ fontSize: 11, color: 'var(--gold)', marginBottom: 6, fontStyle: 'italic' }}>Viewed from exterior</div>
+                    <Field label="Custom Panel Configuration (viewed from exterior)" col="1/-1">
+                      <div style={{ fontSize: 11, color: 'var(--gold)', marginBottom: 6, fontStyle: 'italic' }}>Viewed from exterior</div>
                       <div style={{ display: 'grid', gridTemplateColumns: `repeat(${Math.min(panelCfg.panels, 3)}, 1fr)`, gap: 8 }}>
                         {Array.from({ length: panelCfg.panels }).map((_, i) => {
                           const names = getPanelNames(panelCfg.panels)
@@ -1028,6 +1026,17 @@ function WindowForm({ initial, onSave, onCancel }) {
             </>
           )}
 
+          {/* ══════════════════════════════════════════
+              BOTTOM WINDOW SECTION (always shown)
+          ══════════════════════════════════════════ */}
+          {form.numberHigh === 2 && (
+            <div style={{ gridColumn: '1/-1', background: 'rgba(200,151,58,0.06)', border: '1px solid rgba(200,151,58,0.2)', borderRadius: 8, padding: '12px 14px', marginTop: 8, marginBottom: 4 }}>
+              <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 13, color: 'var(--gold)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Bottom Window</div>
+              <div style={{ fontSize: 12, color: 'var(--gray)' }}>All settings below apply to the bottom window. Top window options appear after.</div>
+            </div>
+          )}
+
+          {/* ── Measurements ── */}
           <SectionHeader>Measurements</SectionHeader>
           {cfg.mt === 2 ? (
             <Field label="Measurement Type" col="1/-1">
@@ -1039,12 +1048,12 @@ function WindowForm({ initial, onSave, onCancel }) {
             </Field>
           ) : (
             <Field label="Measurement Type" col="1/-1">
-              <div style={{ padding: '8px 12px', background: 'rgba(200,151,58,0.1)', border: '1px solid rgba(200,151,58,0.4)', borderRadius: 6, fontSize: 13, color: 'var(--gold)', fontWeight: 600 }}>
+              <div style={{ padding: '10px 14px', background: 'rgba(200,151,58,0.1)', border: '1px solid rgba(200,151,58,0.4)', borderRadius: 6, fontSize: 14, color: 'var(--gold)', fontWeight: 600 }}>
                 📐 Use Rough Opening measurements for this window type
               </div>
             </Field>
           )}
-          {cfg.m.includes('w') && form.numberHigh !== 2 && (
+          {cfg.m.includes('w') && (
             <Field label="Width (inches) *">
               <MeasurementInput value={form.width} frac={form.widthFrac} onValue={v => set('width', v)} onFrac={v => set('widthFrac', v)} />
             </Field>
@@ -1054,146 +1063,53 @@ function WindowForm({ initial, onSave, onCancel }) {
               <MeasurementInput value={form.widthOrHeight} frac={form.widthOrHeightFrac} onValue={v => set('widthOrHeight', v)} onFrac={v => set('widthOrHeightFrac', v)} />
             </Field>
           )}
-
-          {/* 2 High measurements */}
-          {cfg.m.includes('h') && TWO_HIGH_STYLES.includes(form.style) && form.numberHigh === 2 ? (() => {
-            const topOpts = getTopOptions(form.style)
-            const base2Wide = form.numberWide === 2
-            const forceRound = form.numberWide >= 3
-            return (
-              <>
-                <SectionHeader>Top Window</SectionHeader>
-                {base2Wide && !forceRound && (
-                  <Field label="Top Window Width" col="1/-1">
-                    <select value={form.topWindowWidth} onChange={e => set('topWindowWidth', parseInt(e.target.value))}>
-                      <option value={1}>1 Wide</option>
-                      <option value={2}>2 Wide</option>
-                    </select>
-                  </Field>
-                )}
-                {base2Wide && form.topWindowWidth === 2 && !forceRound ? (
-                  <>
-                    <SelectWithPreview label="Left Panel Style" value={form.topLeftStyle}
-                      onChange={v => set('topLeftStyle', v)} imgMap={IMG.windows}
-                      opts={topOpts} placeholder="Select..." />
-                    <SelectWithPreview label="Right Panel Style" value={form.topRightStyle}
-                      onChange={v => set('topRightStyle', v)} imgMap={IMG.windows}
-                      opts={topOpts} placeholder="Select..." />
-                  <div style={{ gridColumn: '1/-1', fontFamily: 'var(--font-head)', fontSize: 12, fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: '1px solid rgba(200,151,58,0.3)', paddingBottom: 6, marginTop: 8, marginBottom: 4 }}>Top Window Options</div>
-                  <div style={{ gridColumn: '1/-1', padding: '8px 12px', background: 'rgba(200,151,58,0.08)', border: '1px solid rgba(200,151,58,0.2)', borderRadius: 6, fontSize: 12, color: 'var(--gray)', marginBottom: 8 }}>
-                    All other settings match the bottom window. Change only what differs below.
-                  </div>
-                  <Field label="Tempered">
-                    <select value={form.topTempered || ''} onChange={e => set('topTempered', e.target.value)}>
-                      <option value="">Same as bottom ({form.tempered})</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </Field>
-                  <SelectWithPreview label="Decorative Glass" value={form.topDecorativeGlass || ''}
-                    onChange={v => set('topDecorativeGlass', v)} imgMap={IMG.decorativeGlass}
-                    opts={['Same as bottom', ...decorGlasses.filter(g => g !== 'None')]} placeholder={`Same as bottom (${form.decorativeGlass})`} />
-                  <SelectWithPreview label="Grille Type" value={form.topGrilleType || ''}
-                    onChange={v => set('topGrilleType', v)} imgMap={IMG.grilleType}
-                    opts={['Same as bottom', ...cfg.g]} placeholder={`Same as bottom (${form.grilleType || 'None'})`} />
-                  {(form.topGrilleType && form.topGrilleType !== 'Same as bottom') && (
-                    <SelectWithPreview label="Grille Pattern" value={form.topGrillePattern || ''}
-                      onChange={v => set('topGrillePattern', v)} imgMap={IMG.grillePattern}
-                      opts={['Same as bottom', ...grillePatterns]} placeholder={`Same as bottom (${form.grillePattern || 'None'})`} />
-                  )}
-                  </>
-                ) : (
-                  <>
-                  <div style={{ gridColumn: '1/-1' }}>
-                    <SelectWithPreview label="Top Window Style" value={form.topStyle}
-                      onChange={v => set('topStyle', v)} imgMap={IMG.windows}
-                      opts={forceRound ? ROUND_TOP_WINDOW_STYLES : topOpts} placeholder="Select..." />
-                  </div>
-                  <div style={{ gridColumn: '1/-1', fontFamily: 'var(--font-head)', fontSize: 12, fontWeight: 700, color: 'var(--gold)', letterSpacing: '0.1em', textTransform: 'uppercase', borderBottom: '1px solid rgba(200,151,58,0.3)', paddingBottom: 6, marginTop: 8, marginBottom: 4 }}>Top Window Options</div>
-                  <div style={{ gridColumn: '1/-1', padding: '8px 12px', background: 'rgba(200,151,58,0.08)', border: '1px solid rgba(200,151,58,0.2)', borderRadius: 6, fontSize: 12, color: 'var(--gray)', marginBottom: 8 }}>
-                    All other settings (color, glass surface, hardware, etc.) match the bottom window. Change only what differs below.
-                  </div>
-                  <Field label="Tempered">
-                    <select value={form.topTempered || form.tempered} onChange={e => set('topTempered', e.target.value)}>
-                      <option value="">Same as bottom ({form.tempered})</option>
-                      <option value="Yes">Yes</option>
-                      <option value="No">No</option>
-                    </select>
-                  </Field>
-                  <SelectWithPreview label="Decorative Glass" value={form.topDecorativeGlass || ''}
-                    onChange={v => set('topDecorativeGlass', v)} imgMap={IMG.decorativeGlass}
-                    opts={['Same as bottom', ...decorGlasses.filter(g => g !== 'None')]} placeholder={`Same as bottom (${form.decorativeGlass})`} />
-                  <SelectWithPreview label="Grille Type" value={form.topGrilleType || ''}
-                    onChange={v => set('topGrilleType', v)} imgMap={IMG.grilleType}
-                    opts={['Same as bottom', ...cfg.g]} placeholder={`Same as bottom (${form.grilleType || 'None'})`} />
-                  {(form.topGrilleType && form.topGrilleType !== 'Same as bottom') && (
-                    <SelectWithPreview label="Grille Pattern" value={form.topGrillePattern || ''}
-                      onChange={v => set('topGrillePattern', v)} imgMap={IMG.grillePattern}
-                      opts={['Same as bottom', ...grillePatterns]} placeholder={`Same as bottom (${form.grillePattern || 'None'})`} />
-                  )}
-                  </>
-                )}
-                <SectionHeader>Measurements</SectionHeader>
-                {cfg.m.includes('w') && (
-                  <Field label="Width (inches) *">
-                    <MeasurementInput value={form.width} frac={form.widthFrac} onValue={v => set('width', v)} onFrac={v => set('widthFrac', v)} />
-                  </Field>
-                )}
-                <Field label="Overall Height (in) *">
-                  <MeasurementInput value={form.overallHeight} frac={form.overallHeightFrac} onValue={v => set('overallHeight', v)} onFrac={v => set('overallHeightFrac', v)} />
-                </Field>
-                <Field label="Bottom Window Height (in)">
-                  <MeasurementInput value={form.height} frac={form.heightFrac} onValue={v => set('height', v)} onFrac={v => set('heightFrac', v)} />
-                </Field>
-                <Field label="Top Window Height (in)">
-                  <MeasurementInput value={form.topHeight} frac={form.topHeightFrac} onValue={v => set('topHeight', v)} onFrac={v => set('topHeightFrac', v)} />
-                </Field>
-                {WIN[form.topStyle]?.m.includes('s') && (
-                  <Field label="Top Short Side Height (in) *">
-                    <MeasurementInput value={form.topShortSideHeight} frac={form.topShortSideHeightFrac} onValue={v => set('topShortSideHeight', v)} onFrac={v => set('topShortSideHeightFrac', v)} />
-                  </Field>
-                )}
-              </>
-            )
-          })() : cfg.m.includes('h') && (
+          {/* Height: 2-high shows overall+bottom+top, 1-high shows normal */}
+          {cfg.m.includes('h') && form.numberHigh === 2 ? (
+            <>
+              <Field label="Overall Height (in) *">
+                <MeasurementInput value={form.overallHeight} frac={form.overallHeightFrac} onValue={v => set('overallHeight', v)} onFrac={v => set('overallHeightFrac', v)} />
+              </Field>
+              <Field label="Bottom Window Height (in)">
+                <MeasurementInput value={form.height} frac={form.heightFrac} onValue={v => set('height', v)} onFrac={v => set('heightFrac', v)} />
+              </Field>
+            </>
+          ) : cfg.m.includes('h') ? (
             <Field label="Height (inches) *">
               <MeasurementInput value={form.height} frac={form.heightFrac} onValue={v => set('height', v)} onFrac={v => set('heightFrac', v)} />
             </Field>
-          )}
+          ) : null}
           {cfg.m.includes('s') && form.numberHigh !== 2 && (
             <Field label="Short Side Height (in) *" col="1/-1">
               <MeasurementInput value={form.shortSideHeight} frac={form.shortSideHeightFrac} onValue={v => set('shortSideHeight', v)} onFrac={v => set('shortSideHeightFrac', v)} />
             </Field>
           )}
+          {cfg.bay && (
+            <>
+              <Field label="Angle of Deflection">
+                <select value={form.angleOfDeflection || ''} onChange={e => set('angleOfDeflection', e.target.value)}>
+                  <option value="">Select...</option>
+                  <option>30°</option>
+                  <option>45°</option>
+                </select>
+              </Field>
+              <Field label="Flanker to Center Ratio">
+                <select value={form.flankerRatio || ''} onChange={e => set('flankerRatio', e.target.value)}>
+                  <option value="">Select...</option>
+                  <option>1:2:1</option>
+                  <option>1:1:1</option>
+                </select>
+              </Field>
+            </>
+          )}
 
-          {cfg.bay && <>
-            <Field label="Angle of Deflection">
-              <select value={form.angleOfDeflection || ''} onChange={e => set('angleOfDeflection', e.target.value)}>
-                <option value="">Select...</option>
-                <option>30°</option>
-                <option>45°</option>
-              </select>
-            </Field>
-            <Field label="Flanker to Center Ratio">
-              <select value={form.flankerRatio || ''} onChange={e => set('flankerRatio', e.target.value)}>
-                <option value="">Select...</option>
-                <option>1:2:1</option>
-                <option>1:1:1</option>
-              </select>
-            </Field>
-          </>}
-
-
+          {/* ── Color & Glass ── */}
           <SectionHeader>Color & Glass</SectionHeader>
           <SelectWithPreview label="Exterior Color *" value={form.exteriorColor}
             onChange={v => set('exteriorColor', v)} imgMap={IMG.exteriorColor}
             opts={EXT_COLORS} placeholder="Select..." />
-          <Field label="Pane">
-            <select value={form.pane} onChange={e => set('pane', e.target.value)}>
-              <option>Double</option>
-              <option>Triple</option>
-            </select>
-          </Field>
+          <SelectWithPreview label="Pane" value={form.pane}
+            onChange={v => set('pane', v)} imgMap={{}}
+            opts={['Double', 'Triple']} />
           <SelectWithPreview label="Interior Color *" value={form.interiorColor}
             onChange={v => set('interiorColor', v)} imgMap={IMG.interiorColor}
             opts={intColors} placeholder="Select..." />
@@ -1210,6 +1126,7 @@ function WindowForm({ initial, onSave, onCancel }) {
             onChange={v => set('decorativeGlass', v)} imgMap={IMG.decorativeGlass}
             opts={decorGlasses} />
 
+          {/* ── Grille ── */}
           <SectionHeader>Grille</SectionHeader>
           {MULTI_PANE_STYLES.includes(form.style) ? (
             <>
@@ -1226,28 +1143,26 @@ function WindowForm({ initial, onSave, onCancel }) {
                 </select>
               </Field>
               {form.grillePaneApplication === 'Both Panes' ? (
-                <>
-                  <div style={{ gridColumn: '1/-1' }}>
-                    <div style={{ fontSize: 11, color: 'var(--gold)', fontWeight: 700, marginBottom: 6, textTransform: 'uppercase' }}>Top Pane</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
-                      <SelectWithPreview label="Grille Type" value={form.topPaneGrilleType}
-                        onChange={v => set('topPaneGrilleType', v)} imgMap={IMG.grilleType}
-                        opts={['', ...cfg.g]} placeholder="None" />
-                      {form.topPaneGrilleType && <SelectWithPreview label="Grille Pattern" value={form.topPaneGrillePattern}
-                        onChange={v => set('topPaneGrillePattern', v)} imgMap={IMG.grillePattern}
-                        opts={grillePatterns} placeholder="Select..." />}
-                    </div>
-                    <div style={{ fontSize: 11, color: 'var(--gold)', fontWeight: 700, marginBottom: 6, marginTop: 8, textTransform: 'uppercase' }}>Bottom Pane</div>
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
-                      <SelectWithPreview label="Grille Type" value={form.bottomPaneGrilleType}
-                        onChange={v => set('bottomPaneGrilleType', v)} imgMap={IMG.grilleType}
-                        opts={['', ...cfg.g]} placeholder="None" />
-                      {form.bottomPaneGrilleType && <SelectWithPreview label="Grille Pattern" value={form.bottomPaneGrillePattern}
-                        onChange={v => set('bottomPaneGrillePattern', v)} imgMap={IMG.grillePattern}
-                        opts={grillePatterns} placeholder="Select..." />}
-                    </div>
+                <div style={{ gridColumn: '1/-1' }}>
+                  <div style={{ fontSize: 12, color: 'var(--gold)', fontWeight: 700, marginBottom: 6, textTransform: 'uppercase' }}>Top Pane</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
+                    <SelectWithPreview label="Grille Type" value={form.topPaneGrilleType}
+                      onChange={v => set('topPaneGrilleType', v)} imgMap={IMG.grilleType}
+                      opts={['', ...cfg.g]} placeholder="None" />
+                    {form.topPaneGrilleType && <SelectWithPreview label="Grille Pattern" value={form.topPaneGrillePattern}
+                      onChange={v => set('topPaneGrillePattern', v)} imgMap={IMG.grillePattern}
+                      opts={grillePatterns} placeholder="Select..." />}
                   </div>
-                </>
+                  <div style={{ fontSize: 12, color: 'var(--gold)', fontWeight: 700, marginBottom: 6, marginTop: 8, textTransform: 'uppercase' }}>Bottom Pane</div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0 20px' }}>
+                    <SelectWithPreview label="Grille Type" value={form.bottomPaneGrilleType}
+                      onChange={v => set('bottomPaneGrilleType', v)} imgMap={IMG.grilleType}
+                      opts={['', ...cfg.g]} placeholder="None" />
+                    {form.bottomPaneGrilleType && <SelectWithPreview label="Grille Pattern" value={form.bottomPaneGrillePattern}
+                      onChange={v => set('bottomPaneGrillePattern', v)} imgMap={IMG.grillePattern}
+                      opts={grillePatterns} placeholder="Select..." />}
+                  </div>
+                </div>
               ) : (
                 <>
                   <SelectWithPreview label="Grille Type" value={form.grilleType}
@@ -1286,6 +1201,7 @@ function WindowForm({ initial, onSave, onCancel }) {
             </>
           )}
 
+          {/* ── Hardware & Screen ── */}
           {(cfg.hw || cfg.sc || cfg.sm) && <SectionHeader>Hardware & Screen</SectionHeader>}
           {cfg.hw && (
             <SelectWithPreview label="Hardware Color" value={form.hardwareColor}
@@ -1302,9 +1218,86 @@ function WindowForm({ initial, onSave, onCancel }) {
               onChange={v => set('screenMesh', v)} imgMap={IMG.screenMesh}
               opts={SCREEN_MESHES} placeholder="Select..." />
           )}
-        </>}
 
-        <SectionHeader>Extension Jamb & Casing</SectionHeader>
+          {/* ══════════════════════════════════════════
+              TOP WINDOW SECTION (only when 2 high)
+          ══════════════════════════════════════════ */}
+          {form.numberHigh === 2 && cfg.m.includes('h') && (() => {
+            const topOpts = getTopOptions(form.style)
+            const base2Wide = form.numberWide === 2
+            const forceRound = form.numberWide >= 3
+            const topWinCfg = WIN[form.topStyle]
+            const topGrillePatterns = topWinCfg?.gp || []
+            return (
+              <>
+                <div style={{ gridColumn: '1/-1', background: 'rgba(200,151,58,0.06)', border: '1px solid rgba(200,151,58,0.2)', borderRadius: 8, padding: '12px 14px', marginTop: 12, marginBottom: 4 }}>
+                  <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 13, color: 'var(--gold)', letterSpacing: '0.08em', textTransform: 'uppercase', marginBottom: 4 }}>Top Window</div>
+                  <div style={{ fontSize: 12, color: 'var(--gray)' }}>Color, glass, hardware & screen match the bottom window. Only change what differs.</div>
+                </div>
+
+                {/* Top window width selection (2-wide base only) */}
+                {base2Wide && !forceRound && (
+                  <Field label="Top Window Width" col="1/-1">
+                    <select value={form.topWindowWidth} onChange={e => set('topWindowWidth', parseInt(e.target.value))}>
+                      <option value={1}>1 Wide</option>
+                      <option value={2}>2 Wide</option>
+                    </select>
+                  </Field>
+                )}
+
+                {/* Top window style(s) */}
+                {base2Wide && form.topWindowWidth === 2 && !forceRound ? (
+                  <>
+                    <SelectWithPreview label="Left Panel Style" value={form.topLeftStyle}
+                      onChange={v => set('topLeftStyle', v)} imgMap={IMG.windows}
+                      opts={topOpts} placeholder="Select..." />
+                    <SelectWithPreview label="Right Panel Style" value={form.topRightStyle}
+                      onChange={v => set('topRightStyle', v)} imgMap={IMG.windows}
+                      opts={topOpts} placeholder="Select..." />
+                  </>
+                ) : (
+                  <div style={{ gridColumn: '1/-1' }}>
+                    <SelectWithPreview label="Top Window Style" value={form.topStyle}
+                      onChange={v => set('topStyle', v)} imgMap={IMG.windows}
+                      opts={forceRound ? ROUND_TOP_WINDOW_STYLES : topOpts} placeholder="Select..." />
+                  </div>
+                )}
+
+                {/* Top window measurements */}
+                <Field label="Top Window Height (in)">
+                  <MeasurementInput value={form.topHeight} frac={form.topHeightFrac} onValue={v => set('topHeight', v)} onFrac={v => set('topHeightFrac', v)} />
+                </Field>
+                {topWinCfg?.m.includes('s') && (
+                  <Field label="Top Short Side Height (in) *">
+                    <MeasurementInput value={form.topShortSideHeight} frac={form.topShortSideHeightFrac} onValue={v => set('topShortSideHeight', v)} onFrac={v => set('topShortSideHeightFrac', v)} />
+                  </Field>
+                )}
+
+                {/* Top window overrides */}
+                <Field label="Tempered">
+                  <select value={form.topTempered || ''} onChange={e => set('topTempered', e.target.value)}>
+                    <option value="">Same as bottom ({form.tempered})</option>
+                    <option value="Yes">Yes</option>
+                    <option value="No">No</option>
+                  </select>
+                </Field>
+                <SelectWithPreview label="Decorative Glass" value={form.topDecorativeGlass || ''}
+                  onChange={v => set('topDecorativeGlass', v)} imgMap={IMG.decorativeGlass}
+                  opts={['Same as bottom', ...decorGlasses.filter(g => g !== 'None')]} placeholder={`Same as bottom (${form.decorativeGlass})`} />
+                <SelectWithPreview label="Grille Type" value={form.topGrilleType || ''}
+                  onChange={v => { set('topGrilleType', v); set('topGrillePattern', '') }} imgMap={IMG.grilleType}
+                  opts={['Same as bottom', ...cfg.g]} placeholder={`Same as bottom (${form.grilleType || 'None'})`} />
+                {form.topGrilleType && form.topGrilleType !== 'Same as bottom' && topGrillePatterns.length > 0 && (
+                  <SelectWithPreview label="Grille Pattern" value={form.topGrillePattern || ''}
+                    onChange={v => set('topGrillePattern', v)} imgMap={IMG.grillePattern}
+                    opts={['Same as bottom', ...topGrillePatterns]} placeholder={`Same as bottom (${form.grillePattern || 'None'})`} />
+                )}
+              </>
+            )
+          })()}
+
+          {/* ── Extension Jamb & Casing ── */}
+          <SectionHeader>Extension Jamb & Casing</SectionHeader>
           <Field label="Jamb Depth (inches)">
             <MeasurementInput value={form.jambDepth} frac={form.jambDepthFrac} onValue={v => set('jambDepth', v)} onFrac={v => set('jambDepthFrac', v)} />
           </Field>
@@ -1330,27 +1323,28 @@ function WindowForm({ initial, onSave, onCancel }) {
             <input placeholder="e.g. White" value={form.lpTrimColor} onChange={e => set('lpTrimColor', e.target.value)} />
           </Field>
 
-        <SectionHeader>Photos & Notes</SectionHeader>
-        <Field label="Photos" col="1/-1">
-          <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handlePhoto} />
-          <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
-            <button type="button" className="btn-outline" onClick={() => cameraRef.current.click()} style={{ padding: '8px 16px', fontSize: 13 }}>📷 Take / Add Photo</button>
-            {(form.photos || []).map((p, i) => (
-              <div key={i} style={{ position: 'relative' }}>
-                <img src={p} alt="" style={{ width: 64, height: 52, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)' }} />
-                <button onClick={() => removePhoto(i)} style={{ position: 'absolute', top: -6, right: -6, background: '#c0392b', border: 'none', borderRadius: '50%', color: '#fff', width: 18, height: 18, fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
-              </div>
-            ))}
-          </div>
-        </Field>
-
-        <Field label="Quantity">
-          <input type="number" min="1" value={form.qty} onChange={e => set('qty', e.target.value)} />
-        </Field>
-        <div />
-        <Field label="Notes / Special Instructions" col="1/-1">
-          <textarea rows={2} placeholder="Any special notes..." value={form.notes} onChange={e => set('notes', e.target.value)} style={{ resize: 'vertical' }} />
-        </Field>
+          {/* ── Photos & Notes ── */}
+          <SectionHeader>Photos & Notes</SectionHeader>
+          <Field label="Photos" col="1/-1">
+            <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{ display: 'none' }} onChange={handlePhoto} />
+            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
+              <button type="button" className="btn-outline" onClick={() => cameraRef.current.click()} style={{ padding: '8px 16px', fontSize: 13 }}>📷 Take / Add Photo</button>
+              {(form.photos || []).map((p, i) => (
+                <div key={i} style={{ position: 'relative' }}>
+                  <img src={p} alt="" style={{ width: 64, height: 52, objectFit: 'cover', borderRadius: 4, border: '1px solid var(--border)' }} />
+                  <button onClick={() => removePhoto(i)} style={{ position: 'absolute', top: -6, right: -6, background: '#c0392b', border: 'none', borderRadius: '50%', color: '#fff', width: 18, height: 18, fontSize: 10, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>✕</button>
+                </div>
+              ))}
+            </div>
+          </Field>
+          <Field label="Quantity">
+            <input type="number" min="1" value={form.qty} onChange={e => set('qty', e.target.value)} />
+          </Field>
+          <div />
+          <Field label="Notes / Special Instructions" col="1/-1">
+            <textarea rows={2} placeholder="Any special notes..." value={form.notes} onChange={e => set('notes', e.target.value)} style={{ resize: 'vertical' }} />
+          </Field>
+        </>}
       </div>
 
       <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
@@ -1360,6 +1354,7 @@ function WindowForm({ initial, onSave, onCancel }) {
     </div>
   )
 }
+
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 
