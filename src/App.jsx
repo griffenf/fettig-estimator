@@ -207,10 +207,10 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
         {value ? (
           <>
             {selectedImg && <img src={selectedImg} alt={value} style={{ width: 60, height: 48, objectFit: 'contain', borderRadius: 3, flexShrink: 0 }} />}
-            <span style={{ flex: 1, fontSize: 15, color: 'var(--field-text)' }}>{value}</span>
+            <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>{value}</span>
           </>
         ) : (
-          <span style={{ flex: 1, fontSize: 15, color: 'var(--field-ph)' }}>{placeholder || 'Select...'}</span>
+          <span style={{ flex: 1, fontSize: 15, color: 'var(--text-muted)' }}>{placeholder || 'Select...'}</span>
         )}
         <span style={{ color: 'var(--red)', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
       </div>
@@ -233,7 +233,7 @@ function SelectWithPreview({ label, value, onChange, opts, imgMap, placeholder }
                   <img src={img} alt={opt} style={{ width: 80, height: 64, objectFit: 'contain', borderRadius: 4, flexShrink: 0 }} />
                 ) : (
                   <div style={{ width: 64, height: 52, background: 'var(--bg-mid)', borderRadius: 4, flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-                    <span style={{ fontSize: 9, color: 'var(--field-ph)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
+                    <span style={{ fontSize: 9, color: 'var(--text-muted)', textAlign: 'center', padding: '0 4px' }}>{opt}</span>
                   </div>
                 )}
                 <span style={{ fontSize: 15, color: selected ? 'var(--red)' : 'var(--text)', fontWeight: selected ? 600 : 400 }}>{opt}</span>
@@ -291,10 +291,10 @@ function ImagePicker({ label, value, onChange, options, imgMap, groups }) {
         {value ? (
           <>
             {selectedImg && <img src={selectedImg} alt={value} style={{ width: 60, height: 48, objectFit: 'contain', borderRadius: 3, flexShrink: 0 }} />}
-            <span style={{ flex: 1, fontSize: 15, color: 'var(--field-text)' }}>{value}</span>
+            <span style={{ flex: 1, fontSize: 15, color: 'var(--text)' }}>{value}</span>
           </>
         ) : (
-          <span style={{ flex: 1, fontSize: 15, color: 'var(--field-ph)' }}>Select style...</span>
+          <span style={{ flex: 1, fontSize: 15, color: 'var(--text-muted)' }}>Select style...</span>
         )}
         <span style={{ color: 'var(--red)', fontSize: 12 }}>{open ? '▲' : '▼'}</span>
       </div>
@@ -626,7 +626,7 @@ function CustomerJobSearch({ onSelect }) {
         <input placeholder="Start typing a customer name..." value={query} onChange={e => setQuery(e.target.value)} autoComplete="off" />
         {loading && <div style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', color: 'var(--red)', fontSize: 12 }}>Searching...</div>}
       </div>
-      {error && <div style={{ marginTop: 8, padding: '10px 12px', background: 'rgba(192,57,43,0.15)', border: '1px solid rgba(192,57,43,0.4)', borderRadius: 6, fontSize: 13, color: '#e74c3c' }}>⚠️ {error}</div>}
+      {error && <div style={{ marginTop: 8, padding: '10px 12px', background: '#fce8e6', border: '1px solid #e57373', borderRadius: 6, fontSize: 13, color: '#e74c3c' }}>⚠️ {error}</div>}
       {results.length > 0 && (
         <div style={{ position: 'absolute', top: '100%', left: 0, right: 0, zIndex: 200, background: 'var(--surface)', border: '1.5px solid var(--red)', borderRadius: 8, marginTop: 4, maxHeight: 340, overflowY: 'auto', boxShadow: '0 8px 32px rgba(0,0,0,0.4)' }}>
           {results.map(customer => (
@@ -1535,7 +1535,7 @@ export default function App() {
   return (
     <div style={{ maxWidth: 900, margin: '0 auto', padding: '0 0 80px 0', background: 'var(--bg)', minHeight: '100vh' }}>
       <div style={{ background: 'var(--bg-mid)', borderBottom: '3px solid var(--red)', padding: '18px 20px', position: 'sticky', top: 0, zIndex: 100 }}>
-        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 18, letterSpacing: '0.06em', color: '#fff', color: '#fff' }}>FETTIG MILLWORK & WINDOWS</div>
+        <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 18, letterSpacing: '0.06em', color: '#ffffff', color: '#fff' }}>FETTIG MILLWORK & WINDOWS</div>
         <div style={{ color: '#ffb3a7', fontSize: 11, letterSpacing: '0.12em', fontWeight: 600 }}>WINDOW ESTIMATOR</div>
         <div style={{ display: 'flex', gap: 6, marginTop: 12 }}>
           {[['job','1','Job Info'],['windows','2','Windows'],['review','3','Review & Submit']].map(([s,n,label]) => (
@@ -1550,7 +1550,7 @@ export default function App() {
         {step === 'job' && (
           <div>
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4, color: '#fff' }}>Job Information</div>
+              <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4, color: 'var(--text)' }}>Job Information</div>
               <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>Search for a customer to pull their jobs from JobTread.</div>
             </div>
             <div style={{ marginBottom: 14 }}>
@@ -1582,7 +1582,7 @@ export default function App() {
         {step === 'windows' && (
           <div>
             <div style={{ marginBottom: 16 }}>
-              <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4, color: '#fff' }}>Windows</div>
+              <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4, color: 'var(--text)' }}>Windows</div>
               <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>Organize windows by room for <span style={{ color: 'var(--red)' }}>{jobInfo.customerName}</span>.</div>
             </div>
 
@@ -1632,7 +1632,7 @@ export default function App() {
         {step === 'review' && (
           <div>
             <div style={{ marginBottom: 20 }}>
-              <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4, color: '#fff' }}>Review & Submit</div>
+              <div style={{ fontFamily: 'var(--font-head)', fontSize: 22, fontWeight: 700, letterSpacing: '0.04em', marginBottom: 4, color: 'var(--text)' }}>Review & Submit</div>
               <div style={{ color: 'var(--text-muted)', fontSize: 13 }}>Review everything, then send straight to JobTread.</div>
             </div>
             <div style={{ background: 'var(--surface)', border: '1.5px solid var(--border)', boxShadow: '0 1px 4px rgba(0,0,0,0.06)', borderRadius: 10, padding: '16px 18px', marginBottom: 20 }}>
@@ -1663,7 +1663,7 @@ export default function App() {
                   {submitting ? '⏳ Posting to JobTread...' : `🔗 Post Estimate to ${jobInfo.jobName || 'JobTread Job'}`}
                 </button>
               ) : (
-                <div style={{ background: 'rgba(74,154,90,0.15)', border: '1.5px solid var(--green)', borderRadius: 8, padding: 16, textAlign: 'center' }}>
+                <div style={{ background: '#e8f5ec', border: '1.5px solid var(--green)', borderRadius: 8, padding: 16, textAlign: 'center' }}>
                   <div style={{ fontSize: 24, marginBottom: 6 }}>✅</div>
                   <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 16 }}>Sent to JobTread!</div>
                   <div style={{ color: 'var(--text-muted)', fontSize: 13, marginTop: 4 }}>Estimate Notes.pdf uploaded to <strong>{jobInfo.jobName}</strong>.</div>
