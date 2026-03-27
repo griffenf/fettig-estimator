@@ -138,12 +138,12 @@ const IMG = {
     'SDL': '/images/grille/sdl.png',
   },
   grillePattern: {
-    'Rectangular': '/images/grille/pattern-rectangular.jpg',
-    'Prairie': '/images/grille/pattern-prairie.jpg',
-    'Checkrail': '/images/grille/pattern-checkrail.jpg',
-    'Cottage': '/images/grille/pattern-cottage.jpg',
-    'Oriel': '/images/grille/pattern-oriel.jpg',
-    'Sunburst': '/images/grille/pattern-sunburst.jpg',
+    'Rectangular': '/images/grille/pattern-rectangular.png',
+    'Prairie': '/images/grille/pattern-prairie.png',
+    'Checkrail': '/images/grille/pattern-checkrail.png',
+    'Cottage': '/images/grille/pattern-cottage.png',
+    'Oriel': '/images/grille/pattern-oriel.png',
+    'Sunburst': '/images/grille/pattern-sunburst.png',
   },
   hardwareColor: {
     'Satin Taupe': '/images/hardware/satin-taupe.png',
