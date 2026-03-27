@@ -1,35 +1,24 @@
 @import url('https://fonts.googleapis.com/css2?family=Barlow:wght@400;500;600;700&family=Barlow+Condensed:wght@600;700;800&display=swap');
 
 :root {
-  /* Page background — warm medium-dark brown */
-  --bg:           #2e1f0e;
-  /* Cards / form panels */
-  --surface:      #3d2b14;
-  /* Input / dropdown fields — lighter than surface so they stand out */
-  --field:        #f2e8d9;
-  /* Field text */
-  --field-text:   #1a0e04;
-  /* Field placeholder */
-  --field-ph:     #8a6a4a;
+  --bg:         #e8eaed;   /* medium-light gray page bg */
+  --surface:    #f4f5f7;   /* card/panel surfaces — slightly lighter */
+  --field:      #ffffff;   /* input/dropdown fields — white */
+  --field-alt:  #eef0f3;   /* alternate field / dropdown options */
 
-  /* Accent — warm amber/caramel */
-  --accent:       #c48a3a;
-  --accent-dark:  #9a6520;
-  --accent-light: #e8b96a;
+  --accent:     #2e6da4;   /* clear blue accent */
+  --accent-dk:  #1d4f78;   /* darker blue hover */
+  --accent-lt:  #5b9fd4;   /* lighter blue for muted highlights */
 
-  /* Primary text on dark surfaces */
-  --text:         #f5ece0;
-  /* Secondary / muted text on dark surfaces */
-  --text-muted:   #c4a882;
-  /* Labels */
-  --label:        #e0c898;
+  --text:       #1a1f2e;   /* near-black for all text on light bg */
+  --text-mid:   #444c5c;   /* secondary text */
+  --text-muted: #6b7689;   /* placeholders/hints */
 
-  /* Borders */
-  --border:       rgba(196,138,58,0.35);
-  --border-field: rgba(196,138,58,0.5);
+  --border:     #b0b8c4;   /* visible but not harsh borders */
+  --border-focus: #2e6da4;
 
-  --green:  #4a9a5a;
-  --red:    #d04030;
+  --green:  #2e7d4f;
+  --red:    #c0392b;
 
   --font-head: 'Barlow Condensed', sans-serif;
   --font-body: 'Barlow', sans-serif;
@@ -45,14 +34,13 @@ body {
   -webkit-text-size-adjust: 100%;
 }
 
-/* ── Fields ── */
 input, select, textarea {
   width: 100%;
   padding: 11px 14px;
   background: var(--field);
-  border: 1.5px solid var(--border-field);
+  border: 1.5px solid var(--border);
   border-radius: 6px;
-  color: var(--field-text);
+  color: var(--text);
   font-family: var(--font-body);
   font-size: 1rem;
   appearance: none;
@@ -61,39 +49,37 @@ input, select, textarea {
 }
 input:focus, select:focus, textarea:focus {
   outline: none;
-  border-color: var(--accent);
-  box-shadow: 0 0 0 3px rgba(196,138,58,0.2);
+  border-color: var(--border-focus);
+  box-shadow: 0 0 0 3px rgba(46,109,164,0.15);
 }
-input::placeholder, textarea::placeholder { color: var(--field-ph); }
+input::placeholder, textarea::placeholder { color: var(--text-muted); }
 input[type="checkbox"] { width: auto; padding: 0; }
 input[type="number"]::-webkit-inner-spin-button,
 input[type="number"]::-webkit-outer-spin-button { opacity: 1; height: 28px; }
 input:disabled, select:disabled {
-  background: #e8dece;
-  color: var(--field-ph);
+  background: var(--field-alt);
+  color: var(--text-muted);
   cursor: not-allowed;
 }
 select {
-  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%239a6520' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='8' viewBox='0 0 12 8'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%232e6da4' stroke-width='1.8' fill='none' stroke-linecap='round'/%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 14px center;
   padding-right: 36px;
   cursor: pointer;
 }
-select option { background: var(--field); color: var(--field-text); }
-select optgroup { background: #e8dece; color: var(--accent-dark); font-weight: 700; }
+select option { background: var(--field); color: var(--text); }
+select optgroup { background: var(--field-alt); color: var(--accent-dk); font-weight: 700; }
 textarea { resize: vertical; min-height: 80px; }
 
-/* ── Labels ── */
 label {
   font-size: 0.72rem;
   font-weight: 700;
-  color: var(--label);
+  color: var(--text-mid);
   text-transform: uppercase;
   letter-spacing: 0.07em;
 }
 
-/* ── Buttons ── */
 button {
   font-family: var(--font-body);
   font-size: 1rem;
@@ -108,22 +94,22 @@ button {
 button:active { transform: scale(0.97); }
 
 .btn-gold { background: var(--accent); color: #fff; }
-.btn-gold:hover { background: var(--accent-dark); }
+.btn-gold:hover { background: var(--accent-dk); }
 
 .btn-outline {
-  background: rgba(196,138,58,0.12);
-  color: var(--accent-light);
+  background: var(--field);
+  color: var(--accent);
   border: 1.5px solid var(--border);
 }
 .btn-outline:hover {
-  background: rgba(196,138,58,0.22);
+  background: var(--field-alt);
   border-color: var(--accent);
 }
 
 .btn-danger {
-  background: rgba(208,64,48,0.15);
-  color: #f07060;
-  border: 1px solid rgba(208,64,48,0.35);
+  background: rgba(192,57,43,0.08);
+  color: var(--red);
+  border: 1px solid rgba(192,57,43,0.3);
   padding: 8px 12px;
 }
 
