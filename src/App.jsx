@@ -1008,8 +1008,6 @@ function WindowForm({ initial, onSave, onCancel }) {
   }
 
   const handleSave = () => {
-    try {
-    alert('handleSave fired - style: ' + form.style + ', numberHigh: ' + form.numberHigh)
     const missing = getMissingFields()
     if (!form.style) { alert('Please select a window style.'); return }
     if (!form.qty) { alert('Please enter a quantity.'); return }
@@ -1023,11 +1021,10 @@ function WindowForm({ initial, onSave, onCancel }) {
       else if (panelCfg.type === 'single') w.configuration = form.standardConfig
       else if (panelCfg.type === 'multi') {
         if (form.configType === 'standard') w.configuration = form.standardConfig || panelCfg.standard || (panelCfg.standardOptions?.[0])
-        else w.configuration = form.panelConfigs.join(' | ')
+        else w.configuration = (form.panelConfigs || []).join(' | ')
       }
     }
     onSave(w)
-    } catch(e) { alert('Error: ' + e.message) }
   }
 
   const valid = form.style && form.qty
