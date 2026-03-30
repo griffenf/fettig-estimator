@@ -1008,9 +1008,13 @@ function WindowForm({ initial, onSave, onCancel }) {
   }
 
   const handleSave = () => {
+    try {
+    alert('handleSave fired - style: ' + form.style + ', numberHigh: ' + form.numberHigh)
     const missing = getMissingFields()
+    if (!form.style) { alert('Please select a window style.'); return }
+    if (!form.qty) { alert('Please enter a quantity.'); return }
     if (missing.length > 0) {
-      alert(`Please fill in the following required fields:\n• ${missing.join('\n• ')}\n\nDebug - style: ${form.style}, numberHigh: ${form.numberHigh}, glassSurface: ${form.glassSurface}, exteriorColor: ${form.exteriorColor}, interiorColor: ${form.interiorColor}`)
+      alert(`Please fill in the following required fields:\n• ${missing.join('\n• ')}`)
       return
     }
     const w = { ...form }
@@ -1023,6 +1027,7 @@ function WindowForm({ initial, onSave, onCancel }) {
       }
     }
     onSave(w)
+    } catch(e) { alert('Error: ' + e.message) }
   }
 
   const valid = form.style && form.qty
@@ -1548,7 +1553,7 @@ function WindowForm({ initial, onSave, onCancel }) {
       </div>
 
       <div style={{ display: 'flex', gap: 10, marginTop: 12 }}>
-        <button className="btn-gold" onClick={() => valid && handleSave()} style={{ flex: 1, opacity: valid ? 1 : 0.5 }}>Save Window</button>
+        <button className="btn-gold" onClick={handleSave} style={{ flex: 1 }}>Save Window</button>
         <button className="btn-outline" onClick={onCancel}>Cancel</button>
       </div>
     </div>
