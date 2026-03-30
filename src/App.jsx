@@ -994,41 +994,28 @@ function WindowForm({ initial, onSave, onCancel }) {
     if (!form.interiorColor) missing.push('Interior Color')
     if (!form.glassSurface) missing.push('Glass Surface')
     if (cfg.sm && !form.screenMesh) missing.push('Screen Mesh Type')
-    if (form.numberHigh === 2) {
-      form.topWindows.forEach((tw, i) => {
-        const label = form.topWindows.length > 1 ? `Top Window ${i + 1}` : 'Top Window'
-        if (!tw.style) missing.push(`${label} Style`)
-        const { m } = getTopWinMeasurements(tw.style)
-        if (m.includes('w') && !tw.width) missing.push(`${label} Width`)
-        if (m.includes('h') && !tw.height) missing.push(`${label} Height`)
-        if (m.includes('s') && !tw.shortSideHeight) missing.push(`${label} Short Side Height`)
-      })
-    }
+
     return missing
   }
 
   const handleSave = () => {
-    try {
-      const missing = getMissingFields()
-      if (!form.style) { alert('Please select a window style.'); return }
-      if (!form.qty) { alert('Please enter a quantity.'); return }
-      if (missing.length > 0) {
-        alert(`Please fill in the following required fields:\n• ${missing.join('\n• ')}`)
-        return
-      }
-      const w = { ...form }
-      if (panelCfg) {
-        if (panelCfg.type === 'fixed') w.configuration = panelCfg.value
-        else if (panelCfg.type === 'single') w.configuration = form.standardConfig
-        else if (panelCfg.type === 'multi') {
-          if (form.configType === 'standard') w.configuration = form.standardConfig || panelCfg.standard || (panelCfg.standardOptions?.[0])
-          else w.configuration = (form.panelConfigs || []).join(' | ')
-        }
-      }
-      onSave(w)
-    } catch(e) {
-      alert('Save error at: ' + e.message + '\n' + e.stack?.split('\n').slice(0,3).join('\n'))
+    const missing = getMissingFields()
+    if (!form.style) { alert('Please select a window style.'); return }
+    if (!form.qty) { alert('Please enter a quantity.'); return }
+    if (missing.length > 0) {
+      alert(`Please fill in the following required fields:\n• ${missing.join('\n• ')}`)
+      return
     }
+    const w = { ...form }
+    if (panelCfg) {
+      if (panelCfg.type === 'fixed') w.configuration = panelCfg.value
+      else if (panelCfg.type === 'single') w.configuration = form.standardConfig
+      else if (panelCfg.type === 'multi') {
+        if (form.configType === 'standard') w.configuration = form.standardConfig || panelCfg.standard || (panelCfg.standardOptions?.[0])
+        else w.configuration = (form.panelConfigs || []).join(' | ')
+      }
+    }
+    onSave(w)
   }
 
   const valid = form.style && form.qty
