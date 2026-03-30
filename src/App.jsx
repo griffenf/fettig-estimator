@@ -1008,23 +1008,27 @@ function WindowForm({ initial, onSave, onCancel }) {
   }
 
   const handleSave = () => {
-    const missing = getMissingFields()
-    if (!form.style) { alert('Please select a window style.'); return }
-    if (!form.qty) { alert('Please enter a quantity.'); return }
-    if (missing.length > 0) {
-      alert(`Please fill in the following required fields:\n• ${missing.join('\n• ')}`)
-      return
-    }
-    const w = { ...form }
-    if (panelCfg) {
-      if (panelCfg.type === 'fixed') w.configuration = panelCfg.value
-      else if (panelCfg.type === 'single') w.configuration = form.standardConfig
-      else if (panelCfg.type === 'multi') {
-        if (form.configType === 'standard') w.configuration = form.standardConfig || panelCfg.standard || (panelCfg.standardOptions?.[0])
-        else w.configuration = (form.panelConfigs || []).join(' | ')
+    try {
+      const missing = getMissingFields()
+      if (!form.style) { alert('Please select a window style.'); return }
+      if (!form.qty) { alert('Please enter a quantity.'); return }
+      if (missing.length > 0) {
+        alert(`Please fill in the following required fields:\n• ${missing.join('\n• ')}`)
+        return
       }
+      const w = { ...form }
+      if (panelCfg) {
+        if (panelCfg.type === 'fixed') w.configuration = panelCfg.value
+        else if (panelCfg.type === 'single') w.configuration = form.standardConfig
+        else if (panelCfg.type === 'multi') {
+          if (form.configType === 'standard') w.configuration = form.standardConfig || panelCfg.standard || (panelCfg.standardOptions?.[0])
+          else w.configuration = (form.panelConfigs || []).join(' | ')
+        }
+      }
+      onSave(w)
+    } catch(e) {
+      alert('Save error at: ' + e.message + '\n' + e.stack?.split('\n').slice(0,3).join('\n'))
     }
-    onSave(w)
   }
 
   const valid = form.style && form.qty
