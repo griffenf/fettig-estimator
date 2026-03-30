@@ -1010,7 +1010,7 @@ function WindowForm({ initial, onSave, onCancel }) {
   const handleSave = () => {
     const missing = getMissingFields()
     if (missing.length > 0) {
-      alert(`Please fill in the following required fields:\n• ${missing.join('\n• ')}`)
+      alert(`Please fill in the following required fields:\n• ${missing.join('\n• ')}\n\nDebug - style: ${form.style}, numberHigh: ${form.numberHigh}, glassSurface: ${form.glassSurface}, exteriorColor: ${form.exteriorColor}, interiorColor: ${form.interiorColor}`)
       return
     }
     const w = { ...form }
