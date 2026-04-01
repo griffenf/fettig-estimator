@@ -299,27 +299,64 @@ const IMG = {
     'Unidirectional Bi-Fold w/Access Panel':'/images/doors/bifold-access.png',
     'Bi-Parting Bi-Fold Door':'/images/doors/bifold-bipart.png',
   },
-  // Door configurations — for SelectWithPreview in config picker
+  // Door configurations — nested by door type so each config image is door-specific
   doorConfigs:{
-    'OX':'/images/door-configs/ox.png','XO':'/images/door-configs/xo.png',
-    'X':'/images/door-configs/x.png','XX':'/images/door-configs/xx.png',
-    'OOX':'/images/door-configs/oox.png','XOO':'/images/door-configs/xoo.png',
-    'OXO':'/images/door-configs/oxo.png','OXXO':'/images/door-configs/oxxo.png',
-    'OXX':'/images/door-configs/oxx.png','XXO':'/images/door-configs/xxo.png',
-    '1L':'/images/door-configs/bifold-1l.png','1R':'/images/door-configs/bifold-1r.png',
-    '2L':'/images/door-configs/bifold-2l.png','2R':'/images/door-configs/bifold-2r.png',
-    '3L':'/images/door-configs/bifold-3l.png','3R':'/images/door-configs/bifold-3r.png',
-    '4L':'/images/door-configs/bifold-4l.png','4R':'/images/door-configs/bifold-4r.png',
-    '5L':'/images/door-configs/bifold-5l.png','5R':'/images/door-configs/bifold-5r.png',
-    '6L':'/images/door-configs/bifold-6l.png','6R':'/images/door-configs/bifold-6r.png',
-    '7L':'/images/door-configs/bifold-7l.png','7R':'/images/door-configs/bifold-7r.png',
-    '2L1R':'/images/door-configs/bifold-2l1r.png','1L2R':'/images/door-configs/bifold-1l2r.png',
-    '3L1R':'/images/door-configs/bifold-3l1r.png','1L3R':'/images/door-configs/bifold-1l3r.png',
-    '4L1R':'/images/door-configs/bifold-4l1r.png','1L4R':'/images/door-configs/bifold-1l4r.png',
-    '5L1R':'/images/door-configs/bifold-5l1r.png','1L5R':'/images/door-configs/bifold-1l5r.png',
-    '6L1R':'/images/door-configs/bifold-6l1r.png','1L6R':'/images/door-configs/bifold-1l6r.png',
-    '1L1R':'/images/door-configs/bifold-1l1r.png','2L2R':'/images/door-configs/bifold-2l2r.png',
-    '3L3R':'/images/door-configs/bifold-3l3r.png',
+    'sliding-patio':{
+      'OX':'/images/door-configs/sliding-patio-2-ox.png',
+      'XO':'/images/door-configs/sliding-patio-2-xo.png',
+      'OOX':'/images/door-configs/sliding-patio-3-oox.png',
+      'XOO':'/images/door-configs/sliding-patio-3-xoo.png',
+      'OXO':'/images/door-configs/sliding-patio-3-oxo.png',
+      'OXXO':'/images/door-configs/sliding-patio-4-oxxo.png',
+    },
+    'sliding-french':{
+      'OX':'/images/door-configs/sliding-french-2-ox.png',
+      'XO':'/images/door-configs/sliding-french-2-xo.png',
+      'OOX':'/images/door-configs/sliding-french-3-oox.png',
+      'XOO':'/images/door-configs/sliding-french-3-xoo.png',
+      'OXO':'/images/door-configs/sliding-french-3-oxo.png',
+      'OXXO':'/images/door-configs/sliding-french-4-oxxo.png',
+    },
+    'inswing':{
+      'X':'/images/door-configs/inswing-1-x.png',
+      'OX':'/images/door-configs/inswing-2-ox.png',
+      'XO':'/images/door-configs/inswing-2-xo.png',
+      'XX':'/images/door-configs/inswing-2-xx.png',
+      'OOX':'/images/door-configs/inswing-3-oox.png',
+      'XOO':'/images/door-configs/inswing-3-xoo.png',
+      'OXO':'/images/door-configs/inswing-3-oxo.png',
+      'OXX':'/images/door-configs/inswing-3-oxx.png',
+      'XXO':'/images/door-configs/inswing-3-xxo.png',
+    },
+    'outswing':{
+      'X':'/images/door-configs/outswing-1-x.png',
+      'OX':'/images/door-configs/outswing-2-ox.png',
+      'XO':'/images/door-configs/outswing-2-xo.png',
+      'XX':'/images/door-configs/outswing-2-xx.png',
+      'OXO':'/images/door-configs/outswing-3-oxo.png',
+    },
+    'bifold-uni':{
+      'O':'/images/door-configs/bifold-uni-o.png',
+      '1L':'/images/door-configs/bifold-uni-1l.png','1R':'/images/door-configs/bifold-uni-1r.png',
+      '2L':'/images/door-configs/bifold-uni-2l.png','2R':'/images/door-configs/bifold-uni-2r.png',
+      '3L':'/images/door-configs/bifold-uni-3l.png','3R':'/images/door-configs/bifold-uni-3r.png',
+      '4L':'/images/door-configs/bifold-uni-4l.png','4R':'/images/door-configs/bifold-uni-4r.png',
+      '5L':'/images/door-configs/bifold-uni-5l.png','5R':'/images/door-configs/bifold-uni-5r.png',
+      '6L':'/images/door-configs/bifold-uni-6l.png','6R':'/images/door-configs/bifold-uni-6r.png',
+      '7L':'/images/door-configs/bifold-uni-7l.png','7R':'/images/door-configs/bifold-uni-7r.png',
+    },
+    'bifold-access':{
+      '2L1R':'/images/door-configs/bifold-access-2l1r.png','1L2R':'/images/door-configs/bifold-access-1l2r.png',
+      '3L1R':'/images/door-configs/bifold-access-3l1r.png','1L3R':'/images/door-configs/bifold-access-1l3r.png',
+      '4L1R':'/images/door-configs/bifold-access-4l1r.png','1L4R':'/images/door-configs/bifold-access-1l4r.png',
+      '5L1R':'/images/door-configs/bifold-access-5l1r.png','1L5R':'/images/door-configs/bifold-access-1l5r.png',
+      '6L1R':'/images/door-configs/bifold-access-6l1r.png','1L6R':'/images/door-configs/bifold-access-1l6r.png',
+    },
+    'bifold-bipart':{
+      '1L1R':'/images/door-configs/bifold-bipart-1l1r.png',
+      '2L2R':'/images/door-configs/bifold-bipart-2l2r.png',
+      '3L3R':'/images/door-configs/bifold-bipart-3l3r.png',
+    },
   },
   // Handle styles — separate maps for sliding vs french
   doorHandleSliding:{'Cambridge':_hw('sliding-cambridge.png'),'Northfield':_hw('sliding-northfield.png')},
@@ -1065,6 +1102,14 @@ function WindowForm({initial,onSave,onCancel}) {
 
 // ─── Patio Door Form ──────────────────────────────────────────────────────────
 
+// Returns the right doorConfigs sub-map for the current door type selection
+function getDoorConfigImgMap(doorCategory, isFrenchSliding, frenchSwing, bifoldSubtype) {
+  if (doorCategory==='sliding') return IMG.doorConfigs[isFrenchSliding?'sliding-french':'sliding-patio']||{}
+  if (doorCategory==='french')  return IMG.doorConfigs[frenchSwing==='inswing'?'inswing':'outswing']||{}
+  if (doorCategory==='bifold')  return IMG.doorConfigs[{uni:'bifold-uni',access:'bifold-access',bipart:'bifold-bipart'}[bifoldSubtype]]||{}
+  return {}
+}
+
 const DOOR_EMPTY = {
   itemType:'door',
   // Step-by-step selectors (these derive the style name)
@@ -1272,7 +1317,7 @@ function DoorForm({initial,onSave,onCancel}) {
             </div>
           ) : (filteredConfigs.length>0||filteredOps.length>0) ? (
             <div style={{gridColumn:'1/-1'}}>
-              <SelectWithPreview label="Configuration (viewed from exterior) *" value={form.configuration} onChange={v=>set('configuration',v)} imgMap={IMG.doorConfigs} opts={filteredConfigs.length>0?filteredConfigs:filteredOps} placeholder="Select..."/>
+              <SelectWithPreview label="Configuration (viewed from exterior) *" value={form.configuration} onChange={v=>set('configuration',v)} imgMap={getDoorConfigImgMap(form.doorCategory,form.isFrenchSliding,form.frenchSwing,form.bifoldSubtype)} opts={filteredConfigs.length>0?filteredConfigs:filteredOps} placeholder="Select..."/>
             </div>
           ) : null}
 
