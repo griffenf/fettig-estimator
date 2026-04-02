@@ -687,7 +687,7 @@ function buildDoorPDFLines(d) {
   const sc=getScreenCfg(category,d.panelCount)
   if(!sc.show){L.push('Screen: N/A (Outswing)')}
   else if(sc.always){L.push('Screen: Included (Exterior)');if(d.screenMesh)L.push(`Screen Mesh: ${d.screenMesh}`)}
-  else{L.push(`Screen: ${d.screenType||'No Screen'}`);if(d.screenType&&d.screenType!=='No Screen'&&d.screenMesh)L.push(`Screen Mesh: ${d.screenMesh}`)}
+  else{L.push(`Screen: ${d.screenType||'No Screen'}`);if(d.screenType&&d.screenType!=='No Screen')L.push('Screen Mesh: Pleated Charcoal Mesh')}
 
   if(dtc?.jamb&&d.jambSize)L.push(`Jamb Size: ${d.jambSize}`)
   if(d.jambDepth)L.push(`Jamb Depth: ${fmtMeasurement(d.jambDepth,d.jambDepthFrac)}`)
@@ -1207,7 +1207,6 @@ function DoorForm({initial,onSave,onCancel}) {
     if(!form.exteriorColor)m.push('Exterior Color')
     if(!form.interiorColor)m.push('Interior Color')
     if(!form.glassSurface)m.push('Glass Surface')
-    if(sc.show&&!sc.always&&form.screenType!=='No Screen'&&!form.screenMesh)m.push('Screen Mesh')
     if(sc.show&&sc.always&&!form.screenMesh)m.push('Screen Mesh')
     return m
   }
@@ -1387,11 +1386,9 @@ function DoorForm({initial,onSave,onCancel}) {
           </>}
           {sc.show&&!sc.always&&<>
             <Field label="Screen Type" col="1/-1"><select value={form.screenType} onChange={e=>set('screenType',e.target.value)}>{sc.opts.map(o=><option key={o}>{o}</option>)}</select></Field>
-            {form.screenType&&form.screenType!=='No Screen'&&<>
-              <div style={{gridColumn:'1/-1',fontSize:12,color:'var(--text-muted)',fontStyle:'italic',marginBottom:4}}>Exterior screen matches exterior color.</div>
-              <SelectWithPreview label="Screen Mesh Type *" value={form.screenMesh} onChange={v=>set('screenMesh',v)} imgMap={IMG.screenMesh} opts={SCREEN_MESHES} placeholder="Select..."/>
-              <div/>
-            </>}
+            {form.screenType&&form.screenType!=='No Screen'&&
+              <div style={{gridColumn:'1/-1',fontSize:12,color:'var(--text-muted)',fontStyle:'italic'}}>Mesh: Pleated Charcoal Mesh (standard for retractable screens).</div>
+            }
           </>}
 
           {/* Casing */}
