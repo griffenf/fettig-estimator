@@ -1363,11 +1363,9 @@ function DoorForm({initial,onSave,onCancel}) {
         {currentStyle&&<>
 
           {/* Style preview image */}
-          {IMG.doors[currentStyle]&&<div style={{gridColumn:'1/-1',marginBottom:8,borderRadius:8,overflow:'hidden',border:'1px solid rgba(74,144,217,0.25)'}}>
-            <div style={{background:'#fff',padding:'12px',display:'flex',justifyContent:'center',alignItems:'center',height:180}}>
-              <img src={IMG.doors[currentStyle]} alt={currentStyle} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
-            </div>
-            <div style={{padding:'8px 14px',background:'rgba(74,144,217,0.06)',fontFamily:'var(--font-head)',fontWeight:700,fontSize:15,color:'var(--text)'}}>{currentStyle}</div>
+          {IMG.doors[currentStyle]&&<div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:14,padding:'10px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.25)',borderRadius:8,marginBottom:8}}>
+            <img src={IMG.doors[currentStyle]} alt={currentStyle} style={{width:80,height:64,objectFit:'contain',borderRadius:4,background:'#fff',flexShrink:0}}/>
+            <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:14,color:'var(--text)'}}>{currentStyle}</div>
           </div>}
 
           {/* Configuration */}
