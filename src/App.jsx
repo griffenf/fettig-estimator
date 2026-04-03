@@ -10,6 +10,9 @@ const getIntColors = (ext) => {
   return ['Stone White','EverWood Pine','Sierra']
 }
 const INT_TO_HW     = {'Stone White':'White','EverWood Pine':'Satin Taupe','Sierra':'Sierra','Bronze':'Oil Rubbed Bronze','Ebony':'Matte Black'}
+const EXT_TO_HW     = {'Stone White':'White','Pebble Gray':'Satin Taupe','Sierra':'Sierra','Bronze':'Oil Rubbed Bronze','Cashmere':'Satin Taupe','Bahama Brown':'Oil Rubbed Bronze','Ebony':'Matte Black'}
+const INT_TO_BIFOLD = (color) => ['Bronze','Ebony'].includes(color) ? 'Black' : 'Brushed Stainless'
+const EXT_TO_BIFOLD = (color) => ['Bronze','Bahama Brown','Ebony'].includes(color) ? 'Black' : 'Brushed Stainless'
 const INT_TO_SCREEN = {'Stone White':'Stone White','EverWood Pine':'Satin Taupe','Sierra':'Sierra','Bronze':'Bronze','Ebony':'Ebony'}
 const GLASS_SURFACES = {
   Double: ['Clear','Low E1','Low E2','Low E3','Low E2/ERS','Low E3/ERS'],
@@ -167,7 +170,7 @@ function getDoorHardwareCfg(category, panelCount) {
     return {stdHandle:true,handleColorInt:true,handleColorExt:true,bifoldPanel:false,bifoldExt:false,bifoldInt:false,hingeInt:true,hingeExt:false,hingeOpts:HARDWARE_COLORS}
   }
   if (category==='outswing_french') {
-    return {stdHandle:true,handleColorInt:true,handleColorExt:true,bifoldPanel:false,bifoldExt:false,bifoldInt:false,hingeInt:true,hingeExt:true,hingeOpts:OUTSWING_HINGE_COLORS}
+    return {stdHandle:true,handleColorInt:true,handleColorExt:true,bifoldPanel:false,bifoldExt:false,bifoldInt:false,hingeInt:false,hingeExt:true,hingeOpts:OUTSWING_HINGE_COLORS}
   }
   if (category==='bifold_uni') {
     const odd=panelCount%2===1
@@ -1232,7 +1235,7 @@ function DoorForm({initial,onSave,onCancel}) {
   const decoOpts=dtc?.decoGlass||['Obscure']
   const isFrenchStyle=category==='inswing_french'||category==='outswing_french'
   const handleImgMap=(isFrenchStyle||isBifold)?IMG.doorHandleFrench:IMG.doorHandleSliding
-  const hingeIntMap=category==='outswing_french'?IMG.hingeOutswingInt:IMG.hingeInswingInt
+  const hingeIntMap=IMG.hingeInswingInt
   const hingeOpts=category==='outswing_french'?OUTSWING_HINGE_COLORS:HARDWARE_COLORS
   const widthKey=isBifold?(panelRow?.widthKey||''):(dtc?.widthKey||'')
   const heightKey=dtc?.heightKey||'h_french'
@@ -1245,7 +1248,33 @@ function DoorForm({initial,onSave,onCancel}) {
   useEffect(()=>{set('handing','')},[form.configuration])
   // Color cascade
   useEffect(()=>{if(form.interiorColor&&!getIntColors(form.exteriorColor).includes(form.interiorColor))set('interiorColor','')},[form.exteriorColor])
-  useEffect(()=>{if(!form.interiorColor)return;setForm(f=>({...f,handleColorInt:INT_TO_HW[f.interiorColor]||f.handleColorInt,handleColorExt:INT_TO_HW[f.interiorColor]||f.handleColorExt}))},[form.interiorColor])
+
+  // Auto-populate exterior handle color and bifold exterior hinge from exterior color
+  useEffect(()=>{
+    if(!form.exteriorColor)return
+    const hwExt=EXT_TO_HW[form.exteriorColor]
+    const bifoldExt=EXT_TO_BIFOLD(form.exteriorColor)
+    setForm(f=>({
+      ...f,
+      handleColorExt: hwExt||f.handleColorExt,
+      hingeColorExt:  hwExt||f.hingeColorExt,       // outswing french exterior hinge matches exterior handle
+      bifoldExtHingeColor: bifoldExt,
+    }))
+  },[form.exteriorColor])
+
+  // Auto-populate interior handle color, inswing hinge, and bifold int hinge/panel handle from interior color
+  useEffect(()=>{
+    if(!form.interiorColor)return
+    const hwInt=INT_TO_HW[form.interiorColor]
+    const bifoldInt=INT_TO_BIFOLD(form.interiorColor)
+    setForm(f=>({
+      ...f,
+      handleColorInt: hwInt||f.handleColorInt,
+      hingeColorInt:  hwInt||f.hingeColorInt,        // inswing french interior hinge matches interior handle
+      bifoldIntHingeColor: bifoldInt,
+      bifoldPanelHandleColor: bifoldInt,
+    }))
+  },[form.interiorColor])
   useEffect(()=>{setForm(f=>({...f,grillePattern:''}))},[form.grilleType])
   useEffect(()=>{if(form.jambType&&!form.casingType)set('casingType',form.jambType)},[form.jambType])
 
