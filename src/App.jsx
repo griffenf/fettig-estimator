@@ -1364,8 +1364,8 @@ function DoorForm({initial,onSave,onCancel}) {
 
           {/* Style preview image */}
           {IMG.doors[currentStyle]&&<div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:14,padding:'10px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.25)',borderRadius:8,marginBottom:8}}>
-            <div style={{width:80,height:64,overflow:'hidden',borderRadius:4,flexShrink:0,background:'#fff'}}>
-              <img src={IMG.doors[currentStyle]} alt={currentStyle} style={{width:'100%',height:'100%',objectFit:'contain',transform:'scale(1.75)',transformOrigin:'center'}}/>
+            <div style={{width:80,height:64,overflow:'hidden',borderRadius:4,flexShrink:0}}>
+              <img src={IMG.doors[currentStyle]} alt={currentStyle} style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center'}}/>
             </div>
             <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:14,color:'var(--text)'}}>{currentStyle}</div>
           </div>}
@@ -1376,8 +1376,8 @@ function DoorForm({initial,onSave,onCancel}) {
             const configImg=configImgMap?.[autoConf]
             return(
               <div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:12,padding:'10px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.25)',borderRadius:6,marginBottom:8}}>
-                {configImg&&<div style={{width:64,height:52,overflow:'hidden',borderRadius:4,flexShrink:0,background:'#fff'}}>
-                  <img src={configImg} alt={autoConf} style={{width:'100%',height:'100%',objectFit:'contain',transform:'scale(1.75)',transformOrigin:'center'}}/>
+                {configImg&&<div style={{width:64,height:52,overflow:'hidden',borderRadius:4,flexShrink:0}}>
+                  <img src={configImg} alt={autoConf} style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center'}}/>
                 </div>}
                 <div><span style={{fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em'}}>Configuration: </span><span style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{autoConf}</span></div>
               </div>
