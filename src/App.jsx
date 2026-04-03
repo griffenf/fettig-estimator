@@ -1364,17 +1364,25 @@ function DoorForm({initial,onSave,onCancel}) {
 
           {/* Style preview image */}
           {IMG.doors[currentStyle]&&<div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:14,padding:'10px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.25)',borderRadius:8,marginBottom:8}}>
-            <img src={IMG.doors[currentStyle]} alt={currentStyle} style={{width:80,height:64,objectFit:'contain',borderRadius:4,background:'#fff',flexShrink:0}}/>
+            <div style={{width:80,height:64,overflow:'hidden',borderRadius:4,flexShrink:0,background:'#fff'}}>
+              <img src={IMG.doors[currentStyle]} alt={currentStyle} style={{width:'100%',height:'100%',objectFit:'contain',transform:'scale(1.75)',transformOrigin:'center'}}/>
+            </div>
             <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:14,color:'var(--text)'}}>{currentStyle}</div>
           </div>}
 
           {/* Configuration */}
-          {autoConf ? (
-            <div style={{gridColumn:'1/-1',padding:'10px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.25)',borderRadius:6,marginBottom:8}}>
-              <span style={{fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em'}}>Configuration: </span>
-              <span style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{autoConf}</span>
-            </div>
-          ) : (filteredConfigs.length>0||filteredOps.length>0) ? (
+          {autoConf ? (()=>{
+            const configImgMap=getDoorConfigImgMap(form.doorCategory,form.isFrenchSliding,form.frenchSwing,form.bifoldSubtype)
+            const configImg=configImgMap?.[autoConf]
+            return(
+              <div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:12,padding:'10px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.25)',borderRadius:6,marginBottom:8}}>
+                {configImg&&<div style={{width:64,height:52,overflow:'hidden',borderRadius:4,flexShrink:0,background:'#fff'}}>
+                  <img src={configImg} alt={autoConf} style={{width:'100%',height:'100%',objectFit:'contain',transform:'scale(1.75)',transformOrigin:'center'}}/>
+                </div>}
+                <div><span style={{fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em'}}>Configuration: </span><span style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{autoConf}</span></div>
+              </div>
+            )
+          })() : (filteredConfigs.length>0||filteredOps.length>0) ? (
             <div style={{gridColumn:'1/-1'}}>
               <SelectWithPreview label="Configuration (viewed from exterior) *" value={form.configuration} onChange={v=>set('configuration',v)} imgMap={getDoorConfigImgMap(form.doorCategory,form.isFrenchSliding,form.frenchSwing,form.bifoldSubtype)} opts={filteredConfigs.length>0?filteredConfigs:filteredOps} placeholder="Select..."/>
             </div>
