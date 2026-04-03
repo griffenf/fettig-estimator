@@ -1373,8 +1373,8 @@ function DoorForm({initial,onSave,onCancel}) {
             const configImg=configImgMap?.[autoConf]
             return(
               <div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:12,padding:'10px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.25)',borderRadius:6,marginBottom:8}}>
-                {configImg&&<div style={{width:80,height:64,overflow:'hidden',borderRadius:4,flexShrink:0}}>
-                  <img src={configImg} alt={autoConf} style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center'}}/>
+                {configImg&&<div style={{width:80,height:64,borderRadius:4,flexShrink:0,background:'rgba(74,144,217,0.06)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <img src={configImg} alt={autoConf} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
                 </div>}
                 <div><span style={{fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em'}}>Configuration: </span><span style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{autoConf}</span></div>
               </div>
