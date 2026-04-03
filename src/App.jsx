@@ -1364,7 +1364,9 @@ function DoorForm({initial,onSave,onCancel}) {
 
           {/* Style preview image */}
           {IMG.doors[currentStyle]&&<div style={{gridColumn:'1/-1',marginBottom:8,borderRadius:8,overflow:'hidden',border:'1px solid rgba(74,144,217,0.25)'}}>
-            <img src={IMG.doors[currentStyle]} alt={currentStyle} style={{width:'100%',display:'block',objectFit:'cover',maxHeight:200}}/>
+            <div style={{background:'#fff',padding:'12px',display:'flex',justifyContent:'center',alignItems:'center',height:180}}>
+              <img src={IMG.doors[currentStyle]} alt={currentStyle} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
+            </div>
             <div style={{padding:'8px 14px',background:'rgba(74,144,217,0.06)',fontFamily:'var(--font-head)',fontWeight:700,fontSize:15,color:'var(--text)'}}>{currentStyle}</div>
           </div>}
 
