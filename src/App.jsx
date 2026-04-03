@@ -70,12 +70,12 @@ const DOOR_TYPE_CONFIG = {
   '2 Panel Sliding French Door':     {widthKey:'w_sliding_2',    heightKey:'h_sliding', configs:['OX','XO'],                             handingConfigs:[],                              category:'sliding',         decoGlass:['Obscure']},
   '3 Panel Sliding French Door':     {widthKey:'w_sliding_3',    heightKey:'h_sliding', configs:['OOX','XOO','OXO'],                    handingConfigs:['OXO'],                         category:'sliding',         decoGlass:['Obscure']},
   '4 Panel Sliding French Door':     {widthKey:'w_sliding_4',    heightKey:'h_sliding', configs:['OXXO'],                                handingConfigs:['OXXO'],                        category:'sliding',         decoGlass:['Obscure']},
-  'Inswing French Door':             {widthKey:'w_french_in_1',  heightKey:'h_french',  configs:['X','O'],                               handingConfigs:['X'],                           category:'inswing_french',  decoGlass:['Obscure','Glue Chip','Frost'], jamb:true},
+  'Inswing French Door':             {widthKey:'w_french_in_1',  heightKey:'h_french',  configs:['X','O'],                               handingConfigs:[],                              category:'inswing_french',  decoGlass:['Obscure','Glue Chip','Frost'], jamb:true},
   '2 Panel Inswing French Door':     {widthKey:'w_french_in_2',  heightKey:'h_french',  configs:['OX','XO','XX','OO'],                   handingConfigs:['OX','XO','XX'],                category:'inswing_french',  decoGlass:['Obscure','Glue Chip','Frost'], jamb:true},
   '3 Panel Inswing French Door':     {widthKey:'w_french_in_3',  heightKey:'h_french',  configs:['OOX','XOO','OXO','OXX','XXO','OOO'],  handingConfigs:['OOX','XOO','OXO','OXX','XXO'],category:'inswing_french',  decoGlass:['Obscure','Glue Chip','Frost'], jamb:true},
-  'Outswing French Door':            {widthKey:'w_french_in_1',  heightKey:'h_french',  configs:['X','O'],                               handingConfigs:['X'],                           category:'outswing_french', decoGlass:['Obscure','Glue Chip','Frost']},
+  'Outswing French Door':            {widthKey:'w_french_in_1',  heightKey:'h_french',  configs:['X','O'],                               handingConfigs:[],                              category:'outswing_french', decoGlass:['Obscure','Glue Chip','Frost']},
   '2 Panel Outswing French Door':    {widthKey:'w_french_out_2', heightKey:'h_french',  configs:['OX','XO','XX','OO'],                   handingConfigs:['OX','XO','XX'],                category:'outswing_french', decoGlass:['Obscure','Glue Chip','Frost']},
-  '3 Panel Outswing French Door':    {widthKey:'w_french_out_3', heightKey:'h_french',  configs:['OXO'],                                 handingConfigs:['OXO'],                         category:'outswing_french', decoGlass:['Obscure','Glue Chip','Frost']},
+  '3 Panel Outswing French Door':    {widthKey:'w_french_out_3', heightKey:'h_french',  configs:['OXO'],                                 handingConfigs:[],                              category:'outswing_french', decoGlass:['Obscure','Glue Chip','Frost']},
   'Unidirectional Bi-Fold Door':           {category:'bifold_uni',    panelOptions:[1,2,3,4,5,6,7], heightKey:'h_french', decoGlass:['Obscure','Glue Chip','Frost']},
   'Unidirectional Bi-Fold w/Access Panel': {category:'bifold_access', panelOptions:[3,4,5,6,7],     heightKey:'h_french', decoGlass:['Obscure','Glue Chip','Frost']},
   'Bi-Parting Bi-Fold Door':              {category:'bifold_bipart', panelOptions:[2,4,6],           heightKey:'h_french', decoGlass:['Obscure','Glue Chip','Frost']},
@@ -98,9 +98,9 @@ const BIFOLD_ACCESS = {
   7:{ops:['6L1R','1L6R'],  widthKey:'w_bifold_7'},
 }
 const BIFOLD_BIPART = {
-  2:{ops:['1L1R'], widthKey:'w_bifold_2', handing:['Left','Right','Not Used']},
+  2:{ops:['1L1R'], widthKey:'w_bifold_2', handing:['Left','Right']},
   4:{ops:['2L2R'], widthKey:'w_bifold_4', handing:null},
-  6:{ops:['3L3R'], widthKey:'w_bifold_6', handing:['Left','Right','Not Used']},
+  6:{ops:['3L3R'], widthKey:'w_bifold_6', handing:['Left','Right']},
 }
 
 const OUTSWING_HINGE_COLORS = [...HARDWARE_COLORS,'Pebble Gray','Cashmere']
@@ -1220,12 +1220,13 @@ function DoorForm({initial,onSave,onCancel}) {
   const {filteredOps,autoOp}=isBifold&&panelRow ? resolveBifoldOps(panelRow) : {filteredOps:[],autoOp:null}
   const autoConf=autoConfig||autoOp
 
-  // Handing
-  const needsHanding=dtc?.handingConfigs?.includes(form.configuration)||
+  // Handing — use autoConf as fallback so auto-defaulted configs (e.g. OXXO) still trigger handing
+  const activeConfig=autoConf||form.configuration
+  const needsHanding=dtc?.handingConfigs?.includes(activeConfig)||
     (category==='bifold_bipart'&&form.panelCount&&BIFOLD_BIPART[form.panelCount]?.handing)
   const handingOpts=category==='bifold_bipart'&&form.panelCount
     ? BIFOLD_BIPART[form.panelCount]?.handing
-    : (dtc?.handingConfigs?.includes(form.configuration)?['Left','Right']:null)
+    : (dtc?.handingConfigs?.includes(activeConfig)?['Left','Right']:null)
 
   const hw=getDoorHardwareCfg(category,form.panelCount)
   const sc=getScreenCfg(category,form.panelCount)
@@ -1233,7 +1234,7 @@ function DoorForm({initial,onSave,onCancel}) {
   const glassSurfaces=GLASS_SURFACES['Double']
   const decoOpts=dtc?.decoGlass||['Obscure']
   const isFrenchStyle=category==='inswing_french'||category==='outswing_french'
-  const handleImgMap=isFrenchStyle?IMG.doorHandleFrench:IMG.doorHandleSliding
+  const handleImgMap=(isFrenchStyle||isBifold)?IMG.doorHandleFrench:IMG.doorHandleSliding
   const hingeIntMap=category==='outswing_french'?IMG.hingeOutswingInt:IMG.hingeInswingInt
   const hingeOpts=category==='outswing_french'?OUTSWING_HINGE_COLORS:HARDWARE_COLORS
   const widthKey=isBifold?(panelRow?.widthKey||''):(dtc?.widthKey||'')
@@ -1362,12 +1363,9 @@ function DoorForm({initial,onSave,onCancel}) {
         {currentStyle&&<>
 
           {/* Style preview image */}
-          {IMG.doors[currentStyle]&&<div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:14,padding:'10px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.25)',borderRadius:8,marginBottom:8}}>
-            <img src={IMG.doors[currentStyle]} alt={currentStyle} style={{width:80,height:64,objectFit:'contain',borderRadius:4,background:'rgba(0,0,0,0.05)'}}/>
-            <div>
-              <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:14,color:'var(--text)'}}>{currentStyle}</div>
-              <div style={{fontSize:12,color:'var(--text-muted)',marginTop:2}}>🔒 Double Pane · Tempered · Exterior Screen</div>
-            </div>
+          {IMG.doors[currentStyle]&&<div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:16,padding:'12px 16px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.25)',borderRadius:8,marginBottom:8}}>
+            <img src={IMG.doors[currentStyle]} alt={currentStyle} style={{width:140,height:112,objectFit:'contain',borderRadius:6,background:'rgba(0,0,0,0.04)',flexShrink:0}}/>
+            <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:15,color:'var(--text)'}}>{currentStyle}</div>
           </div>}
 
           {/* Configuration */}
@@ -1384,7 +1382,7 @@ function DoorForm({initial,onSave,onCancel}) {
 
           {/* Handing */}
           {handingOpts&&(()=>{
-            const handingImgMap=getHandingImgMap(form.doorCategory,form.isFrenchSliding,form.frenchSwing,form.panelCount,autoConf||form.configuration)
+            const handingImgMap=getHandingImgMap(form.doorCategory,form.isFrenchSliding,form.frenchSwing,form.panelCount,activeConfig)
             return handingImgMap
               ? <div style={{gridColumn:'1/-1'}}><SelectWithPreview label="Handing *" value={form.handing} onChange={v=>set('handing',v)} imgMap={handingImgMap} opts={handingOpts} placeholder="Select..."/></div>
               : <Field label="Handing *" col="1/-1"><select value={form.handing} onChange={e=>set('handing',e.target.value)}><option value="">Select...</option>{handingOpts.map(h=><option key={h}>{h}</option>)}</select></Field>
@@ -1417,7 +1415,7 @@ function DoorForm({initial,onSave,onCancel}) {
           <SelectWithPreview label="Exterior Color *" value={form.exteriorColor} onChange={v=>set('exteriorColor',v)} imgMap={IMG.exteriorColor} opts={EXT_COLORS} placeholder="Select..."/>
           <SelectWithPreview label="Interior Color *" value={form.interiorColor} onChange={v=>set('interiorColor',v)} imgMap={IMG.interiorColor} opts={intColors} placeholder="Select..."/>
           <SelectWithPreview label="Glass Surface *" value={form.glassSurface} onChange={v=>set('glassSurface',v)} imgMap={IMG.glassSurface} opts={glassSurfaces} placeholder="Select..."/>
-          <Field label="Decorative Glass"><select value={form.decorativeGlass} onChange={e=>set('decorativeGlass',e.target.value)}><option value="None">None</option>{decoOpts.map(g=><option key={g}>{g}</option>)}</select></Field>
+          <div style={{gridColumn:'1/-1'}}><SelectWithPreview label="Decorative Glass" value={form.decorativeGlass} onChange={v=>set('decorativeGlass',v)} imgMap={IMG.decorativeGlass} opts={['None',...decoOpts]} placeholder="None"/></div>
 
           {/* Grille */}
           <SectionHeader blue>Grille</SectionHeader>
