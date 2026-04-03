@@ -307,7 +307,6 @@ const IMG = {
       'OOX':'/images/door-configs/sliding-patio-3-oox.png',
       'XOO':'/images/door-configs/sliding-patio-3-xoo.png',
       'OXO':'/images/door-configs/sliding-patio-3-oxo.png',
-      'OXXO':'/images/door-configs/sliding-patio-4-oxxo.png',
     },
     'sliding-french':{
       'OX':'/images/door-configs/sliding-french-2-ox.png',
@@ -315,7 +314,6 @@ const IMG = {
       'OOX':'/images/door-configs/sliding-french-3-oox.png',
       'XOO':'/images/door-configs/sliding-french-3-xoo.png',
       'OXO':'/images/door-configs/sliding-french-3-oxo.png',
-      'OXXO':'/images/door-configs/sliding-french-4-oxxo.png',
     },
     'inswing':{
       'OX':'/images/door-configs/inswing-2-ox.png',
@@ -331,7 +329,6 @@ const IMG = {
       'OX':'/images/door-configs/outswing-2-ox.png',
       'XO':'/images/door-configs/outswing-2-xo.png',
       'XX':'/images/door-configs/outswing-2-xx.png',
-      'OXO':'/images/door-configs/outswing-3-oxo.png',
     },
     'bifold-uni':{
       '1L':'/images/door-configs/bifold-uni-1l.png','1R':'/images/door-configs/bifold-uni-1r.png',
@@ -1376,8 +1373,8 @@ function DoorForm({initial,onSave,onCancel}) {
             const configImg=configImgMap?.[autoConf]
             return(
               <div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:12,padding:'10px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.25)',borderRadius:6,marginBottom:8}}>
-                {configImg&&<div style={{width:64,height:52,overflow:'hidden',borderRadius:4,flexShrink:0}}>
-                  <img src={configImg} alt={autoConf} style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center'}}/>
+                {configImg&&<div style={{width:80,height:64,overflow:'hidden',borderRadius:4,flexShrink:0,background:'#fff',display:'flex',alignItems:'center',justifyContent:'center'}}>
+                  <img src={configImg} alt={autoConf} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
                 </div>}
                 <div><span style={{fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em'}}>Configuration: </span><span style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{autoConf}</span></div>
               </div>
