@@ -82,7 +82,7 @@ const DOOR_TYPE_CONFIG = {
 }
 
 const BIFOLD_UNI = {
-  1:{ops:['O','1L','1R'],  widthKey:'w_bifold_1'},
+  1:{ops:['1L','1R'],  widthKey:'w_bifold_1'},
   2:{ops:['2L','2R'],      widthKey:'w_bifold_2'},
   3:{ops:['3L','3R'],      widthKey:'w_bifold_3'},
   4:{ops:['4L','4R'],      widthKey:'w_bifold_4'},
@@ -164,7 +164,7 @@ function getDoorHardwareCfg(category, panelCount) {
     return {stdHandle:true,handleColorInt:true,handleColorExt:true,bifoldPanel:false,bifoldExt:false,bifoldInt:false,hingeInt:false,hingeExt:false}
   }
   if (category==='inswing_french') {
-    return {stdHandle:true,handleColorInt:true,handleColorExt:true,bifoldPanel:false,bifoldExt:false,bifoldInt:false,hingeInt:true,hingeExt:true,hingeOpts:HARDWARE_COLORS}
+    return {stdHandle:true,handleColorInt:true,handleColorExt:true,bifoldPanel:false,bifoldExt:false,bifoldInt:false,hingeInt:true,hingeExt:false,hingeOpts:HARDWARE_COLORS}
   }
   if (category==='outswing_french') {
     return {stdHandle:true,handleColorInt:true,handleColorExt:true,bifoldPanel:false,bifoldExt:false,bifoldInt:false,hingeInt:true,hingeExt:true,hingeOpts:OUTSWING_HINGE_COLORS}
@@ -318,7 +318,6 @@ const IMG = {
       'OXXO':'/images/door-configs/sliding-french-4-oxxo.png',
     },
     'inswing':{
-      'X':'/images/door-configs/inswing-1-x.png',
       'OX':'/images/door-configs/inswing-2-ox.png',
       'XO':'/images/door-configs/inswing-2-xo.png',
       'XX':'/images/door-configs/inswing-2-xx.png',
@@ -329,14 +328,12 @@ const IMG = {
       'XXO':'/images/door-configs/inswing-3-xxo.png',
     },
     'outswing':{
-      'X':'/images/door-configs/outswing-1-x.png',
       'OX':'/images/door-configs/outswing-2-ox.png',
       'XO':'/images/door-configs/outswing-2-xo.png',
       'XX':'/images/door-configs/outswing-2-xx.png',
       'OXO':'/images/door-configs/outswing-3-oxo.png',
     },
     'bifold-uni':{
-      'O':'/images/door-configs/bifold-uni-o.png',
       '1L':'/images/door-configs/bifold-uni-1l.png','1R':'/images/door-configs/bifold-uni-1r.png',
       '2L':'/images/door-configs/bifold-uni-2l.png','2R':'/images/door-configs/bifold-uni-2r.png',
       '3L':'/images/door-configs/bifold-uni-3l.png','3R':'/images/door-configs/bifold-uni-3r.png',
@@ -358,18 +355,70 @@ const IMG = {
       '3L3R':'/images/door-configs/bifold-bipart-3l3r.png',
     },
   },
+  // Handing images — keyed by 'doortype-panelcount-config-handing'
+  // Only door types that have handing photos; bifold-bipart uses plain dropdown (no images)
+  handingImgs:{
+    // Sliding Patio
+    'sliding-patio-3-oxo-left':   '/images/door-configs/sliding-patio-3-oxo-left.png',
+    'sliding-patio-3-oxo-right':  '/images/door-configs/sliding-patio-3-oxo-right.png',
+    'sliding-patio-4-oxxo-left':  '/images/door-configs/sliding-patio-4-oxxo-left.png',
+    'sliding-patio-4-oxxo-right': '/images/door-configs/sliding-patio-4-oxxo-right.png',
+    // Sliding French
+    'sliding-french-3-oxo-left':   '/images/door-configs/sliding-french-3-oxo-left.png',
+    'sliding-french-3-oxo-right':  '/images/door-configs/sliding-french-3-oxo-right.png',
+    'sliding-french-4-oxxo-left':  '/images/door-configs/sliding-french-4-oxxo-left.png',
+    'sliding-french-4-oxxo-right': '/images/door-configs/sliding-french-4-oxxo-right.png',
+    // Inswing 1-panel
+    'inswing-1-x-left':   '/images/door-configs/inswing-1-x-left.png',
+    'inswing-1-x-right':  '/images/door-configs/inswing-1-x-right.png',
+    // Inswing 2-panel
+    'inswing-2-ox-left':  '/images/door-configs/inswing-2-ox-left.png',
+    'inswing-2-ox-right': '/images/door-configs/inswing-2-ox-right.png',
+    'inswing-2-xo-left':  '/images/door-configs/inswing-2-xo-left.png',
+    'inswing-2-xo-right': '/images/door-configs/inswing-2-xo-right.png',
+    'inswing-2-xx-left':  '/images/door-configs/inswing-2-xx-left.png',
+    'inswing-2-xx-right': '/images/door-configs/inswing-2-xx-right.png',
+    // Inswing 3-panel
+    'inswing-3-oox-left':  '/images/door-configs/inswing-3-oox-left.png',
+    'inswing-3-oox-right': '/images/door-configs/inswing-3-oox-right.png',
+    'inswing-3-xoo-left':  '/images/door-configs/inswing-3-xoo-left.png',
+    'inswing-3-xoo-right': '/images/door-configs/inswing-3-xoo-right.png',
+    'inswing-3-oxo-left':  '/images/door-configs/inswing-3-oxo-left.png',
+    'inswing-3-oxo-right': '/images/door-configs/inswing-3-oxo-right.png',
+    'inswing-3-oxx-left':  '/images/door-configs/inswing-3-oxx-left.png',
+    'inswing-3-oxx-right': '/images/door-configs/inswing-3-oxx-right.png',
+    'inswing-3-xxo-left':  '/images/door-configs/inswing-3-xxo-left.png',
+    'inswing-3-xxo-right': '/images/door-configs/inswing-3-xxo-right.png',
+    // Outswing 1-panel
+    'outswing-1-x-left':   '/images/door-configs/outswing-1-x-left.png',
+    'outswing-1-x-right':  '/images/door-configs/outswing-1-x-right.png',
+    // Outswing 2-panel
+    'outswing-2-ox-left':  '/images/door-configs/outswing-2-ox-left.png',
+    'outswing-2-ox-right': '/images/door-configs/outswing-2-ox-right.png',
+    'outswing-2-xo-left':  '/images/door-configs/outswing-2-xo-left.png',
+    'outswing-2-xo-right': '/images/door-configs/outswing-2-xo-right.png',
+    'outswing-2-xx-left':  '/images/door-configs/outswing-2-xx-left.png',
+    'outswing-2-xx-right': '/images/door-configs/outswing-2-xx-right.png',
+    // Outswing 3-panel
+    'outswing-3-oxo-left':  '/images/door-configs/outswing-3-oxo-left.png',
+    'outswing-3-oxo-right': '/images/door-configs/outswing-3-oxo-right.png',
+  },
   // Handle styles — separate maps for sliding vs french
   doorHandleSliding:{'Cambridge':_hw('sliding-cambridge.png'),'Northfield':_hw('sliding-northfield.png')},
   doorHandleFrench: {'Cambridge':_hw('french-cambridge.png'),'Northfield':_hw('french-northfield.png')},
   // Handle colors — interior and exterior separate maps
   doorHandleColorInt: makeColorMap(HW_SLUGS, _hc_i),
   doorHandleColorExt: makeColorMap(HW_SLUGS, _hc_e),
-  // Hinge colors — inswing french (interior / exterior)
-  hingeInswingInt: makeColorMap(HW_SLUGS, _hi_ii),
-  hingeInswingExt: makeColorMap(HW_SLUGS, _hi_ie),
-  // Hinge colors — outswing french (interior / exterior, includes Pebble Gray + Cashmere)
-  hingeOutswingInt: makeColorMap(OS_SLUGS, _hi_oi),
-  hingeOutswingExt: makeColorMap(OS_SLUGS, _hi_oe),
+  // Hinge colors — inswing french interior only, reuses handle-int images (same colors)
+  hingeInswingInt: makeColorMap(HW_SLUGS, _hc_i),
+  // Outswing hinge interior — reuses handle-int images for standard colors
+  hingeOutswingInt: makeColorMap(HW_SLUGS, _hc_i),
+  // Outswing hinge exterior — reuses handle-ext images for standard colors, unique files for Pebble Gray + Cashmere
+  hingeOutswingExt: {
+    ...makeColorMap(HW_SLUGS, _hc_e),
+    'Pebble Gray': _hw('hinge-outswing-ext-pebble-gray.png'),
+    'Cashmere':    _hw('hinge-outswing-ext-cashmere.png'),
+  },
   // Bifold hardware
   bifoldExtHinge: {'Black':_hw('bifold-ext-hinge-black.png'),'Brushed Stainless':_hw('bifold-ext-hinge-brushed-stainless.png')},
   bifoldIntHinge: {'Black':_hw('bifold-int-hinge-black.png'),'Brushed Stainless':_hw('bifold-int-hinge-brushed-stainless.png')},
@@ -1102,6 +1151,20 @@ function WindowForm({initial,onSave,onCancel}) {
 
 // ─── Patio Door Form ──────────────────────────────────────────────────────────
 
+// Returns a {Left, Right} (or {Left, Right, 'Not Used'}) image map for handing, or null if no images
+function getHandingImgMap(doorCategory, isFrenchSliding, frenchSwing, panelCount, config) {
+  if (!config || !panelCount) return null
+  const cfg = config.toLowerCase()
+  let prefix = ''
+  if (doorCategory==='sliding') prefix = `${isFrenchSliding?'sliding-french':'sliding-patio'}-${panelCount}-${cfg}`
+  else if (doorCategory==='french') prefix = `${frenchSwing==='inswing'?'inswing':'outswing'}-${panelCount}-${cfg}`
+  else return null // bifold-bipart uses plain dropdown
+  const L = IMG.handingImgs[`${prefix}-left`]
+  const R = IMG.handingImgs[`${prefix}-right`]
+  if (!L && !R) return null
+  return {'Left': L, 'Right': R}
+}
+
 // Returns the right doorConfigs sub-map for the current door type selection
 function getDoorConfigImgMap(doorCategory, isFrenchSliding, frenchSwing, bifoldSubtype) {
   if (doorCategory==='sliding') return IMG.doorConfigs[isFrenchSliding?'sliding-french':'sliding-patio']||{}
@@ -1172,7 +1235,6 @@ function DoorForm({initial,onSave,onCancel}) {
   const isFrenchStyle=category==='inswing_french'||category==='outswing_french'
   const handleImgMap=isFrenchStyle?IMG.doorHandleFrench:IMG.doorHandleSliding
   const hingeIntMap=category==='outswing_french'?IMG.hingeOutswingInt:IMG.hingeInswingInt
-  const hingeExtMap=category==='outswing_french'?IMG.hingeOutswingExt:IMG.hingeInswingExt
   const hingeOpts=category==='outswing_french'?OUTSWING_HINGE_COLORS:HARDWARE_COLORS
   const widthKey=isBifold?(panelRow?.widthKey||''):(dtc?.widthKey||'')
   const heightKey=dtc?.heightKey||'h_french'
@@ -1321,11 +1383,12 @@ function DoorForm({initial,onSave,onCancel}) {
           ) : null}
 
           {/* Handing */}
-          {handingOpts&&<Field label="Handing *" col="1/-1">
-            <select value={form.handing} onChange={e=>set('handing',e.target.value)}>
-              <option value="">Select...</option>{handingOpts.map(h=><option key={h}>{h}</option>)}
-            </select>
-          </Field>}
+          {handingOpts&&(()=>{
+            const handingImgMap=getHandingImgMap(form.doorCategory,form.isFrenchSliding,form.frenchSwing,form.panelCount,autoConf||form.configuration)
+            return handingImgMap
+              ? <div style={{gridColumn:'1/-1'}}><SelectWithPreview label="Handing *" value={form.handing} onChange={v=>set('handing',v)} imgMap={handingImgMap} opts={handingOpts} placeholder="Select..."/></div>
+              : <Field label="Handing *" col="1/-1"><select value={form.handing} onChange={e=>set('handing',e.target.value)}><option value="">Select...</option>{handingOpts.map(h=><option key={h}>{h}</option>)}</select></Field>
+          })()}
 
           {/* Measurement */}
           <SectionHeader blue>Measurement</SectionHeader>
@@ -1368,7 +1431,7 @@ function DoorForm({initial,onSave,onCancel}) {
           {hw.handleColorInt&&<SelectWithPreview label="Interior Handle Color" value={form.handleColorInt} onChange={v=>set('handleColorInt',v)} imgMap={IMG.doorHandleColorInt} opts={HARDWARE_COLORS} placeholder="Select..."/>}
           {hw.handleColorExt&&<SelectWithPreview label="Exterior Handle Color" value={form.handleColorExt} onChange={v=>set('handleColorExt',v)} imgMap={IMG.doorHandleColorExt} opts={HARDWARE_COLORS} placeholder="Select..."/>}
           {hw.hingeInt&&<SelectWithPreview label="Interior Hinge Color" value={form.hingeColorInt} onChange={v=>set('hingeColorInt',v)} imgMap={hingeIntMap} opts={hingeOpts} placeholder="Select..."/>}
-          {hw.hingeExt&&<SelectWithPreview label="Exterior Hinge Color" value={form.hingeColorExt} onChange={v=>set('hingeColorExt',v)} imgMap={hingeExtMap} opts={hingeOpts} placeholder="Select..."/>}
+          {hw.hingeExt&&<SelectWithPreview label="Exterior Hinge Color" value={form.hingeColorExt} onChange={v=>set('hingeColorExt',v)} imgMap={IMG.hingeOutswingExt} opts={hingeOpts} placeholder="Select..."/>}
           {hw.bifoldPanel&&<SelectWithPreview label="BiFold Panel Handle Color" value={form.bifoldPanelHandleColor} onChange={v=>set('bifoldPanelHandleColor',v)} imgMap={IMG.bifoldPanelHandle} opts={BIFOLD_HINGE_COLORS} placeholder="Select..."/>}
           {hw.bifoldExt&&<SelectWithPreview label="BiFold Exterior Hinge Color" value={form.bifoldExtHingeColor} onChange={v=>set('bifoldExtHingeColor',v)} imgMap={IMG.bifoldExtHinge} opts={BIFOLD_HINGE_COLORS} placeholder="Select..."/>}
           {hw.bifoldInt&&<SelectWithPreview label="BiFold Interior Hinge Color" value={form.bifoldIntHingeColor} onChange={v=>set('bifoldIntHingeColor',v)} imgMap={IMG.bifoldIntHinge} opts={BIFOLD_HINGE_COLORS} placeholder="Select..."/>}
