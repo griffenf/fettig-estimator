@@ -70,12 +70,12 @@ const DOOR_TYPE_CONFIG = {
   '2 Panel Sliding French Door':     {widthKey:'w_sliding_2',    heightKey:'h_sliding', configs:['OX','XO'],                             handingConfigs:[],                              category:'sliding',         decoGlass:['Obscure']},
   '3 Panel Sliding French Door':     {widthKey:'w_sliding_3',    heightKey:'h_sliding', configs:['OOX','XOO','OXO'],                    handingConfigs:['OXO'],                         category:'sliding',         decoGlass:['Obscure']},
   '4 Panel Sliding French Door':     {widthKey:'w_sliding_4',    heightKey:'h_sliding', configs:['OXXO'],                                handingConfigs:['OXXO'],                        category:'sliding',         decoGlass:['Obscure']},
-  'Inswing French Door':             {widthKey:'w_french_in_1',  heightKey:'h_french',  configs:['X','O'],                               handingConfigs:[],                              category:'inswing_french',  decoGlass:['Obscure','Glue Chip','Frost'], jamb:true},
+  'Inswing French Door':             {widthKey:'w_french_in_1',  heightKey:'h_french',  configs:['X','O'],                               handingConfigs:['X'],                           category:'inswing_french',  decoGlass:['Obscure','Glue Chip','Frost'], jamb:true},
   '2 Panel Inswing French Door':     {widthKey:'w_french_in_2',  heightKey:'h_french',  configs:['OX','XO','XX','OO'],                   handingConfigs:['OX','XO','XX'],                category:'inswing_french',  decoGlass:['Obscure','Glue Chip','Frost'], jamb:true},
   '3 Panel Inswing French Door':     {widthKey:'w_french_in_3',  heightKey:'h_french',  configs:['OOX','XOO','OXO','OXX','XXO','OOO'],  handingConfigs:['OOX','XOO','OXO','OXX','XXO'],category:'inswing_french',  decoGlass:['Obscure','Glue Chip','Frost'], jamb:true},
-  'Outswing French Door':            {widthKey:'w_french_in_1',  heightKey:'h_french',  configs:['X','O'],                               handingConfigs:[],                              category:'outswing_french', decoGlass:['Obscure','Glue Chip','Frost']},
+  'Outswing French Door':            {widthKey:'w_french_in_1',  heightKey:'h_french',  configs:['X','O'],                               handingConfigs:['X'],                           category:'outswing_french', decoGlass:['Obscure','Glue Chip','Frost']},
   '2 Panel Outswing French Door':    {widthKey:'w_french_out_2', heightKey:'h_french',  configs:['OX','XO','XX','OO'],                   handingConfigs:['OX','XO','XX'],                category:'outswing_french', decoGlass:['Obscure','Glue Chip','Frost']},
-  '3 Panel Outswing French Door':    {widthKey:'w_french_out_3', heightKey:'h_french',  configs:['OXO'],                                 handingConfigs:[],                              category:'outswing_french', decoGlass:['Obscure','Glue Chip','Frost']},
+  '3 Panel Outswing French Door':    {widthKey:'w_french_out_3', heightKey:'h_french',  configs:['OXO'],                                 handingConfigs:['OXO'],                         category:'outswing_french', decoGlass:['Obscure','Glue Chip','Frost']},
   'Unidirectional Bi-Fold Door':           {category:'bifold_uni',    panelOptions:[1,2,3,4,5,6,7], heightKey:'h_french', decoGlass:['Obscure','Glue Chip','Frost']},
   'Unidirectional Bi-Fold w/Access Panel': {category:'bifold_access', panelOptions:[3,4,5,6,7],     heightKey:'h_french', decoGlass:['Obscure','Glue Chip','Frost']},
   'Bi-Parting Bi-Fold Door':              {category:'bifold_bipart', panelOptions:[2,4,6],           heightKey:'h_french', decoGlass:['Obscure','Glue Chip','Frost']},
@@ -1363,9 +1363,9 @@ function DoorForm({initial,onSave,onCancel}) {
         {currentStyle&&<>
 
           {/* Style preview image */}
-          {IMG.doors[currentStyle]&&<div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:16,padding:'12px 16px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.25)',borderRadius:8,marginBottom:8}}>
-            <img src={IMG.doors[currentStyle]} alt={currentStyle} style={{width:140,height:112,objectFit:'contain',borderRadius:6,background:'rgba(0,0,0,0.04)',flexShrink:0}}/>
-            <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:15,color:'var(--text)'}}>{currentStyle}</div>
+          {IMG.doors[currentStyle]&&<div style={{gridColumn:'1/-1',marginBottom:8,borderRadius:8,overflow:'hidden',border:'1px solid rgba(74,144,217,0.25)'}}>
+            <img src={IMG.doors[currentStyle]} alt={currentStyle} style={{width:'100%',display:'block',objectFit:'cover',maxHeight:200}}/>
+            <div style={{padding:'8px 14px',background:'rgba(74,144,217,0.06)',fontFamily:'var(--font-head)',fontWeight:700,fontSize:15,color:'var(--text)'}}>{currentStyle}</div>
           </div>}
 
           {/* Configuration */}
