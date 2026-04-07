@@ -517,9 +517,8 @@ function Field({label,children,col}) {
     </div>
   )
 }
-function SectionHeader({children,blue}) {
-  const c=blue?'var(--blue)':'var(--red)',b=blue?'rgba(74,144,217,0.25)':'rgba(192,57,43,0.25)'
-  return <div style={{gridColumn:'1/-1',fontFamily:'var(--font-head)',fontSize:12,fontWeight:700,color:c,letterSpacing:'0.1em',textTransform:'uppercase',borderBottom:`1px solid ${b}`,paddingBottom:6,marginTop:8,marginBottom:4}}>{children}</div>
+function SectionHeader({children}) {
+  return <div style={{gridColumn:'1/-1',fontFamily:'var(--font-head)',fontSize:12,fontWeight:700,color:'var(--red)',letterSpacing:'0.1em',textTransform:'uppercase',borderBottom:'1px solid rgba(192,57,43,0.25)',paddingBottom:6,marginTop:8,marginBottom:4}}>{children}</div>
 }
 function MeasurementInput({value,frac,onValue,onFrac,placeholder}) {
   return(
@@ -561,9 +560,7 @@ function CallHeightPicker({label,value,onChange,heightKey}) {
 }
 
 // Toggle button row (used for panel counts, swing direction, etc.)
-function ToggleRow({label,value,onChange,options,labelFn,blue}) {
-  const ac=blue?'var(--blue)':'var(--red)'
-  const ab=blue?'rgba(74,144,217,0.12)':'rgba(192,57,43,0.12)'
+function ToggleRow({label,value,onChange,options,labelFn}) {
   return(
     <div style={{marginBottom:12}}>
       {label&&<label style={{display:'block',fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:6}}>{label}</label>}
@@ -573,7 +570,7 @@ function ToggleRow({label,value,onChange,options,labelFn,blue}) {
           const lbl=labelFn?labelFn(opt):String(opt)
           return(
             <button key={opt} type="button" onClick={()=>onChange(opt)}
-              style={{padding:'8px 18px',borderRadius:6,border:`1.5px solid ${sel?ac:'var(--border)'}`,background:sel?ab:'transparent',color:sel?ac:'var(--text-muted)',fontFamily:'var(--font-head)',fontWeight:700,fontSize:13,letterSpacing:'0.04em',cursor:'pointer',transition:'all 0.12s'}}>
+              style={{padding:'8px 18px',borderRadius:6,border:`1.5px solid ${sel?'var(--red)':'var(--border)'}`,background:sel?'rgba(192,57,43,0.08)':'transparent',color:sel?'var(--red)':'var(--text-muted)',fontFamily:'var(--font-head)',fontWeight:700,fontSize:13,letterSpacing:'0.04em',cursor:'pointer',transition:'all 0.12s'}}>
               {lbl}
             </button>
           )
@@ -879,7 +876,7 @@ function WindowCard({win,index,onEdit,onRemove}) {
 
 function DoorCard({door,index,onEdit,onRemove}) {
   return(
-    <div style={{background:'var(--surface)',border:'1.5px solid rgba(74,144,217,0.45)',boxShadow:'0 1px 4px rgba(0,0,0,0.06)',borderRadius:8,padding:'12px 14px',marginBottom:8}}>
+    <div style={{background:'var(--surface)',border:'1.5px solid rgba(192,57,43,0.35)',boxShadow:'0 1px 4px rgba(0,0,0,0.06)',borderRadius:8,padding:'12px 14px',marginBottom:8}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
         <div style={{flex:1}}>
           <div style={{display:'flex',alignItems:'center',gap:8,marginBottom:4,flexWrap:'wrap'}}>
@@ -1023,7 +1020,7 @@ function WindowForm({initial,onSave,onCancel}) {
 
   return(
     <div style={{background:'var(--surface)',border:'2px solid var(--red)',boxShadow:'var(--shadow-lg)',borderRadius:10,padding:'20px',marginBottom:16}}>
-      <div style={{fontFamily:'var(--font-head)',fontSize:16,fontWeight:700,letterSpacing:'0.08em',color:'var(--red)',marginBottom:16,textTransform:'uppercase'}}>Window Details</div>
+      <div style={{fontFamily:'var(--font-head)',fontSize:16,fontWeight:700,letterSpacing:'0.08em',color:'var(--charcoal)',marginBottom:16,textTransform:'uppercase'}}>Window Details</div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 20px'}}>
         <Field label="Number High"><select value={form.numberHigh} onChange={e=>set('numberHigh',parseInt(e.target.value))}><option value={1}>1 High</option><option value={2}>2 High</option></select></Field>
         <div/>
@@ -1314,7 +1311,7 @@ function DoorForm({initial,onSave,onCancel}) {
     const sel=form.doorCategory===cat
     return(
       <button type="button" key={cat} onClick={()=>{setForm(f=>({...DOOR_EMPTY,doorCategory:cat,measurementType:'Call Size',photos:f.photos,qty:f.qty,notes:f.notes}))}}
-        style={{flex:1,padding:'14px 8px',borderRadius:8,border:`2px solid ${sel?'var(--blue)':'var(--border)'}`,background:sel?'rgba(74,144,217,0.1)':'transparent',color:sel?'var(--blue)':'var(--text-muted)',fontFamily:'var(--font-head)',fontWeight:700,fontSize:14,letterSpacing:'0.04em',cursor:'pointer',transition:'all 0.12s',textAlign:'center'}}>
+        style={{flex:1,padding:'14px 8px',borderRadius:8,border:`2px solid ${sel?'var(--red)':'var(--border)'}`,background:sel?'rgba(192,57,43,0.08)':'transparent',color:sel?'var(--red)':'var(--text-muted)',fontFamily:'var(--font-head)',fontWeight:700,fontSize:14,letterSpacing:'0.04em',cursor:'pointer',transition:'all 0.12s',textAlign:'center'}}>
         {label}
       </button>
     )
@@ -1332,8 +1329,8 @@ function DoorForm({initial,onSave,onCancel}) {
   const noHw=!hw.stdHandle&&!hw.handleColorInt&&!hw.handleColorExt&&!hw.bifoldPanel&&!hw.bifoldExt&&!hw.bifoldInt&&!hw.hingeInt&&!hw.hingeExt
 
   return(
-    <div style={{background:'var(--surface)',border:'2px solid var(--blue)',boxShadow:'var(--shadow-lg)',borderRadius:10,padding:'20px',marginBottom:16}}>
-      <div style={{fontFamily:'var(--font-head)',fontSize:16,fontWeight:700,letterSpacing:'0.08em',color:'var(--blue)',marginBottom:16,textTransform:'uppercase'}}>Patio Door Details</div>
+    <div style={{background:'var(--surface)',border:'2px solid var(--red)',boxShadow:'var(--shadow-lg)',borderRadius:10,padding:'20px',marginBottom:16}}>
+      <div style={{fontFamily:'var(--font-head)',fontSize:16,fontWeight:700,letterSpacing:'0.08em',color:'var(--charcoal)',marginBottom:16,textTransform:'uppercase'}}>Patio Door Details</div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 20px'}}>
 
         {/* ── Step 1: Door Category ── */}
@@ -1366,7 +1363,7 @@ function DoorForm({initial,onSave,onCancel}) {
         {/* ── Step 2 (French): Inswing/Outswing + panel count ── */}
         {form.doorCategory==='french'&&<>
           <div style={{gridColumn:'1/-1',marginBottom:12}}>
-            <ToggleRow label="Swing Direction *" value={form.frenchSwing} onChange={v=>setForm(f=>({...f,frenchSwing:v,panelCount:null,configuration:'',handing:'',callWidth:'',callHeight:''}))} options={['inswing','outswing']} labelFn={v=>v==='inswing'?'Inswing':'Outswing'} blue/>
+            <ToggleRow label="Swing Direction *" value={form.frenchSwing} onChange={v=>setForm(f=>({...f,frenchSwing:v,panelCount:null,configuration:'',handing:'',callWidth:'',callHeight:''}))} options={['inswing','outswing']} labelFn={v=>v==='inswing'?'Inswing':'Outswing'}/>
             {form.frenchSwing&&<>
               <label style={{display:'block',fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:6}}>Panels Wide *</label>
               <div style={{display:'flex',gap:6}}>{[1,2,3].map(n=>panelBtn(n))}</div>
@@ -1377,7 +1374,7 @@ function DoorForm({initial,onSave,onCancel}) {
         {/* ── Step 2 (Bifold): Subtype + panel count ── */}
         {form.doorCategory==='bifold'&&<>
           <div style={{gridColumn:'1/-1',marginBottom:12}}>
-            <ToggleRow label="Bi-Fold Type *" value={form.bifoldSubtype} onChange={v=>setForm(f=>({...f,bifoldSubtype:v,panelCount:null,configuration:'',handing:'',callWidth:'',callHeight:''}))} options={['uni','access','bipart']} labelFn={v=>({uni:'Unidirectional',access:'w/ Access Panel',bipart:'Bi-Parting'}[v])} blue/>
+            <ToggleRow label="Bi-Fold Type *" value={form.bifoldSubtype} onChange={v=>setForm(f=>({...f,bifoldSubtype:v,panelCount:null,configuration:'',handing:'',callWidth:'',callHeight:''}))} options={['uni','access','bipart']} labelFn={v=>({uni:'Unidirectional',access:'w/ Access Panel',bipart:'Bi-Parting'}[v])}/>
             {form.bifoldSubtype&&<>
               <label style={{display:'block',fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:6}}>Panels Wide *</label>
               <div style={{display:'flex',gap:6,flexWrap:'wrap'}}>{panelCounts.map(n=>panelBtn(n))}</div>
@@ -1389,7 +1386,7 @@ function DoorForm({initial,onSave,onCancel}) {
         {currentStyle&&<>
 
           {/* Style preview image */}
-          {IMG.doors[currentStyle]&&<div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:14,padding:'10px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.25)',borderRadius:8,marginBottom:8}}>
+          {IMG.doors[currentStyle]&&<div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:14,padding:'10px 14px',background:'rgba(192,57,43,0.05)',border:'1px solid rgba(192,57,43,0.2)',borderRadius:8,marginBottom:8}}>
             <div style={{width:80,height:64,overflow:'hidden',borderRadius:4,flexShrink:0}}>
               <img src={IMG.doors[currentStyle]} alt={currentStyle} style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center'}}/>
             </div>
@@ -1401,8 +1398,8 @@ function DoorForm({initial,onSave,onCancel}) {
             const configImgMap=getDoorConfigImgMap(form.doorCategory,form.isFrenchSliding,form.frenchSwing,form.bifoldSubtype)
             const configImg=configImgMap?.[autoConf]
             return(
-              <div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:12,padding:'10px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.25)',borderRadius:6,marginBottom:8}}>
-                {configImg&&<div style={{width:80,height:64,borderRadius:4,flexShrink:0,background:'rgba(74,144,217,0.06)',display:'flex',alignItems:'center',justifyContent:'center'}}>
+              <div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:12,padding:'10px 14px',background:'rgba(192,57,43,0.05)',border:'1px solid rgba(192,57,43,0.2)',borderRadius:6,marginBottom:8}}>
+                {configImg&&<div style={{width:80,height:64,borderRadius:4,flexShrink:0,background:'rgba(192,57,43,0.05)',display:'flex',alignItems:'center',justifyContent:'center'}}>
                   <img src={configImg} alt={autoConf} style={{maxWidth:'100%',maxHeight:'100%',objectFit:'contain'}}/>
                 </div>}
                 <div><span style={{fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em'}}>Configuration: </span><span style={{fontSize:14,fontWeight:700,color:'var(--text)'}}>{autoConf}</span></div>
@@ -1423,7 +1420,7 @@ function DoorForm({initial,onSave,onCancel}) {
           })()}
 
           {/* Measurement */}
-          <SectionHeader blue>Measurement</SectionHeader>
+          <SectionHeader>Measurement</SectionHeader>
           <Field label="Measurement Type" col="1/-1">
             <select value={form.measurementType} onChange={e=>set('measurementType',e.target.value)}>
               <option>Call Size</option>
@@ -1445,7 +1442,7 @@ function DoorForm({initial,onSave,onCancel}) {
           </>}
 
           {/* Color & Glass — Ext+Int color LEFT, Glass surface+Deco glass RIGHT */}
-          <SectionHeader blue>Color & Glass</SectionHeader>
+          <SectionHeader>Color & Glass</SectionHeader>
           <div>
             <SelectWithPreview label="Exterior Color *" value={form.exteriorColor} onChange={v=>set('exteriorColor',v)} imgMap={IMG.exteriorColor} opts={EXT_COLORS} placeholder="Select..."/>
             <SelectWithPreview label="Interior Color *" value={form.interiorColor} onChange={v=>set('interiorColor',v)} imgMap={IMG.interiorColor} opts={intColors} placeholder="Select..."/>
@@ -1456,12 +1453,12 @@ function DoorForm({initial,onSave,onCancel}) {
           </div>
 
           {/* Grille */}
-          <SectionHeader blue>Grille</SectionHeader>
+          <SectionHeader>Grille</SectionHeader>
           <SelectWithPreview label="Grille Type" value={form.grilleType} onChange={v=>{set('grilleType',v);set('grillePattern','')}} imgMap={IMG.grilleType} opts={['','GBG','SDL']} placeholder="None"/>
           {form.grilleType&&<SelectWithPreview label="Grille Pattern" value={form.grillePattern} onChange={v=>set('grillePattern',v)} imgMap={IMG.grillePattern} opts={STD_PATTERNS} placeholder="Select..."/>}
 
           {/* Hardware — layout varies by door category and panel count */}
-          <SectionHeader blue>Hardware</SectionHeader>
+          <SectionHeader>Hardware</SectionHeader>
           {noHw&&<div style={{gridColumn:'1/-1',padding:'10px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.2)',borderRadius:6,fontSize:13,color:'var(--text-muted)',fontStyle:'italic'}}>No hardware options for this configuration.</div>}
           {!noHw&&(()=>{
             const pc=form.panelCount
@@ -1541,13 +1538,13 @@ function DoorForm({initial,onSave,onCancel}) {
                 <SelectWithPreview label="BiFold Interior Hinge Color" value={form.bifoldIntHingeColor} onChange={v=>set('bifoldIntHingeColor',v)} imgMap={IMG.bifoldIntHinge} opts={BIFOLD_HINGE_COLORS} placeholder="Select..."/>
               </div>
             </>)
-          })()}}
+          })()}
 
           {/* Jamb Size (inswing french only) */}
-          {dtc?.jamb&&<><SectionHeader blue>Jamb Size</SectionHeader><Field label="Jamb Size" col="1/-1"><select value={form.jambSize} onChange={e=>set('jambSize',e.target.value)}><option>4-9/16"</option><option>6-9/16"</option></select></Field></>}
+          {dtc?.jamb&&<><SectionHeader>Jamb Size</SectionHeader><Field label="Jamb Size" col="1/-1"><select value={form.jambSize} onChange={e=>set('jambSize',e.target.value)}><option>4-9/16"</option><option>6-9/16"</option></select></Field></>}
 
           {/* Screen */}
-          <SectionHeader blue>Screen</SectionHeader>
+          <SectionHeader>Screen</SectionHeader>
           {!sc.show&&<div style={{gridColumn:'1/-1',padding:'8px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.2)',borderRadius:6,fontSize:13,color:'var(--text-muted)',fontStyle:'italic'}}>Screen not available on outswing French doors.</div>}
           {sc.show&&sc.always&&<>
             <div style={{gridColumn:'1/-1',fontSize:12,color:'var(--text-muted)',fontStyle:'italic',marginBottom:4}}>Exterior screen included. Matches exterior color.</div>
@@ -1562,7 +1559,7 @@ function DoorForm({initial,onSave,onCancel}) {
           </>}
 
           {/* Casing */}
-          <SectionHeader blue>Extension Jamb & Casing</SectionHeader>
+          <SectionHeader>Extension Jamb & Casing</SectionHeader>
           <div style={{gridColumn:'1/-1',fontSize:12,color:'var(--text-muted)',marginBottom:4,fontStyle:'italic'}}>Leave blank if not needed.</div>
           <Field label="Jamb Depth (inches)"><MeasurementInput value={form.jambDepth} frac={form.jambDepthFrac} onValue={v=>set('jambDepth',v)} onFrac={v=>set('jambDepthFrac',v)}/></Field>
           <Field label="Jamb Type"><select value={form.jambType} onChange={e=>{set('jambType',e.target.value);if(!form.casingType)set('casingType',e.target.value)}}><option value="">Select...</option>{JAMB_TYPES.map(t=><option key={t}>{t}</option>)}</select></Field>
@@ -1574,7 +1571,7 @@ function DoorForm({initial,onSave,onCancel}) {
           <Field label="LP Trim Color"><input placeholder="e.g. White (leave blank if none)" value={form.lpTrimColor} onChange={e=>set('lpTrimColor',e.target.value)}/></Field>
 
           {/* Photos & Notes */}
-          <SectionHeader blue>Photos & Notes</SectionHeader>
+          <SectionHeader>Photos & Notes</SectionHeader>
           <Field label="Photos" col="1/-1">
             <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handlePhoto}/>
             <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
