@@ -763,20 +763,25 @@ function generatePDF(jobInfo,rooms) {
   const col2=W/2;let leftY=y,rightY=y
   fields.forEach(([label,value],i)=>{const cx=i%2===0?M:col2;let cy=i%2===0?leftY:rightY;doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...BLUE);doc.text(label.toUpperCase(),cx,cy);cy+=12;doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.setTextColor(...TEXTDK);doc.text(value||'—',cx,cy);cy+=17;if(i%2===0)leftY=cy;else rightY=cy})
   y=Math.max(leftY,rightY)+10;doc.setDrawColor(...MGRAY);doc.setLineWidth(0.5);doc.line(M,y,W-M,y);y+=14
+  const LGRAY=[180,185,195]
   let itemNum=1
+  let firstItemOnPage=true
   rooms.forEach(room=>{
     if(!room.items.length)return
-    if(y>pH-80){addFooter();doc.addPage();y=40}
-    if(room.name){doc.setFillColor(...BLUE);doc.rect(M,y-10,W-M*2,22,'F');doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...WHITE);doc.text(room.name.toUpperCase(),M+8,y+5);y+=20}
     room.items.forEach(item=>{
+      // Each item always starts on a new page
+      if(!firstItemOnPage){addFooter();doc.addPage();y=40}
+      firstItemOnPage=false
+
+      // Room name header at top of each item's page
+      if(room.name){doc.setFillColor(...ORANGE);doc.rect(M,y-10,W-M*2,22,'F');doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...WHITE);doc.text(room.name.toUpperCase(),M+8,y+5);y+=20}
+
       const isDoor=item.itemType==='door'
       const lines=isDoor?buildDoorPDFLines(item):buildPDFLines(item)
       const titleText=`${item.style}${isDoor?' (Patio Door)':''}${parseInt(item.qty)>1?` × ${item.qty}`:''}`
       const lineH=13,rowH=24+lines.length*lineH+(item.notes?14:0)
-      if(y+rowH>pH-60){addFooter();doc.addPage();y=40}
-      const bg=itemNum%2===0?[242,244,247]:[255,255,255]
-      doc.setFillColor(...bg);doc.rect(M,y-10,W-M*2,rowH,'F')
-      doc.setFillColor(...(isDoor?BLUE:ORANGE));doc.rect(M,y-10,28,rowH,'F')
+      doc.setFillColor(255,255,255);doc.rect(M,y-10,W-M*2,rowH,'F')
+      doc.setFillColor(...LGRAY);doc.rect(M,y-10,28,rowH,'F')
       doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...WHITE);doc.text(String(itemNum),M+14,y+(rowH/2)-10,{align:'center'})
       doc.setFontSize(11);doc.setTextColor(...CHARCOAL);doc.text(titleText,M+36,y);y+=16
       lines.forEach(line=>{
@@ -788,7 +793,6 @@ function generatePDF(jobInfo,rooms) {
       if(item.notes){doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(...TEXTMD);doc.text(`Note: ${item.notes}`,M+36,y);y+=12}
       y+=6;itemNum++
     })
-    y+=8
   })
   const allItems=rooms.flatMap(r=>r.items)
   if(allItems.length>0){
