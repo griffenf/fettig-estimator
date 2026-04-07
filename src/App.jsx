@@ -1432,8 +1432,8 @@ function DoorForm({initial,onSave,onCancel}) {
             </select>
           </Field>
           {(form.measurementType==='Call Size'||!form.measurementType)&&<>
-            {widthKey&&<div style={{gridColumn:'1/-1'}}><CallSizePicker label="Call Width *" value={form.callWidth} onChange={v=>set('callWidth',v)} widthKey={widthKey}/></div>}
-            <div style={{gridColumn:'1/-1'}}><CallHeightPicker label="Call Height *" value={form.callHeight} onChange={v=>set('callHeight',v)} heightKey={heightKey}/></div>
+            {widthKey&&<CallSizePicker label="Call Width *" value={form.callWidth} onChange={v=>set('callWidth',v)} widthKey={widthKey}/>}
+            <CallHeightPicker label="Call Height *" value={form.callHeight} onChange={v=>set('callHeight',v)} heightKey={heightKey}/>
           </>}
           {form.measurementType==='Frame Size'&&<>
             <Field label="Width (inches) *"><MeasurementInput value={form.width} frac={form.widthFrac} onValue={v=>set('width',v)} onFrac={v=>set('widthFrac',v)}/></Field>
@@ -1444,29 +1444,104 @@ function DoorForm({initial,onSave,onCancel}) {
             <Field label="Rough Opening Height (inches) *"><MeasurementInput value={form.height} frac={form.heightFrac} onValue={v=>set('height',v)} onFrac={v=>set('heightFrac',v)}/></Field>
           </>}
 
-          {/* Color & Glass */}
+          {/* Color & Glass — Ext+Int color LEFT, Glass surface+Deco glass RIGHT */}
           <SectionHeader blue>Color & Glass</SectionHeader>
-          <SelectWithPreview label="Exterior Color *" value={form.exteriorColor} onChange={v=>set('exteriorColor',v)} imgMap={IMG.exteriorColor} opts={EXT_COLORS} placeholder="Select..."/>
-          <SelectWithPreview label="Interior Color *" value={form.interiorColor} onChange={v=>set('interiorColor',v)} imgMap={IMG.interiorColor} opts={intColors} placeholder="Select..."/>
-          <SelectWithPreview label="Glass Surface *" value={form.glassSurface} onChange={v=>set('glassSurface',v)} imgMap={IMG.glassSurface} opts={glassSurfaces} placeholder="Select..."/>
-          <div style={{gridColumn:'1/-1'}}><SelectWithPreview label="Decorative Glass" value={form.decorativeGlass} onChange={v=>set('decorativeGlass',v)} imgMap={IMG.decorativeGlass} opts={['None',...decoOpts]} placeholder="None"/></div>
+          <div>
+            <SelectWithPreview label="Exterior Color *" value={form.exteriorColor} onChange={v=>set('exteriorColor',v)} imgMap={IMG.exteriorColor} opts={EXT_COLORS} placeholder="Select..."/>
+            <SelectWithPreview label="Interior Color *" value={form.interiorColor} onChange={v=>set('interiorColor',v)} imgMap={IMG.interiorColor} opts={intColors} placeholder="Select..."/>
+          </div>
+          <div>
+            <SelectWithPreview label="Glass Surface *" value={form.glassSurface} onChange={v=>set('glassSurface',v)} imgMap={IMG.glassSurface} opts={glassSurfaces} placeholder="Select..."/>
+            <SelectWithPreview label="Decorative Glass" value={form.decorativeGlass} onChange={v=>set('decorativeGlass',v)} imgMap={IMG.decorativeGlass} opts={['None',...decoOpts]} placeholder="None"/>
+          </div>
 
           {/* Grille */}
           <SectionHeader blue>Grille</SectionHeader>
           <SelectWithPreview label="Grille Type" value={form.grilleType} onChange={v=>{set('grilleType',v);set('grillePattern','')}} imgMap={IMG.grilleType} opts={['','GBG','SDL']} placeholder="None"/>
           {form.grilleType&&<SelectWithPreview label="Grille Pattern" value={form.grillePattern} onChange={v=>set('grillePattern',v)} imgMap={IMG.grillePattern} opts={STD_PATTERNS} placeholder="Select..."/>}
 
-          {/* Hardware */}
+          {/* Hardware — layout varies by door category and panel count */}
           <SectionHeader blue>Hardware</SectionHeader>
           {noHw&&<div style={{gridColumn:'1/-1',padding:'10px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.2)',borderRadius:6,fontSize:13,color:'var(--text-muted)',fontStyle:'italic'}}>No hardware options for this configuration.</div>}
-          {hw.stdHandle&&<SelectWithPreview label="Handle Style" value={form.handleStyle} onChange={v=>set('handleStyle',v)} imgMap={handleImgMap} opts={DOOR_HANDLE_STYLES} placeholder="Select..."/>}
-          {hw.handleColorInt&&<SelectWithPreview label="Interior Handle Color" value={form.handleColorInt} onChange={v=>set('handleColorInt',v)} imgMap={IMG.doorHandleColorInt} opts={HARDWARE_COLORS} placeholder="Select..."/>}
-          {hw.handleColorExt&&<SelectWithPreview label="Exterior Handle Color" value={form.handleColorExt} onChange={v=>set('handleColorExt',v)} imgMap={IMG.doorHandleColorExt} opts={HARDWARE_COLORS} placeholder="Select..."/>}
-          {hw.hingeInt&&<SelectWithPreview label="Interior Hinge Color" value={form.hingeColorInt} onChange={v=>set('hingeColorInt',v)} imgMap={hingeIntMap} opts={hingeOpts} placeholder="Select..."/>}
-          {hw.hingeExt&&<SelectWithPreview label="Exterior Hinge Color" value={form.hingeColorExt} onChange={v=>set('hingeColorExt',v)} imgMap={IMG.hingeOutswingExt} opts={hingeOpts} placeholder="Select..."/>}
-          {hw.bifoldPanel&&<SelectWithPreview label="BiFold Panel Handle Color" value={form.bifoldPanelHandleColor} onChange={v=>set('bifoldPanelHandleColor',v)} imgMap={IMG.bifoldPanelHandle} opts={BIFOLD_HINGE_COLORS} placeholder="Select..."/>}
-          {hw.bifoldExt&&<SelectWithPreview label="BiFold Exterior Hinge Color" value={form.bifoldExtHingeColor} onChange={v=>set('bifoldExtHingeColor',v)} imgMap={IMG.bifoldExtHinge} opts={BIFOLD_HINGE_COLORS} placeholder="Select..."/>}
-          {hw.bifoldInt&&<SelectWithPreview label="BiFold Interior Hinge Color" value={form.bifoldIntHingeColor} onChange={v=>set('bifoldIntHingeColor',v)} imgMap={IMG.bifoldIntHinge} opts={BIFOLD_HINGE_COLORS} placeholder="Select..."/>}
+          {!noHw&&(()=>{
+            const pc=form.panelCount
+            const cat=category
+
+            // Sliding: Ext+Int handle color LEFT, Handle style RIGHT
+            if(cat==='sliding') return(<>
+              <div>
+                <SelectWithPreview label="Exterior Handle Color" value={form.handleColorExt} onChange={v=>set('handleColorExt',v)} imgMap={IMG.doorHandleColorExt} opts={HARDWARE_COLORS} placeholder="Select..."/>
+                <SelectWithPreview label="Interior Handle Color" value={form.handleColorInt} onChange={v=>set('handleColorInt',v)} imgMap={IMG.doorHandleColorInt} opts={HARDWARE_COLORS} placeholder="Select..."/>
+              </div>
+              <div>
+                <SelectWithPreview label="Handle Style" value={form.handleStyle} onChange={v=>set('handleStyle',v)} imgMap={handleImgMap} opts={DOOR_HANDLE_STYLES} placeholder="Select..."/>
+              </div>
+            </>)
+
+            // French (inswing + outswing): Ext+Int handle color LEFT, Handle style + Hinge color(s) RIGHT
+            if(cat==='inswing_french') return(<>
+              <div>
+                <SelectWithPreview label="Exterior Handle Color" value={form.handleColorExt} onChange={v=>set('handleColorExt',v)} imgMap={IMG.doorHandleColorExt} opts={HARDWARE_COLORS} placeholder="Select..."/>
+                <SelectWithPreview label="Interior Handle Color" value={form.handleColorInt} onChange={v=>set('handleColorInt',v)} imgMap={IMG.doorHandleColorInt} opts={HARDWARE_COLORS} placeholder="Select..."/>
+              </div>
+              <div>
+                <SelectWithPreview label="Handle Style" value={form.handleStyle} onChange={v=>set('handleStyle',v)} imgMap={handleImgMap} opts={DOOR_HANDLE_STYLES} placeholder="Select..."/>
+                <SelectWithPreview label="Interior Hinge Color" value={form.hingeColorInt} onChange={v=>set('hingeColorInt',v)} imgMap={hingeIntMap} opts={HARDWARE_COLORS} placeholder="Select..."/>
+              </div>
+            </>)
+            if(cat==='outswing_french') return(<>
+              <div>
+                <SelectWithPreview label="Exterior Handle Color" value={form.handleColorExt} onChange={v=>set('handleColorExt',v)} imgMap={IMG.doorHandleColorExt} opts={HARDWARE_COLORS} placeholder="Select..."/>
+                <SelectWithPreview label="Interior Handle Color" value={form.handleColorInt} onChange={v=>set('handleColorInt',v)} imgMap={IMG.doorHandleColorInt} opts={HARDWARE_COLORS} placeholder="Select..."/>
+              </div>
+              <div>
+                <SelectWithPreview label="Handle Style" value={form.handleStyle} onChange={v=>set('handleStyle',v)} imgMap={handleImgMap} opts={DOOR_HANDLE_STYLES} placeholder="Select..."/>
+                <SelectWithPreview label="Exterior Hinge Color" value={form.hingeColorExt} onChange={v=>set('hingeColorExt',v)} imgMap={IMG.hingeOutswingExt} opts={OUTSWING_HINGE_COLORS} placeholder="Select..."/>
+              </div>
+            </>)
+
+            // Bifold — layout depends on panel count / which fields are shown
+            // Odd uni panels (1,3,5,7) and access panel and bipart-6: Handle style+Ext+Int handle LEFT, Bifold panel+Ext+Int hinge RIGHT
+            // Even non-bipart (2,4,6 uni) and bipart-4: Bifold Ext+Int hinge LEFT, Bifold panel handle RIGHT
+            // Bipart-2 and uni-1: Ext+Int handle LEFT, Handle style + Bifold ext hinge RIGHT
+
+            // Bipart-2 layout (same as uni-1)
+            if((cat==='bifold_bipart'&&pc===2)||(cat==='bifold_uni'&&pc===1)) return(<>
+              <div>
+                <SelectWithPreview label="Exterior Handle Color" value={form.handleColorExt} onChange={v=>set('handleColorExt',v)} imgMap={IMG.doorHandleColorExt} opts={HARDWARE_COLORS} placeholder="Select..."/>
+                <SelectWithPreview label="Interior Handle Color" value={form.handleColorInt} onChange={v=>set('handleColorInt',v)} imgMap={IMG.doorHandleColorInt} opts={HARDWARE_COLORS} placeholder="Select..."/>
+              </div>
+              <div>
+                <SelectWithPreview label="Handle Style" value={form.handleStyle} onChange={v=>set('handleStyle',v)} imgMap={handleImgMap} opts={DOOR_HANDLE_STYLES} placeholder="Select..."/>
+                <SelectWithPreview label="BiFold Exterior Hinge Color" value={form.bifoldExtHingeColor} onChange={v=>set('bifoldExtHingeColor',v)} imgMap={IMG.bifoldExtHinge} opts={BIFOLD_HINGE_COLORS} placeholder="Select..."/>
+              </div>
+            </>)
+
+            // Even uni (2,4,6) and bipart-4: Bifold Ext+Int hinge LEFT, Bifold panel handle RIGHT
+            if((cat==='bifold_uni'&&[2,4,6].includes(pc))||(cat==='bifold_bipart'&&pc===4)) return(<>
+              <div>
+                <SelectWithPreview label="BiFold Exterior Hinge Color" value={form.bifoldExtHingeColor} onChange={v=>set('bifoldExtHingeColor',v)} imgMap={IMG.bifoldExtHinge} opts={BIFOLD_HINGE_COLORS} placeholder="Select..."/>
+                <SelectWithPreview label="BiFold Interior Hinge Color" value={form.bifoldIntHingeColor} onChange={v=>set('bifoldIntHingeColor',v)} imgMap={IMG.bifoldIntHinge} opts={BIFOLD_HINGE_COLORS} placeholder="Select..."/>
+              </div>
+              <div>
+                <SelectWithPreview label="BiFold Panel Handle Color" value={form.bifoldPanelHandleColor} onChange={v=>set('bifoldPanelHandleColor',v)} imgMap={IMG.bifoldPanelHandle} opts={BIFOLD_HINGE_COLORS} placeholder="Select..."/>
+              </div>
+            </>)
+
+            // Odd uni (3,5,7), access panel, bipart-6: Handle style+Ext+Int handle LEFT, Bifold panel+Ext+Int hinge RIGHT
+            return(<>
+              <div>
+                <SelectWithPreview label="Handle Style" value={form.handleStyle} onChange={v=>set('handleStyle',v)} imgMap={handleImgMap} opts={DOOR_HANDLE_STYLES} placeholder="Select..."/>
+                <SelectWithPreview label="Exterior Handle Color" value={form.handleColorExt} onChange={v=>set('handleColorExt',v)} imgMap={IMG.doorHandleColorExt} opts={HARDWARE_COLORS} placeholder="Select..."/>
+                <SelectWithPreview label="Interior Handle Color" value={form.handleColorInt} onChange={v=>set('handleColorInt',v)} imgMap={IMG.doorHandleColorInt} opts={HARDWARE_COLORS} placeholder="Select..."/>
+              </div>
+              <div>
+                <SelectWithPreview label="BiFold Panel Handle Color" value={form.bifoldPanelHandleColor} onChange={v=>set('bifoldPanelHandleColor',v)} imgMap={IMG.bifoldPanelHandle} opts={BIFOLD_HINGE_COLORS} placeholder="Select..."/>
+                <SelectWithPreview label="BiFold Exterior Hinge Color" value={form.bifoldExtHingeColor} onChange={v=>set('bifoldExtHingeColor',v)} imgMap={IMG.bifoldExtHinge} opts={BIFOLD_HINGE_COLORS} placeholder="Select..."/>
+                <SelectWithPreview label="BiFold Interior Hinge Color" value={form.bifoldIntHingeColor} onChange={v=>set('bifoldIntHingeColor',v)} imgMap={IMG.bifoldIntHinge} opts={BIFOLD_HINGE_COLORS} placeholder="Select..."/>
+              </div>
+            </>)
+          })()}}
 
           {/* Jamb Size (inswing french only) */}
           {dtc?.jamb&&<><SectionHeader blue>Jamb Size</SectionHeader><Field label="Jamb Size" col="1/-1"><select value={form.jambSize} onChange={e=>set('jambSize',e.target.value)}><option>4-9/16"</option><option>6-9/16"</option></select></Field></>}
