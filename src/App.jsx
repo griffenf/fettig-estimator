@@ -682,7 +682,7 @@ function buildWindowPDFRows(w) {
     const ts=w.topWindowWidth===2?`${w.topLeftStyle||'—'} | ${w.topRightStyle||'—'}`:(w.topStyle||'—')
     pair('Top Style',ts,'Top Facing',w.topFacing||'Same as bottom')
     pair('Top Tempered',(w.topTempered&&w.topTempered!==w.tempered)?w.topTempered:'Same as bottom','Top Deco Glass',(w.topDecorativeGlass&&w.topDecorativeGlass!=='Same as bottom')?w.topDecorativeGlass:'Same as bottom')
-    pair('Top Grille Type',(w.topGrilleType&&w.topGrilleType!=='Same as bottom')?w.topGrilleType:'Same as bottom','Top Grille Pattern',(w.topGrillePattern&&w.topGrillePattern!=='Same as bottom')?w.topGrillePattern:'Same as bottom')
+    pair('Top Grille Type',(w.topGrilleType&&w.topGrilleType!=='Same as bottom')?w.topGrilleType:'Same as bottom','Top Grille Pattern',(w.topGrillePattern&&w.topGrillePattern!=='Same as bottom')?w.topGrillePattern:(w.topGrilleType==='None'?'N/A':'Same as bottom'))
   }
 
   sec('Color & Glass')
@@ -1116,8 +1116,8 @@ function WindowForm({initial,onSave,onCancel}) {
     const gp=c?.gp||[]
     const isMP=MULTI_PANE_STYLES.includes(topOverride||form.style)
     if(topOverride){return(<>
-      <SelectWithPreview label="Grille Type" value={form.topGrilleType||''} onChange={v=>{set('topGrilleType',v);set('topGrillePattern','')}} imgMap={IMG.grilleType} opts={['Same as bottom',...(c?.g||cfg?.g||[])]} placeholder={`Same as bottom (${form.grilleType||'None'})`}/>
-      {form.topGrilleType&&form.topGrilleType!=='Same as bottom'&&gp.length>0&&<SelectWithPreview label="Grille Pattern" value={form.topGrillePattern||''} onChange={v=>set('topGrillePattern',v)} imgMap={IMG.grillePattern} opts={['Same as bottom',...gp]} placeholder={`Same as bottom (${form.grillePattern||'None'})`}/>}
+      <SelectWithPreview label="Grille Type" value={form.topGrilleType||''} onChange={v=>{set('topGrilleType',v);set('topGrillePattern','')}} imgMap={IMG.grilleType} opts={['Same as bottom','None',...(c?.g||cfg?.g||[])]} placeholder={`Same as bottom (${form.grilleType||'None'})`}/>
+      {form.topGrilleType&&form.topGrilleType!=='Same as bottom'&&form.topGrilleType!=='None'&&gp.length>0&&<SelectWithPreview label="Grille Pattern" value={form.topGrillePattern||''} onChange={v=>set('topGrillePattern',v)} imgMap={IMG.grillePattern} opts={['Same as bottom',...gp]} placeholder={`Same as bottom (${form.grillePattern||'None'})`}/>}
     </>)}
     if(isMP){return(<>
       <SelectWithPreview label="Grille Type" value={form.grilleType} onChange={v=>{set('grilleType',v);set('grillePattern','');set('topPaneGrillePattern','');set('bottomPaneGrillePattern','')}} imgMap={IMG.grilleType} opts={['',...(cfg?.g||[])]} placeholder="None"/>
