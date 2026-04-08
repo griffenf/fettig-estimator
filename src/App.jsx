@@ -608,7 +608,10 @@ function summarizeWindow(w) {
   if(w.lpTrimColor)p.push(`LP:${w.lpTrimColor}`)
   if(w.cutSiding)p.push('Cut Siding')
   if(w.takeDownSiding)p.push('Take Down Siding')
-  return p.join(' · ')(d) {
+  return p.join(' · ')
+}
+
+function summarizeDoor(d) {
   const p=[]
   if(d.panelCount)p.push(`${d.panelCount}P`)
   if(d.configuration)p.push(d.configuration)
@@ -1155,6 +1158,15 @@ function WindowForm({initial,onSave,onCancel}) {
           <Field label="Quantity"><input type="number" min="1" value={form.qty} onChange={e=>set('qty',e.target.value)}/></Field>
           <div/>
           <Field label="Notes / Special Instructions" col="1/-1"><textarea rows={2} placeholder="Any special notes..." value={form.notes} onChange={e=>set('notes',e.target.value)} style={{resize:'vertical'}}/></Field>
+        </>}
+      </div>
+      <div style={{display:'flex',gap:10,marginTop:12}}>
+        <button className="btn-gold" onClick={handleSave} style={{flex:1}}>Save Window</button>
+        <button className="btn-outline" onClick={onCancel}>Cancel</button>
+      </div>
+    </div>
+  )
+}
 
 // ─── Patio Door Form ──────────────────────────────────────────────────────────
 
