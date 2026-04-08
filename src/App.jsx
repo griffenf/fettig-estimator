@@ -639,118 +639,176 @@ function summarizeDoor(d) {
   return p.join(' · ')
 }
 
-// ─── PDF Detail Builders ──────────────────────────────────────────────────────
+// ─── PDF Row Builders (structured layout) ─────────────────────────────────────
+// Each row is one of:
+//   {type:'section', label}                           — section header
+//   {type:'pair', a:{l,v}, b:{l,v}|null}             — two fields side by side
+//   {type:'single', l, v}                             — one field full width
+//   {type:'flag', label}                              — bold highlight line
 
-function buildPDFLines(w) {
-  const L=[]
-  if(w.insert)L.push('INSERT WINDOW')
-  if(w.numberWide>1)L.push(`${w.numberWide} Wide`)
-  if(w.numberHigh===2)L.push('2 High')
-  if(w.facing)L.push(`Facing: ${w.facing} (from exterior)`)
-  if(w.sashSplit)L.push(`Sash Split: ${w.sashSplit}`)
-  if(w.configuration)L.push(`Configuration: ${w.configuration}`)
-  if(w.measurementType)L.push(`Measurement Type: ${w.measurementType}`)
-  if(w.width)L.push(`Width: ${fmtMeasurement(w.width,w.widthFrac)}`)
-  if(w.height&&w.numberHigh!==2)L.push(`Height: ${fmtMeasurement(w.height,w.heightFrac)}`)
-  if(w.widthOrHeight)L.push(`Width / Height: ${fmtMeasurement(w.widthOrHeight,w.widthOrHeightFrac)}`)
-  if(w.shortSideHeight)L.push(`Short Side Height: ${fmtMeasurement(w.shortSideHeight,w.shortSideHeightFrac)}`)
-  if(w.numberHigh===2){
-    if(w.overallHeight)L.push(`Overall Height: ${fmtMeasurement(w.overallHeight,w.overallHeightFrac)}`)
-    if(w.height)L.push(`Bottom Window Height: ${fmtMeasurement(w.height,w.heightFrac)}`)
-    if(w.topHeight)L.push(`Top Window Height: ${fmtMeasurement(w.topHeight,w.topHeightFrac)}`)
-    const ts=w.topWindowWidth===2?`${w.topLeftStyle||'—'} | ${w.topRightStyle||'—'}`:(w.topStyle||'')
-    if(ts)L.push(`Top Window Style: ${ts}`)
-    if(w.topFacing)L.push(`Top Window Facing: ${w.topFacing}`)
-    if(w.topTempered&&w.topTempered!==w.tempered)L.push(`Top Window Tempered: ${w.topTempered}`)
-    if(w.topDecorativeGlass&&w.topDecorativeGlass!=='Same as bottom')L.push(`Top Decorative Glass: ${w.topDecorativeGlass}`)
-    if(w.topGrilleType&&w.topGrilleType!=='Same as bottom')L.push(`Top Grille Type: ${w.topGrilleType}`)
-    if(w.topGrillePattern&&w.topGrillePattern!=='Same as bottom')L.push(`Top Grille Pattern: ${w.topGrillePattern}`)
+function buildWindowPDFRows(w) {
+  const R=[]
+  const sec=(l)=>R.push({type:'section',label:l})
+  const pair=(al,av,bl,bv)=>R.push({type:'pair',a:{l:al,v:String(av??'')},b:bl!=null?{l:bl,v:String(bv??'')}:null})
+  const single=(l,v)=>R.push({type:'single',l,v:String(v??'')})
+  const flag=(l)=>R.push({type:'flag',label:l})
+
+  if(w.insert) flag('INSERT WINDOW')
+
+  sec('Window')
+  const wideStr=w.numberWide>1?`${w.numberWide} Wide`:'1 Wide'
+  const highStr=w.numberHigh===2?'2 High':'1 High'
+  pair('Style',w.style,'Size',`${wideStr} · ${highStr}`)
+  if(w.facing&&w.sashSplit) pair('Facing (exterior)',w.facing,'Sash Split',w.sashSplit)
+  else if(w.facing) single('Facing (exterior)',w.facing)
+  else if(w.sashSplit) single('Sash Split',w.sashSplit)
+  if(w.configuration) single('Configuration',w.configuration)
+
+  sec('Measurements')
+  single('Measurement Type',w.measurementType||'Frame Size')
+  if(w.numberHigh===2) {
+    pair('Overall Height',w.overallHeight?fmtMeasurement(w.overallHeight,w.overallHeightFrac):'—','Bottom Height',w.height?fmtMeasurement(w.height,w.heightFrac):'—')
+    if(w.topHeight) single('Top Height (calculated)',fmtMeasurement(w.topHeight,w.topHeightFrac))
+  } else if(w.widthOrHeight) {
+    single('Width or Height',fmtMeasurement(w.widthOrHeight,w.widthOrHeightFrac))
+  } else {
+    pair('Width',w.width?fmtMeasurement(w.width,w.widthFrac):'—','Height',w.height?fmtMeasurement(w.height,w.heightFrac):'—')
   }
-  if(w.angleOfDeflection)L.push(`Angle of Deflection: ${w.angleOfDeflection}`)
-  if(w.flankerRatio)L.push(`Flanker to Center Ratio: ${w.flankerRatio}`)
-  L.push(`Exterior Color: ${w.exteriorColor||'—'}`)
-  L.push(`Interior Color: ${w.interiorColor||'—'}`)
-  L.push(`Pane: ${w.pane||'Double'}`)
-  L.push(`Glass Surface: ${w.glassSurface||'—'}`)
-  L.push(`Tempered: ${w.tempered||'No'}`)
-  if(w.decorativeGlass&&w.decorativeGlass!=='None')L.push(`Decorative Glass: ${w.decorativeGlass}`)
-  const isMP=MULTI_PANE_STYLES.includes(w.style)
-  if(isMP&&w.grilleType){
-    L.push(`Grille Type: ${w.grilleType}`)
-    L.push(`Pane Application: ${w.grillePaneApplication||'Both Panes'}`)
-    if(w.grillePaneApplication==='Both Panes'){if(w.topPaneGrillePattern)L.push(`Top Pane Pattern: ${w.topPaneGrillePattern}`);if(w.bottomPaneGrillePattern)L.push(`Bottom Pane Pattern: ${w.bottomPaneGrillePattern}`)}
-    else if(w.grillePattern)L.push(`Grille Pattern: ${w.grillePattern}`)
-  }else if(w.grilleType){
-    L.push(`Grille Type: ${w.grilleType}`)
-    if(w.grillePattern)L.push(`Grille Pattern: ${w.grillePattern}`)
-    if(w.simulatedRail)L.push(`Simulated Rail: ${w.simulatedRail}`)
+  if(w.shortSideHeight) single('Short Side Height',fmtMeasurement(w.shortSideHeight,w.shortSideHeightFrac))
+  if(w.angleOfDeflection||w.flankerRatio) pair('Angle of Deflection',w.angleOfDeflection||'—','Flanker Ratio',w.flankerRatio||'—')
+
+  if(w.numberHigh===2) {
+    sec('Top Window')
+    const ts=w.topWindowWidth===2?`${w.topLeftStyle||'—'} | ${w.topRightStyle||'—'}`:(w.topStyle||'—')
+    pair('Top Style',ts,'Top Facing',w.topFacing||'Same as bottom')
+    pair('Top Tempered',(w.topTempered&&w.topTempered!==w.tempered)?w.topTempered:'Same as bottom','Top Deco Glass',(w.topDecorativeGlass&&w.topDecorativeGlass!=='Same as bottom')?w.topDecorativeGlass:'Same as bottom')
+    pair('Top Grille Type',(w.topGrilleType&&w.topGrilleType!=='Same as bottom')?w.topGrilleType:'Same as bottom','Top Grille Pattern',(w.topGrillePattern&&w.topGrillePattern!=='Same as bottom')?w.topGrillePattern:'Same as bottom')
   }
-  if(w.hardwareColor)L.push(`Hardware Color: ${w.hardwareColor}`)
-  if(w.screenColor)L.push(`Interior Screen Color: ${w.screenColor}`)
-  if(w.screenMesh)L.push(`Screen Mesh: ${w.screenMesh}`)
-  if(w.jambDepth)L.push(`Jamb Depth: ${fmtMeasurement(w.jambDepth,w.jambDepthFrac)}`)
-  if(w.jambType)L.push(`Jamb Type: ${w.jambType==='Other'?(w.jambTypeOther||'Other'):w.jambType}`)
-  if(w.casingWidth)L.push(`Casing Width: ${fmtMeasurement(w.casingWidth,w.casingWidthFrac)}`)
-  if(w.casingType)L.push(`Casing Type: ${w.casingType==='Other'?(w.casingTypeOther||'Other'):w.casingType}`)
-  if(w.casingStyle)L.push(`Casing Style: ${w.casingStyle}`)
-  if(w.cutSiding)L.push('Cut Siding: YES')
-  if(w.takeDownSiding)L.push('Take Down Siding: YES')
-  if(w.lpTrimColor)L.push(`LP Trim Color: ${w.lpTrimColor}`)
-  return L
+
+  sec('Color & Glass')
+  pair('Exterior Color',w.exteriorColor||'—','Interior Color',w.interiorColor||'—')
+  pair('Pane',w.pane||'Double','Tempered',w.tempered||'No')
+  pair('Glass Surface',w.glassSurface||'—','Decorative Glass',(w.decorativeGlass&&w.decorativeGlass!=='None')?w.decorativeGlass:'None')
+
+  if(w.grilleType) {
+    sec('Grille')
+    const isMP=MULTI_PANE_STYLES.includes(w.style)
+    if(isMP) {
+      pair('Grille Type',w.grilleType,'Pane Application',w.grillePaneApplication||'Both Panes')
+      if(w.grillePaneApplication==='Both Panes') pair('Top Pane Pattern',w.topPaneGrillePattern||'—','Bottom Pane Pattern',w.bottomPaneGrillePattern||'—')
+      else if(w.grillePattern) single('Grille Pattern',w.grillePattern)
+    } else {
+      pair('Grille Type',w.grilleType,'Grille Pattern',w.grillePattern||'—')
+      if(w.simulatedRail) single('Simulated Rail',w.simulatedRail)
+    }
+  }
+
+  if(w.hardwareColor||w.screenColor||w.screenMesh) {
+    sec('Hardware & Screen')
+    if(w.hardwareColor||w.screenColor) pair('Hardware Color',w.hardwareColor||'—','Screen Color',w.screenColor||'—')
+    if(w.screenMesh) single('Screen Mesh',w.screenMesh)
+  }
+
+  if(w.jambDepth||w.jambType||w.casingWidth||w.casingType||w.casingStyle||w.lpTrimColor) {
+    sec('Extension Jamb & Casing')
+    pair('Jamb Depth',w.jambDepth?fmtMeasurement(w.jambDepth,w.jambDepthFrac):'—','Jamb Type',w.jambType?(w.jambType==='Other'?w.jambTypeOther||'Other':w.jambType):'—')
+    pair('Casing Width',w.casingWidth?fmtMeasurement(w.casingWidth,w.casingWidthFrac):'—','Casing Type',w.casingType?(w.casingType==='Other'?w.casingTypeOther||'Other':w.casingType):'—')
+    if(w.casingStyle||w.lpTrimColor) pair('Casing Style',w.casingStyle||'—','LP Trim Color',w.lpTrimColor||'—')
+  }
+
+  if(w.cutSiding||w.takeDownSiding) {
+    sec('Additional')
+    if(w.cutSiding&&w.takeDownSiding) pair('Cut Siding','YES','Take Down Siding','YES')
+    else if(w.cutSiding) single('Cut Siding','YES')
+    else single('Take Down Siding','YES')
+  }
+  return R
 }
 
-function buildDoorPDFLines(d) {
-  const L=[]
+function buildDoorPDFRows(d) {
+  const R=[]
+  const sec=(l)=>R.push({type:'section',label:l})
+  const pair=(al,av,bl,bv)=>R.push({type:'pair',a:{l:al,v:String(av??'')},b:bl!=null?{l:bl,v:String(bv??'')}:null})
+  const single=(l,v)=>R.push({type:'single',l,v:String(v??'')})
+  const flag=(l)=>R.push({type:'flag',label:l})
+
   const dtc=DOOR_TYPE_CONFIG[d.style]
   const category=dtc?.category||''
-  if(d.panelCount)L.push(`Panels: ${d.panelCount}`)
-  if(d.configuration)L.push(`Configuration: ${d.configuration}`)
-  if(d.handing)L.push(`Handing: ${d.handing}`)
 
+  if(d.insert) flag('INSERT DOOR')
+
+  sec('Door')
+  pair('Style',d.style,'Panels',d.panelCount||'—')
+  pair('Configuration',d.configuration||'—','Handing',d.handing||'—')
+
+  sec('Measurements')
   const mt=d.measurementType||'Call Size'
-  L.push(`Measurement Type: ${mt}`)
+  single('Measurement Type',mt)
   if(mt==='Call Size') {
     const wk=d.bifoldWidthKey||dtc?.widthKey
     const hk=dtc?.heightKey||'h_french'
-    if(d.callWidth&&wk){const wd=CALL_WIDTH_DATA[wk]?.[d.callWidth];L.push(`Call Width: ${d.callWidth}${wd?` (Frame: ${wd.frame} · RO: ${wd.ro})`:''}`)}
-    if(d.callHeight){const hd=CALL_HEIGHT_DATA[hk]?.[d.callHeight];L.push(`Call Height: ${d.callHeight}${hd?` (Frame: ${hd.frame} · RO: ${hd.ro})`:''}`)}
+    const cwLabel=d.callWidth&&wk?(()=>{const wd=CALL_WIDTH_DATA[wk]?.[d.callWidth];return wd?`${d.callWidth}" — Frame: ${wd.frame} · RO: ${wd.ro}`:`${d.callWidth}"`})():'—'
+    const chLabel=d.callHeight?(()=>{const hd=CALL_HEIGHT_DATA[hk]?.[d.callHeight];return hd?`${d.callHeight}" — Frame: ${hd.frame} · RO: ${hd.ro}`:`${d.callHeight}"`})():'—'
+    single('Call Width',cwLabel)
+    single('Call Height',chLabel)
   } else {
-    if(d.width)L.push(`Width: ${fmtMeasurement(d.width,d.widthFrac)}`)
-    if(d.height)L.push(`Height: ${fmtMeasurement(d.height,d.heightFrac)}`)
+    pair('Width',d.width?fmtMeasurement(d.width,d.widthFrac):'—','Height',d.height?fmtMeasurement(d.height,d.heightFrac):'—')
   }
 
-  L.push(`Exterior Color: ${d.exteriorColor||'—'}`)
-  L.push(`Interior Color: ${d.interiorColor||'—'}`)
-  L.push('Pane: Double (Tempered)')
-  L.push(`Glass Surface: ${d.glassSurface||'—'}`)
-  if(d.decorativeGlass&&d.decorativeGlass!=='None')L.push(`Decorative Glass: ${d.decorativeGlass}`)
-  if(d.grilleType){L.push(`Grille Type: ${d.grilleType}`);if(d.grillePattern)L.push(`Grille Pattern: ${d.grillePattern}`)}
+  sec('Color & Glass')
+  pair('Exterior Color',d.exteriorColor||'—','Interior Color',d.interiorColor||'—')
+  pair('Glass Surface',d.glassSurface||'—','Pane','Double (Tempered)')
+  if(d.decorativeGlass&&d.decorativeGlass!=='None') single('Decorative Glass',d.decorativeGlass)
+
+  if(d.grilleType) {
+    sec('Grille')
+    pair('Grille Type',d.grilleType,'Grille Pattern',d.grillePattern||'—')
+  }
 
   const hw=getDoorHardwareCfg(category,d.panelCount)
-  if(hw.stdHandle&&d.handleStyle)L.push(`Handle Style: ${d.handleStyle}`)
-  if(hw.handleColorInt&&d.handleColorInt)L.push(`Interior Handle Color: ${d.handleColorInt}`)
-  if(hw.handleColorExt&&d.handleColorExt)L.push(`Exterior Handle Color: ${d.handleColorExt}`)
-  if(hw.hingeInt&&d.hingeColorInt)L.push(`Interior Hinge Color: ${d.hingeColorInt}`)
-  if(hw.hingeExt&&d.hingeColorExt)L.push(`Exterior Hinge Color: ${d.hingeColorExt}`)
-  if(hw.bifoldPanel&&d.bifoldPanelHandleColor)L.push(`BiFold Panel Handle Color: ${d.bifoldPanelHandleColor}`)
-  if(hw.bifoldExt&&d.bifoldExtHingeColor)L.push(`BiFold Exterior Hinge Color: ${d.bifoldExtHingeColor}`)
-  if(hw.bifoldInt&&d.bifoldIntHingeColor)L.push(`BiFold Interior Hinge Color: ${d.bifoldIntHingeColor}`)
+  const hasHW=hw.stdHandle||hw.handleColorInt||hw.handleColorExt||hw.hingeInt||hw.hingeExt||hw.bifoldPanel||hw.bifoldExt||hw.bifoldInt
+  if(hasHW) {
+    sec('Hardware')
+    if(hw.stdHandle) pair('Handle Style',d.handleStyle||'—',hw.handleColorExt?'Ext. Handle Color':null,hw.handleColorExt?d.handleColorExt||'—':null)
+    if(hw.handleColorInt) {
+      if(hw.hingeInt) pair('Int. Handle Color',d.handleColorInt||'—','Int. Hinge Color',d.hingeColorInt||'—')
+      else if(hw.hingeExt) pair('Int. Handle Color',d.handleColorInt||'—','Ext. Hinge Color',d.hingeColorExt||'—')
+      else single('Int. Handle Color',d.handleColorInt||'—')
+    } else if(hw.hingeExt&&!hw.stdHandle) single('Ext. Hinge Color',d.hingeColorExt||'—')
+    if(hw.bifoldExt||hw.bifoldPanel) {
+      if(hw.bifoldPanel&&hw.bifoldExt) pair('BiFold Panel Handle',d.bifoldPanelHandleColor||'—','BiFold Ext. Hinge',d.bifoldExtHingeColor||'—')
+      else if(hw.bifoldExt) single('BiFold Ext. Hinge Color',d.bifoldExtHingeColor||'—')
+    }
+    if(hw.bifoldInt) single('BiFold Int. Hinge Color',d.bifoldIntHingeColor||'—')
+  }
 
   const sc=getScreenCfg(category,d.panelCount)
-  if(!sc.show){L.push('Screen: N/A (Outswing)')}
-  else if(sc.always){L.push('Screen: Included (Exterior)');if(d.screenMesh)L.push(`Screen Mesh: ${d.screenMesh}`)}
-  else{L.push(`Screen: ${d.screenType||'No Screen'}`);if(d.screenType&&d.screenType!=='No Screen')L.push('Screen Mesh: Pleated Charcoal Mesh')}
+  sec('Screen')
+  if(!sc.show) single('Screen','N/A (Outswing)')
+  else if(sc.always) pair('Screen','Included (Exterior)','Screen Mesh',d.screenMesh||'—')
+  else {
+    pair('Screen Type',d.screenType||'No Screen',d.screenType&&d.screenType!=='No Screen'?'Mesh':null,d.screenType&&d.screenType!=='No Screen'?'Pleated Charcoal Mesh':null)
+  }
 
-  if(dtc?.jamb&&d.jambSize)L.push(`Jamb Size: ${d.jambSize}`)
-  if(d.jambDepth)L.push(`Jamb Depth: ${fmtMeasurement(d.jambDepth,d.jambDepthFrac)}`)
-  if(d.jambType)L.push(`Jamb Type: ${d.jambType==='Other'?(d.jambTypeOther||'Other'):d.jambType}`)
-  if(d.casingWidth)L.push(`Casing Width: ${fmtMeasurement(d.casingWidth,d.casingWidthFrac)}`)
-  if(d.casingType)L.push(`Casing Type: ${d.casingType==='Other'?(d.casingTypeOther||'Other'):d.casingType}`)
-  if(d.casingStyle)L.push(`Casing Style: ${d.casingStyle}`)
-  if(d.lpTrimColor)L.push(`LP Trim Color: ${d.lpTrimColor}`)
-  if(d.cutSiding)L.push('Cut Siding: YES')
-  if(d.takeDownSiding)L.push('Take Down Siding: YES')
-  return L
+  if(dtc?.jamb&&d.jambSize) {
+    sec('Jamb Size')
+    single('Jamb Size',d.jambSize)
+  }
+
+  if(d.jambDepth||d.jambType||d.casingWidth||d.casingType||d.casingStyle||d.lpTrimColor) {
+    sec('Extension Jamb & Casing')
+    pair('Jamb Depth',d.jambDepth?fmtMeasurement(d.jambDepth,d.jambDepthFrac):'—','Jamb Type',d.jambType?(d.jambType==='Other'?d.jambTypeOther||'Other':d.jambType):'—')
+    pair('Casing Width',d.casingWidth?fmtMeasurement(d.casingWidth,d.casingWidthFrac):'—','Casing Type',d.casingType?(d.casingType==='Other'?d.casingTypeOther||'Other':d.casingType):'—')
+    if(d.casingStyle||d.lpTrimColor) pair('Casing Style',d.casingStyle||'—','LP Trim Color',d.lpTrimColor||'—')
+  }
+
+  if(d.cutSiding||d.takeDownSiding) {
+    sec('Additional')
+    if(d.cutSiding&&d.takeDownSiding) pair('Cut Siding','YES','Take Down Siding','YES')
+    else if(d.cutSiding) single('Cut Siding','YES')
+    else single('Take Down Siding','YES')
+  }
+  return R
 }
 
 // ─── PDF Generator ────────────────────────────────────────────────────────────
@@ -772,34 +830,83 @@ function generatePDF(jobInfo,rooms) {
   fields.forEach(([label,value],i)=>{const cx=i%2===0?M:col2;let cy=i%2===0?leftY:rightY;doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...BLUE);doc.text(label.toUpperCase(),cx,cy);cy+=12;doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.setTextColor(...TEXTDK);doc.text(value||'—',cx,cy);cy+=17;if(i%2===0)leftY=cy;else rightY=cy})
   y=Math.max(leftY,rightY)+10;doc.setDrawColor(...MGRAY);doc.setLineWidth(0.5);doc.line(M,y,W-M,y);y+=14
   const LGRAY=[180,185,195]
+  // Row renderer helpers
+  const cX=M+36,cW=W-M-cX  // content area after badge
+  const col2X=cX+cW/2
+  const renderField=(label,value,x,maxW)=>{
+    const lbl=label+': '
+    doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...BLUE)
+    const lw=doc.getTextWidth(lbl);doc.text(lbl,x,y)
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...TEXTDK)
+    // truncate value if it would overflow column
+    const avail=maxW-lw-2
+    let val=String(value)
+    while(val.length>4&&doc.getTextWidth(val)>avail)val=val.slice(0,-1)
+    if(val!==String(value))val=val.slice(0,-1)+'…'
+    doc.text(val,x+lw,y)
+  }
+  const renderRow=(row)=>{
+    if(row.type==='section'){
+      y+=4
+      doc.setFont('helvetica','bold');doc.setFontSize(7);doc.setTextColor(...ORANGE)
+      doc.text(row.label.toUpperCase(),cX,y)
+      doc.setDrawColor(...ORANGE);doc.setLineWidth(0.25)
+      doc.line(cX+doc.getTextWidth(row.label.toUpperCase())+4,y-1,M+cW,y-1)
+      y+=10;return
+    }
+    if(row.type==='flag'){
+      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...ORANGE)
+      doc.text(row.label,cX,y);y+=14;return
+    }
+    if(row.type==='pair'){
+      renderField(row.a.l,row.a.v,cX,cW/2-4)
+      if(row.b) renderField(row.b.l,row.b.v,col2X,cW/2-4)
+      y+=13;return
+    }
+    if(row.type==='single'){
+      renderField(row.l,row.v,cX,cW-4);y+=13;return
+    }
+  }
+
   let itemNum=1
   let firstItemOnPage=true
   rooms.forEach(room=>{
     if(!room.items.length)return
     room.items.forEach(item=>{
-      // Each item always starts on a new page
       if(!firstItemOnPage){addFooter();doc.addPage();y=40}
       firstItemOnPage=false
 
-      // Room name header at top of each item's page
-      if(room.name){doc.setFillColor(...ORANGE);doc.rect(M,y-10,W-M*2,22,'F');doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...WHITE);doc.text(room.name.toUpperCase(),M+8,y+5);y+=20}
+      // Room name header
+      if(room.name){doc.setFillColor(...ORANGE);doc.rect(M,y-10,W-M*2,22,'F');doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...WHITE);doc.text(room.name.toUpperCase(),M+8,y+5);y+=24}
 
       const isDoor=item.itemType==='door'
-      const lines=isDoor?buildDoorPDFLines(item):buildPDFLines(item)
+      const rows=isDoor?buildDoorPDFRows(item):buildWindowPDFRows(item)
       const titleText=`${item.style}${isDoor?' (Patio Door)':''}${parseInt(item.qty)>1?` × ${item.qty}`:''}`
-      const lineH=13,rowH=24+lines.length*lineH+(item.notes?14:0)
-      doc.setFillColor(255,255,255);doc.rect(M,y-10,W-M*2,rowH,'F')
-      doc.setFillColor(...LGRAY);doc.rect(M,y-10,28,rowH,'F')
-      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...WHITE);doc.text(String(itemNum),M+14,y+(rowH/2)-10,{align:'center'})
-      doc.setFontSize(11);doc.setTextColor(...CHARCOAL);doc.text(titleText,M+36,y);y+=16
-      lines.forEach(line=>{
-        const ci=line.indexOf(': ')
-        if(ci>-1){const lbl=line.substring(0,ci+2),val=line.substring(ci+2);doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(...BLUE);const lw=doc.getTextWidth(lbl);doc.text(lbl,M+36,y);doc.setFont('helvetica','normal');doc.setTextColor(...TEXTDK);doc.text(val,M+36+lw,y)}
-        else{doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(...ORANGE);doc.text(line,M+36,y)}
-        y+=lineH
-      })
-      if(item.notes){doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(...TEXTMD);doc.text(`Note: ${item.notes}`,M+36,y);y+=12}
-      y+=6;itemNum++
+
+      // Item number badge
+      doc.setFillColor(...LGRAY);doc.rect(M,y-10,28,22,'F')
+      doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...WHITE)
+      doc.text(String(itemNum),M+14,y+4,{align:'center'})
+
+      // Item title
+      doc.setFontSize(11);doc.setTextColor(...CHARCOAL)
+      doc.text(titleText,cX,y+4);y+=20
+
+      // Render all rows
+      rows.forEach(row=>renderRow(row))
+
+      // Notes
+      if(item.notes){
+        y+=4
+        doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...TEXTMD)
+        doc.text('NOTES: ',cX,y)
+        doc.setFont('helvetica','italic');doc.setFontSize(8);doc.setTextColor(...TEXTMD)
+        doc.text(item.notes,cX+doc.getTextWidth('NOTES: '),y)
+        y+=12
+      }
+
+      // Divider between items on summary page (not used since 1 per page, but kept for spacing)
+      y+=10;itemNum++
     })
   })
   const allItems=rooms.flatMap(r=>r.items)
