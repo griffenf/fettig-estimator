@@ -606,10 +606,9 @@ function summarizeWindow(w) {
   if(w.jambDepth)p.push(`Jamb:${fmtMeasurement(w.jambDepth,w.jambDepthFrac)}`)
   if(w.casingStyle)p.push(w.casingStyle)
   if(w.lpTrimColor)p.push(`LP:${w.lpTrimColor}`)
-  return p.join(' · ')
-}
-
-function summarizeDoor(d) {
+  if(w.cutSiding)p.push('Cut Siding')
+  if(w.takeDownSiding)p.push('Take Down Siding')
+  return p.join(' · ')(d) {
   const p=[]
   if(d.panelCount)p.push(`${d.panelCount}P`)
   if(d.configuration)p.push(d.configuration)
@@ -632,6 +631,8 @@ function summarizeDoor(d) {
   if(d.handleColorExt)p.push(d.handleColorExt)
   if(d.screenType&&d.screenType!=='No Screen')p.push('Screen')
   if(d.jambSize)p.push(`Jamb:${d.jambSize}`)
+  if(d.cutSiding)p.push('Cut Siding')
+  if(d.takeDownSiding)p.push('Take Down Siding')
   return p.join(' · ')
 }
 
@@ -689,6 +690,8 @@ function buildPDFLines(w) {
   if(w.casingWidth)L.push(`Casing Width: ${fmtMeasurement(w.casingWidth,w.casingWidthFrac)}`)
   if(w.casingType)L.push(`Casing Type: ${w.casingType==='Other'?(w.casingTypeOther||'Other'):w.casingType}`)
   if(w.casingStyle)L.push(`Casing Style: ${w.casingStyle}`)
+  if(w.cutSiding)L.push('Cut Siding: YES')
+  if(w.takeDownSiding)L.push('Take Down Siding: YES')
   if(w.lpTrimColor)L.push(`LP Trim Color: ${w.lpTrimColor}`)
   return L
 }
@@ -742,6 +745,8 @@ function buildDoorPDFLines(d) {
   if(d.casingType)L.push(`Casing Type: ${d.casingType==='Other'?(d.casingTypeOther||'Other'):d.casingType}`)
   if(d.casingStyle)L.push(`Casing Style: ${d.casingStyle}`)
   if(d.lpTrimColor)L.push(`LP Trim Color: ${d.lpTrimColor}`)
+  if(d.cutSiding)L.push('Cut Siding: YES')
+  if(d.takeDownSiding)L.push('Take Down Siding: YES')
   return L
 }
 
@@ -934,7 +939,7 @@ const EMPTY={
   exteriorColor:'',interiorColor:'',pane:'Double',glassSurface:'',tempered:'No',decorativeGlass:'None',
   grilleType:'',grillePattern:'',simulatedRail:'',grillePaneApplication:'Both Panes',topPaneGrillePattern:'',bottomPaneGrillePattern:'',
   hardwareColor:'',screenColor:'',screenMesh:'',
-  photos:[],qty:'1',notes:'',insert:false,
+  photos:[],qty:'1',notes:'',cutSiding:false,takeDownSiding:false,insert:false,
   numberHigh:1,topWindowWidth:1,topStyle:'',topHeight:'',topHeightFrac:'',topShortSideHeight:'',topShortSideHeightFrac:'',topFacing:'',
   topLeftStyle:'',topRightStyle:'',topLeftFacing:'',topRightFacing:'',topLeftShortSide:'',topLeftShortSideFrac:'',topRightShortSide:'',topRightShortSideFrac:'',
   topTempered:'',topDecorativeGlass:'',topGrilleType:'',topGrillePattern:'',
@@ -1137,18 +1142,19 @@ function WindowForm({initial,onSave,onCancel}) {
               {(form.photos||[]).map((p,i)=>(<div key={i} style={{position:'relative'}}><img src={p} alt="" style={{width:64,height:52,objectFit:'cover',borderRadius:4,border:'1px solid var(--border)'}}/><button onClick={()=>removePhoto(i)} style={{position:'absolute',top:-6,right:-6,background:'#c0392b',border:'none',borderRadius:'50%',color:'#fff',width:18,height:18,fontSize:10,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button></div>))}
             </div>
           </Field>
+          <div style={{gridColumn:'1/-1',display:'flex',gap:24,marginBottom:4}}>
+            {[['cutSiding','Cut Siding'],['takeDownSiding','Take Down Siding']].map(([key,label])=>(
+              <label key={key} style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer',userSelect:'none'}}>
+                <div onClick={()=>set(key,!form[key])} style={{width:24,height:24,borderRadius:5,border:`2px solid ${form[key]?'var(--red)':'var(--border)'}`,background:form[key]?'var(--red)':'transparent',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.15s',flexShrink:0}}>
+                  {form[key]&&<span style={{color:'#fff',fontSize:14,fontWeight:900,lineHeight:1}}>✓</span>}
+                </div>
+                <span style={{fontSize:14,fontWeight:600,color:'var(--text)'}}>{label}</span>
+              </label>
+            ))}
+          </div>
           <Field label="Quantity"><input type="number" min="1" value={form.qty} onChange={e=>set('qty',e.target.value)}/></Field>
           <div/>
           <Field label="Notes / Special Instructions" col="1/-1"><textarea rows={2} placeholder="Any special notes..." value={form.notes} onChange={e=>set('notes',e.target.value)} style={{resize:'vertical'}}/></Field>
-        </>}
-      </div>
-      <div style={{display:'flex',gap:10,marginTop:12}}>
-        <button className="btn-gold" onClick={handleSave} style={{flex:1}}>Save Window</button>
-        <button className="btn-outline" onClick={onCancel}>Cancel</button>
-      </div>
-    </div>
-  )
-}
 
 // ─── Patio Door Form ──────────────────────────────────────────────────────────
 
@@ -1200,7 +1206,7 @@ const DOOR_EMPTY = {
   jambSize:'4-9/16"',
   jambDepth:'',jambDepthFrac:'',jambType:'',jambTypeOther:'',
   casingWidth:'',casingWidthFrac:'',casingType:'',casingTypeOther:'',casingStyle:'',lpTrimColor:'',
-  photos:[],qty:'1',notes:'',
+  photos:[],qty:'1',notes:'',cutSiding:false,takeDownSiding:false,
 }
 
 function DoorForm({initial,onSave,onCancel}) {
@@ -1583,6 +1589,16 @@ function DoorForm({initial,onSave,onCancel}) {
               {(form.photos||[]).map((p,i)=>(<div key={i} style={{position:'relative'}}><img src={p} alt="" style={{width:64,height:52,objectFit:'cover',borderRadius:4,border:'1px solid var(--border)'}}/><button onClick={()=>removePhoto(i)} style={{position:'absolute',top:-6,right:-6,background:'#c0392b',border:'none',borderRadius:'50%',color:'#fff',width:18,height:18,fontSize:10,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button></div>))}
             </div>
           </Field>
+          <div style={{gridColumn:'1/-1',display:'flex',gap:24,marginBottom:4}}>
+            {[['cutSiding','Cut Siding'],['takeDownSiding','Take Down Siding']].map(([key,label])=>(
+              <label key={key} style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer',userSelect:'none'}}>
+                <div onClick={()=>set(key,!form[key])} style={{width:24,height:24,borderRadius:5,border:`2px solid ${form[key]?'var(--red)':'var(--border)'}`,background:form[key]?'var(--red)':'transparent',display:'flex',alignItems:'center',justifyContent:'center',transition:'all 0.15s',flexShrink:0}}>
+                  {form[key]&&<span style={{color:'#fff',fontSize:14,fontWeight:900,lineHeight:1}}>✓</span>}
+                </div>
+                <span style={{fontSize:14,fontWeight:600,color:'var(--text)'}}>{label}</span>
+              </label>
+            ))}
+          </div>
           <Field label="Quantity"><input type="number" min="1" value={form.qty} onChange={e=>set('qty',e.target.value)}/></Field>
           <div/>
           <Field label="Notes / Special Instructions" col="1/-1"><textarea rows={2} placeholder="Any special notes..." value={form.notes} onChange={e=>set('notes',e.target.value)} style={{resize:'vertical'}}/></Field>
