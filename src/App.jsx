@@ -1760,15 +1760,45 @@ export default function App() {
 
   const handleDownloadPDF=()=>{const doc=generatePDF(jobInfo,rooms);doc.save(`Fettig-Estimate-${jobInfo.customerName.replace(/\s+/g,'-')||'Draft'}-${Date.now()}.pdf`)}
 
+  const compressPhoto=async(dataUrl,maxPx=1200,quality=0.75)=>new Promise(resolve=>{
+    const img=new Image();img.onload=()=>{
+      const scale=Math.min(1,maxPx/Math.max(img.width,img.height))
+      const canvas=document.createElement('canvas')
+      canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale)
+      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height)
+      resolve(canvas.toDataURL('image/jpeg',quality))
+    };img.src=dataUrl
+  })
+
   const handleSubmitToJobTread=async()=>{
     setSubmitting(true)
     try{
-      const upload=async(b64,fn,mt)=>{const res=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'uploadFile',jobId:jobInfo.jobId,pdfBase64:b64,fileName:fn,mimeType:mt})});const d=await res.json();if(!res.ok)throw new Error(d.error||`Failed to upload ${fn}`)}
+      const upload=async(b64,fn,mt)=>{
+        const res=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'uploadFile',jobId:jobInfo.jobId,pdfBase64:b64,fileName:fn,mimeType:mt})})
+        let d
+        try{d=await res.json()}catch{throw new Error(`Server error (${res.status}) uploading ${fn}`)}
+        if(!res.ok)throw new Error(d.error||`Failed to upload ${fn}`)
+      }
+      const sanitize=n=>n.replace(/[/\\:*?"<>|]/g,'_').trim()
       const doc=generatePDF(jobInfo,rooms)
       await upload(doc.output('datauristring').split(',')[1],'Estimate Notes.pdf','application/pdf')
       const rc={}
-      for(const room of rooms){for(const item of room.items){for(const dataUrl of(item.photos||[])){const rn=room.name||'Unknown Room';rc[rn]=(rc[rn]||0)+1;const cnt=rc[rn],ext=dataUrl.includes('image/png')?'png':'jpg',mt=dataUrl.includes('image/png')?'image/png':'image/jpeg';await upload(dataUrl.split(',')[1],`${rn}${cnt>1?` ${cnt}`:''}.${ext}`,mt)}}}
+      const photoErrors=[]
+      for(const room of rooms){
+        for(const item of room.items){
+          for(const rawUrl of(item.photos||[])){
+            const rn=sanitize(room.name||'Unknown Room')
+            rc[rn]=(rc[rn]||0)+1
+            const cnt=rc[rn]
+            try{
+              const dataUrl=await compressPhoto(rawUrl)
+              await upload(dataUrl.split(',')[1],`${rn}${cnt>1?` ${cnt}`:''}.jpg`,'image/jpeg')
+            }catch(err){photoErrors.push(`${rn} photo ${cnt}: ${err.message}`)}
+          }
+        }
+      }
       setSubmitted(true)
+      if(photoErrors.length>0)alert(`PDF uploaded successfully, but ${photoErrors.length} photo(s) failed:\n• ${photoErrors.join('\n• ')}`)
     }catch(err){alert('JobTread error: '+err.message)}finally{setSubmitting(false)}
   }
 
