@@ -117,7 +117,6 @@ function getBifoldPanelRow(category, panelCount) {
   return null
 }
 
-// Derive style name from the form's step-by-step selectors
 function deriveDoorStyle(dc, isFrench, frenchSwing, bifoldSub, panelCount) {
   if (!dc) return ''
   if (dc==='sliding') {
@@ -136,7 +135,6 @@ function deriveDoorStyle(dc, isFrench, frenchSwing, bifoldSub, panelCount) {
   return ''
 }
 
-// Panel count options per door category/subtype
 function getPanelCounts(dc, bifoldSub) {
   if (dc==='sliding') return [2,3,4]
   if (dc==='french')  return [1,2,3]
@@ -148,7 +146,6 @@ function getPanelCounts(dc, bifoldSub) {
   return []
 }
 
-// Filter configs: remove any that are all-O (no X). Returns {filteredConfigs, autoConfig}
 function resolveConfigs(dtc) {
   if (!dtc?.configs) return {filteredConfigs:[], autoConfig:null}
   const filtered = dtc.configs.filter(c => c.includes('X'))
@@ -161,7 +158,6 @@ function resolveBifoldOps(panelRow) {
   return ops.length===1 ? {filteredOps:[], autoOp:ops[0]} : {filteredOps:ops, autoOp:null}
 }
 
-// Hardware fields per door type
 function getDoorHardwareCfg(category, panelCount) {
   if (category==='sliding') {
     return {stdHandle:true,handleColorInt:true,handleColorExt:true,bifoldPanel:false,bifoldExt:false,bifoldInt:false,hingeInt:false,hingeExt:false}
@@ -261,10 +257,6 @@ function getTopWinMeasurements(style){
 const _hw = (name) => `/images/door-hardware/${name}`
 const _hc_i = (slug) => `/images/door-hardware/handle-int-${slug}.png`
 const _hc_e = (slug) => `/images/door-hardware/handle-ext-${slug}.png`
-const _hi_ii = (slug) => `/images/door-hardware/hinge-inswing-int-${slug}.png`
-const _hi_ie = (slug) => `/images/door-hardware/hinge-inswing-ext-${slug}.png`
-const _hi_oi = (slug) => `/images/door-hardware/hinge-outswing-int-${slug}.png`
-const _hi_oe = (slug) => `/images/door-hardware/hinge-outswing-ext-${slug}.png`
 const HW_SLUGS = {'Satin Taupe':'satin-taupe','Sierra':'sierra','White':'white','Matte Black':'matte-black','Oil Rubbed Bronze':'oil-rubbed-bronze','Satin Nickel':'satin-nickel','Brushed Chrome':'brushed-chrome','Antique Brass':'antique-brass','Brass':'brass'}
 const OS_SLUGS = {...HW_SLUGS,'Pebble Gray':'pebble-gray','Cashmere':'cashmere'}
 function makeColorMap(slugMap, fn) { return Object.fromEntries(Object.entries(slugMap).map(([k,v])=>[k,fn(v)])) }
@@ -284,7 +276,6 @@ const IMG = {
     'Quarter Eyebrow':'/images/windows/quarter-eyebrow.png','Extended Quarter Eyebrow':'/images/windows/extended-quarter-eyebrow.png',
     'Full Circle':'/images/windows/full-circle.png',
   },
-  // Door style previews (shown after selection, not in a picker)
   doors:{
     '2 Panel Sliding Patio Door':'/images/doors/sliding-patio-2.png',
     '3 Panel Sliding Patio Door':'/images/doors/sliding-patio-3.png',
@@ -302,7 +293,6 @@ const IMG = {
     'Unidirectional Bi-Fold w/Access Panel':'/images/doors/bifold-access.png',
     'Bi-Parting Bi-Fold Door':'/images/doors/bifold-bipart.png',
   },
-  // Door configurations — nested by door type so each config image is door-specific
   doorConfigs:{
     'sliding-patio':{
       'OX':'/images/door-configs/sliding-patio-2-ox.png',
@@ -355,30 +345,23 @@ const IMG = {
       '3L3R':'/images/door-configs/bifold-bipart-3l3r.png',
     },
   },
-  // Handing images — keyed by 'doortype-panelcount-config-handing'
-  // Only door types that have handing photos; bifold-bipart uses plain dropdown (no images)
   handingImgs:{
-    // Sliding Patio
     'sliding-patio-3-oxo-left':   '/images/door-configs/sliding-patio-3-oxo-left.png',
     'sliding-patio-3-oxo-right':  '/images/door-configs/sliding-patio-3-oxo-right.png',
     'sliding-patio-4-oxxo-left':  '/images/door-configs/sliding-patio-4-oxxo-left.png',
     'sliding-patio-4-oxxo-right': '/images/door-configs/sliding-patio-4-oxxo-right.png',
-    // Sliding French
     'sliding-french-3-oxo-left':   '/images/door-configs/sliding-french-3-oxo-left.png',
     'sliding-french-3-oxo-right':  '/images/door-configs/sliding-french-3-oxo-right.png',
     'sliding-french-4-oxxo-left':  '/images/door-configs/sliding-french-4-oxxo-left.png',
     'sliding-french-4-oxxo-right': '/images/door-configs/sliding-french-4-oxxo-right.png',
-    // Inswing 1-panel
     'inswing-1-x-left':   '/images/door-configs/inswing-1-x-left.png',
     'inswing-1-x-right':  '/images/door-configs/inswing-1-x-right.png',
-    // Inswing 2-panel
     'inswing-2-ox-left':  '/images/door-configs/inswing-2-ox-left.png',
     'inswing-2-ox-right': '/images/door-configs/inswing-2-ox-right.png',
     'inswing-2-xo-left':  '/images/door-configs/inswing-2-xo-left.png',
     'inswing-2-xo-right': '/images/door-configs/inswing-2-xo-right.png',
     'inswing-2-xx-left':  '/images/door-configs/inswing-2-xx-left.png',
     'inswing-2-xx-right': '/images/door-configs/inswing-2-xx-right.png',
-    // Inswing 3-panel
     'inswing-3-oox-left':  '/images/door-configs/inswing-3-oox-left.png',
     'inswing-3-oox-right': '/images/door-configs/inswing-3-oox-right.png',
     'inswing-3-xoo-left':  '/images/door-configs/inswing-3-xoo-left.png',
@@ -389,41 +372,31 @@ const IMG = {
     'inswing-3-oxx-right': '/images/door-configs/inswing-3-oxx-right.png',
     'inswing-3-xxo-left':  '/images/door-configs/inswing-3-xxo-left.png',
     'inswing-3-xxo-right': '/images/door-configs/inswing-3-xxo-right.png',
-    // Outswing 1-panel
     'outswing-1-x-left':   '/images/door-configs/outswing-1-x-left.png',
     'outswing-1-x-right':  '/images/door-configs/outswing-1-x-right.png',
-    // Outswing 2-panel
     'outswing-2-ox-left':  '/images/door-configs/outswing-2-ox-left.png',
     'outswing-2-ox-right': '/images/door-configs/outswing-2-ox-right.png',
     'outswing-2-xo-left':  '/images/door-configs/outswing-2-xo-left.png',
     'outswing-2-xo-right': '/images/door-configs/outswing-2-xo-right.png',
     'outswing-2-xx-left':  '/images/door-configs/outswing-2-xx-left.png',
     'outswing-2-xx-right': '/images/door-configs/outswing-2-xx-right.png',
-    // Outswing 3-panel
     'outswing-3-oxo-left':  '/images/door-configs/outswing-3-oxo-left.png',
     'outswing-3-oxo-right': '/images/door-configs/outswing-3-oxo-right.png',
   },
-  // Handle styles — separate maps for sliding vs french
   doorHandleSliding:{'Cambridge':_hw('sliding-cambridge.png'),'Northfield':_hw('sliding-northfield.png')},
   doorHandleFrench: {'Cambridge':_hw('french-cambridge.png'),'Northfield':_hw('french-northfield.png')},
-  // Handle colors — interior and exterior separate maps
   doorHandleColorInt: makeColorMap(HW_SLUGS, _hc_i),
   doorHandleColorExt: makeColorMap(HW_SLUGS, _hc_e),
-  // Hinge colors — inswing french interior only, reuses handle-int images (same colors)
   hingeInswingInt: makeColorMap(HW_SLUGS, _hc_i),
-  // Outswing hinge interior — reuses handle-int images for standard colors
   hingeOutswingInt: makeColorMap(HW_SLUGS, _hc_i),
-  // Outswing hinge exterior — reuses handle-ext images for standard colors, unique files for Pebble Gray + Cashmere
   hingeOutswingExt: {
     ...makeColorMap(HW_SLUGS, _hc_e),
     'Pebble Gray': _hw('hinge-outswing-ext-pebble-gray.png'),
     'Cashmere':    _hw('hinge-outswing-ext-cashmere.png'),
   },
-  // Bifold hardware
   bifoldExtHinge: {'Black':_hw('bifold-ext-hinge-black.png'),'Brushed Stainless':_hw('bifold-ext-hinge-brushed-stainless.png')},
   bifoldIntHinge: {'Black':_hw('bifold-int-hinge-black.png'),'Brushed Stainless':_hw('bifold-int-hinge-brushed-stainless.png')},
   bifoldPanelHandle: {'Black':_hw('bifold-panel-handle-black.png'),'Brushed Stainless':_hw('bifold-panel-handle-brushed-stainless.png')},
-  // Shared (window + door)
   facing:{
     'Right Triangle':{'Left':'/images/facing/right-triangle-left.png','Right':'/images/facing/right-triangle-right.png'},
     'Trapezoid':{'Left':'/images/facing/trapezoid-left.png','Right':'/images/facing/trapezoid-right.png'},
@@ -444,6 +417,151 @@ const IMG = {
   screenColor:{'Stone White':'/images/screen/stone-white.png','EverWood Pine':'/images/screen/everwood-pine.png','Satin Taupe':'/images/screen/satin-taupe.png','Sierra':'/images/screen/sierra.png','Bronze':'/images/screen/bronze.png','Ebony':'/images/screen/ebony.png'},
   screenMesh:{'Bright View Mesh':'/images/screen/bright-view-mesh.png','Charcoal Hi-Transparency Fiberglass Mesh':'/images/screen/charcoal-mesh.png'},
   casingStyle:{'Ranch':'/images/casing/ranch.png','Colonial':'/images/casing/colonial.png'},
+}
+
+// ─── Carry-Over: which fields transfer from the previous item ─────────────────
+// These are the "options" fields — colors, glass, hardware, screen, casing.
+// Style, dimensions, configuration, handing, qty, photos, notes, siding flags are NOT carried.
+
+const WINDOW_CARRY_FIELDS = [
+  'exteriorColor','interiorColor','pane','glassSurface','tempered','decorativeGlass',
+  'grilleType','grillePattern','simulatedRail','grillePaneApplication',
+  'topPaneGrillePattern','bottomPaneGrillePattern',
+  'hardwareColor','screenColor','screenMesh',
+  'jambDepth','jambDepthFrac','jambType','jambTypeOther',
+  'casingWidth','casingWidthFrac','casingType','casingTypeOther','casingStyle','lpTrimColor',
+]
+
+const DOOR_CARRY_FIELDS = [
+  'exteriorColor','interiorColor','glassSurface','decorativeGlass',
+  'grilleType','grillePattern',
+  'handleStyle','handleColorInt','handleColorExt',
+  'hingeColorInt','hingeColorExt',
+  'bifoldPanelHandleColor','bifoldExtHingeColor','bifoldIntHingeColor',
+  'screenMesh',
+  'jambDepth','jambDepthFrac','jambType','jambTypeOther',
+  'casingWidth','casingWidthFrac','casingType','casingTypeOther','casingStyle','lpTrimColor',
+]
+
+function extractCarryFields(item, fields) {
+  const out = {}
+  fields.forEach(f => { if (item[f] !== undefined) out[f] = item[f] })
+  return out
+}
+
+// ─── Carry-Over Banner Component ──────────────────────────────────────────────
+
+function CarryOverBanner({ prevItem, onApply, onDismiss }) {
+  const isWindow = prevItem.itemType !== 'door'
+  const ext = prevItem.exteriorColor
+  const int = prevItem.interiorColor
+  const glass = prevItem.glassSurface
+
+  const chips = [ext, int, glass].filter(Boolean)
+
+  return (
+    <div style={{
+      gridColumn: '1/-1',
+      marginBottom: 16,
+      borderRadius: 10,
+      overflow: 'hidden',
+      border: '1.5px solid rgba(232,98,42,0.4)',
+      boxShadow: '0 2px 12px rgba(232,98,42,0.12)',
+    }}>
+      {/* Header bar */}
+      <div style={{
+        background: 'linear-gradient(135deg, rgba(232,98,42,0.15) 0%, rgba(232,98,42,0.05) 100%)',
+        borderBottom: '1px solid rgba(232,98,42,0.2)',
+        padding: '10px 14px',
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+      }}>
+        <span style={{ fontSize: 16 }}>🎨</span>
+        <div style={{ flex: 1 }}>
+          <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 12, color: 'var(--red)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+            Copy Options from Previous {isWindow ? 'Window' : 'Door'}?
+          </div>
+          <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
+            Colors, glass, hardware, screen &amp; casing — you can change anything after.
+          </div>
+        </div>
+      </div>
+
+      {/* Preview chips */}
+      <div style={{ padding: '10px 14px', background: 'rgba(0,0,0,0.04)' }}>
+        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
+          {chips.map((c, i) => (
+            <span key={i} style={{
+              background: 'var(--surface)',
+              border: '1px solid var(--border)',
+              borderRadius: 20,
+              padding: '3px 10px',
+              fontSize: 11,
+              fontWeight: 600,
+              color: 'var(--text)',
+            }}>{c}</span>
+          ))}
+          {prevItem.grilleType && (
+            <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 600, color: 'var(--text)' }}>
+              {prevItem.grilleType}{prevItem.grillePattern ? ` · ${prevItem.grillePattern}` : ''}
+            </span>
+          )}
+          {prevItem.screenMesh && (
+            <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 600, color: 'var(--text)' }}>
+              {prevItem.screenMesh}
+            </span>
+          )}
+        </div>
+
+        {/* Action buttons */}
+        <div style={{ display: 'flex', gap: 8 }}>
+          <button
+            type="button"
+            onClick={onApply}
+            style={{
+              flex: 1,
+              padding: '9px 14px',
+              borderRadius: 6,
+              border: '1.5px solid var(--red)',
+              background: 'var(--red)',
+              color: '#fff',
+              fontFamily: 'var(--font-head)',
+              fontWeight: 700,
+              fontSize: 13,
+              letterSpacing: '0.04em',
+              cursor: 'pointer',
+              transition: 'all 0.12s',
+            }}
+            onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
+            onMouseLeave={e => e.currentTarget.style.opacity = '1'}
+          >
+            ✓ Yes, Copy Options
+          </button>
+          <button
+            type="button"
+            onClick={onDismiss}
+            style={{
+              padding: '9px 14px',
+              borderRadius: 6,
+              border: '1.5px solid var(--border)',
+              background: 'transparent',
+              color: 'var(--text-muted)',
+              fontFamily: 'var(--font-head)',
+              fontWeight: 700,
+              fontSize: 13,
+              cursor: 'pointer',
+              transition: 'all 0.12s',
+            }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--text-muted)'; e.currentTarget.style.color = 'var(--text)' }}
+            onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)' }}
+          >
+            No, Start Fresh
+          </button>
+        </div>
+      </div>
+    </div>
+  )
 }
 
 // ─── Shared UI Primitives ─────────────────────────────────────────────────────
@@ -559,7 +677,6 @@ function CallHeightPicker({label,value,onChange,heightKey}) {
   )
 }
 
-// Toggle button row (used for panel counts, swing direction, etc.)
 function ToggleRow({label,value,onChange,options,labelFn}) {
   return(
     <div style={{marginBottom:12}}>
@@ -639,12 +756,7 @@ function summarizeDoor(d) {
   return p.join(' · ')
 }
 
-// ─── PDF Row Builders (structured layout) ─────────────────────────────────────
-// Each row is one of:
-//   {type:'section', label}                           — section header
-//   {type:'pair', a:{l,v}, b:{l,v}|null}             — two fields side by side
-//   {type:'single', l, v}                             — one field full width
-//   {type:'flag', label}                              — bold highlight line
+// ─── PDF Row Builders ─────────────────────────────────────────────────────────
 
 function buildWindowPDFRows(w) {
   const R=[]
@@ -830,15 +942,13 @@ function generatePDF(jobInfo,rooms) {
   fields.forEach(([label,value],i)=>{const cx=i%2===0?M:col2;let cy=i%2===0?leftY:rightY;doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...BLUE);doc.text(label.toUpperCase(),cx,cy);cy+=12;doc.setFont('helvetica','normal');doc.setFontSize(10.5);doc.setTextColor(...TEXTDK);doc.text(value||'—',cx,cy);cy+=17;if(i%2===0)leftY=cy;else rightY=cy})
   y=Math.max(leftY,rightY)+10;doc.setDrawColor(...MGRAY);doc.setLineWidth(0.5);doc.line(M,y,W-M,y);y+=14
   const LGRAY=[180,185,195]
-  // Row renderer helpers
-  const cX=M+36,cW=W-M-cX  // content area after badge
+  const cX=M+36,cW=W-M-cX
   const col2X=cX+cW/2
   const renderField=(label,value,x,maxW)=>{
     const lbl=label+': '
     doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...BLUE)
     const lw=doc.getTextWidth(lbl);doc.text(lbl,x,y)
     doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...TEXTDK)
-    // truncate value if it would overflow column
     const avail=maxW-lw-2
     let val=String(value)
     while(val.length>4&&doc.getTextWidth(val)>avail)val=val.slice(0,-1)
@@ -876,26 +986,21 @@ function generatePDF(jobInfo,rooms) {
       if(!firstItemOnPage){addFooter();doc.addPage();y=40}
       firstItemOnPage=false
 
-      // Room name header
       if(room.name){doc.setFillColor(...ORANGE);doc.rect(M,y-10,W-M*2,22,'F');doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...WHITE);doc.text(room.name.toUpperCase(),M+8,y+5);y+=24}
 
       const isDoor=item.itemType==='door'
       const rows=isDoor?buildDoorPDFRows(item):buildWindowPDFRows(item)
       const titleText=`${item.style}${isDoor?' (Patio Door)':''}${parseInt(item.qty)>1?` × ${item.qty}`:''}`
 
-      // Item number badge
       doc.setFillColor(...LGRAY);doc.rect(M,y-10,28,22,'F')
       doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...WHITE)
       doc.text(String(itemNum),M+14,y+4,{align:'center'})
 
-      // Item title
       doc.setFontSize(11);doc.setTextColor(...CHARCOAL)
       doc.text(titleText,cX,y+4);y+=20
 
-      // Render all rows
       rows.forEach(row=>renderRow(row))
 
-      // Notes
       if(item.notes){
         y+=4
         doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...TEXTMD)
@@ -905,7 +1010,6 @@ function generatePDF(jobInfo,rooms) {
         y+=12
       }
 
-      // Divider between items on summary page (not used since 1 per page, but kept for spacing)
       y+=10;itemNum++
     })
   })
@@ -1058,7 +1162,10 @@ const EMPTY={
   jambDepth:'',jambDepthFrac:'',jambType:'',jambTypeOther:'',casingWidth:'',casingWidthFrac:'',casingType:'',casingTypeOther:'',casingStyle:'',lpTrimColor:'',
 }
 
-function WindowForm({initial,onSave,onCancel}) {
+// prevOptions: object of carry-over fields from last saved item (or null if first item / editing)
+function WindowForm({initial,onSave,onCancel,prevOptions}) {
+  // Banner state: null = not yet decided, 'offered' = showing banner, 'dismissed' = user said no
+  const [bannerState,setBannerState]=useState(()=> prevOptions && !initial ? 'offered' : null)
   const [form,setForm]=useState(()=>initial?{...EMPTY,...initial}:{...EMPTY})
   const set=(k,v)=>setForm(f=>({...f,[k]:v}))
   const cameraRef=useRef(null)
@@ -1068,6 +1175,12 @@ function WindowForm({initial,onSave,onCancel}) {
   const glassSurfaces=GLASS_SURFACES[form.pane]||[]
   const decorGlasses=DECORATIVE_GLASSES[form.pane]||[]
   const topOpts=getTopOptions(form.style)
+
+  const applyCarryOver = () => {
+    if (!prevOptions) return
+    setForm(f => ({ ...f, ...prevOptions }))
+    setBannerState('applied')
+  }
 
   useEffect(()=>{if(!form.style||!WIN[form.style])return;const c=WIN[form.style];setForm(f=>({...f,numberWide:c.wide[0],measurementType:c.mt===1?'Rough Opening':'Frame Size',configType:'standard',standardConfig:'',panelConfigs:Array(c.wide[0]).fill(''),facing:'',sashSplit:'',grilleType:'',grillePattern:'',simulatedRail:'',grillePaneApplication:'Both Panes',topPaneGrillePattern:'',bottomPaneGrillePattern:''}))},[form.style])
   useEffect(()=>{setForm(f=>({...f,panelConfigs:Array(f.numberWide).fill(''),standardConfig:''}))},[form.numberWide])
@@ -1141,6 +1254,21 @@ function WindowForm({initial,onSave,onCancel}) {
     <div style={{background:'var(--surface)',border:'2px solid var(--red)',boxShadow:'var(--shadow-lg)',borderRadius:10,padding:'20px',marginBottom:16}}>
       <div style={{fontFamily:'var(--font-head)',fontSize:16,fontWeight:700,letterSpacing:'0.08em',color:'var(--charcoal)',marginBottom:16,textTransform:'uppercase'}}>Window Details</div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 20px'}}>
+
+        {/* ── Carry-Over Banner ── */}
+        {bannerState==='offered'&&prevOptions&&(
+          <CarryOverBanner
+            prevItem={prevOptions}
+            onApply={applyCarryOver}
+            onDismiss={()=>setBannerState('dismissed')}
+          />
+        )}
+        {bannerState==='applied'&&(
+          <div style={{gridColumn:'1/-1',marginBottom:12,padding:'8px 14px',background:'rgba(39,174,96,0.08)',border:'1px solid rgba(39,174,96,0.3)',borderRadius:8,fontSize:12,color:'#27ae60',fontWeight:600,display:'flex',alignItems:'center',gap:8}}>
+            <span>✓</span> Options copied from previous item — adjust anything below as needed.
+          </div>
+        )}
+
         <Field label="Number High"><select value={form.numberHigh} onChange={e=>set('numberHigh',parseInt(e.target.value))}><option value={1}>1 High</option><option value={2}>2 High</option></select></Field>
         <div/>
         {form.numberHigh===1&&(
@@ -1277,21 +1405,19 @@ function WindowForm({initial,onSave,onCancel}) {
 
 // ─── Patio Door Form ──────────────────────────────────────────────────────────
 
-// Returns a {Left, Right} (or {Left, Right, 'Not Used'}) image map for handing, or null if no images
 function getHandingImgMap(doorCategory, isFrenchSliding, frenchSwing, panelCount, config) {
   if (!config || !panelCount) return null
   const cfg = config.toLowerCase()
   let prefix = ''
   if (doorCategory==='sliding') prefix = `${isFrenchSliding?'sliding-french':'sliding-patio'}-${panelCount}-${cfg}`
   else if (doorCategory==='french') prefix = `${frenchSwing==='inswing'?'inswing':'outswing'}-${panelCount}-${cfg}`
-  else return null // bifold-bipart uses plain dropdown
+  else return null
   const L = IMG.handingImgs[`${prefix}-left`]
   const R = IMG.handingImgs[`${prefix}-right`]
   if (!L && !R) return null
   return {'Left': L, 'Right': R}
 }
 
-// Returns the right doorConfigs sub-map for the current door type selection
 function getDoorConfigImgMap(doorCategory, isFrenchSliding, frenchSwing, bifoldSubtype) {
   if (doorCategory==='sliding') return IMG.doorConfigs[isFrenchSliding?'sliding-french':'sliding-patio']||{}
   if (doorCategory==='french')  return IMG.doorConfigs[frenchSwing==='inswing'?'inswing':'outswing']||{}
@@ -1301,13 +1427,12 @@ function getDoorConfigImgMap(doorCategory, isFrenchSliding, frenchSwing, bifoldS
 
 const DOOR_EMPTY = {
   itemType:'door',
-  // Step-by-step selectors (these derive the style name)
-  doorCategory:'',       // 'sliding' | 'french' | 'bifold'
-  isFrenchSliding:false, // sliding only
-  frenchSwing:'',        // 'inswing' | 'outswing' — french only
-  bifoldSubtype:'',      // 'uni' | 'access' | 'bipart' — bifold only
+  doorCategory:'',
+  isFrenchSliding:false,
+  frenchSwing:'',
+  bifoldSubtype:'',
   panelCount:null,
-  style:'',              // derived on save
+  style:'',
   configuration:'',
   handing:'',
   measurementType:'Call Size',
@@ -1328,12 +1453,19 @@ const DOOR_EMPTY = {
   photos:[],qty:'1',notes:'',cutSiding:false,takeDownSiding:false,
 }
 
-function DoorForm({initial,onSave,onCancel}) {
+// prevOptions: carry-over fields from last saved item (or null)
+function DoorForm({initial,onSave,onCancel,prevOptions}) {
+  const [bannerState,setBannerState]=useState(()=> prevOptions && !initial ? 'offered' : null)
   const [form,setForm]=useState(()=>initial?{...DOOR_EMPTY,...initial}:{...DOOR_EMPTY})
   const set=(k,v)=>setForm(f=>({...f,[k]:v}))
   const cameraRef=useRef(null)
 
-  // Derive the style name from selectors
+  const applyCarryOver = () => {
+    if (!prevOptions) return
+    setForm(f => ({ ...f, ...prevOptions }))
+    setBannerState('applied')
+  }
+
   const currentStyle=deriveDoorStyle(form.doorCategory,form.isFrenchSliding,form.frenchSwing,form.bifoldSubtype,form.panelCount)
   const dtc=DOOR_TYPE_CONFIG[currentStyle]
   const category=dtc?.category||''
@@ -1341,12 +1473,10 @@ function DoorForm({initial,onSave,onCancel}) {
   const panelRow=isBifold&&form.panelCount?getBifoldPanelRow(category,form.panelCount):null
   const panelCounts=getPanelCounts(form.doorCategory,form.bifoldSubtype)
 
-  // Configs
   const {filteredConfigs,autoConfig}=!isBifold&&dtc ? resolveConfigs(dtc) : {filteredConfigs:[],autoConfig:null}
   const {filteredOps,autoOp}=isBifold&&panelRow ? resolveBifoldOps(panelRow) : {filteredOps:[],autoOp:null}
   const autoConf=autoConfig||autoOp
 
-  // Handing — use autoConf as fallback so auto-defaulted configs (e.g. OXXO) still trigger handing
   const activeConfig=autoConf||form.configuration
   const needsHanding=dtc?.handingConfigs?.includes(activeConfig)||
     (category==='bifold_bipart'&&form.panelCount&&BIFOLD_BIPART[form.panelCount]?.handing)
@@ -1366,16 +1496,11 @@ function DoorForm({initial,onSave,onCancel}) {
   const widthKey=isBifold?(panelRow?.widthKey||''):(dtc?.widthKey||'')
   const heightKey=dtc?.heightKey||'h_french'
 
-  // Reset config/handing when style changes
   useEffect(()=>{setForm(f=>({...f,configuration:'',handing:'',callWidth:'',callHeight:'',bifoldWidthKey:''}))},[currentStyle,form.panelCount])
-  // Auto-set bifoldWidthKey
   useEffect(()=>{if(isBifold&&panelRow)set('bifoldWidthKey',panelRow.widthKey||'')},[currentStyle,form.panelCount])
-  // Reset handing when config changes
   useEffect(()=>{set('handing','')},[form.configuration])
-  // Color cascade
   useEffect(()=>{if(form.interiorColor&&!getIntColors(form.exteriorColor).includes(form.interiorColor))set('interiorColor','')},[form.exteriorColor])
 
-  // Auto-populate exterior handle color and bifold exterior hinge from exterior color
   useEffect(()=>{
     if(!form.exteriorColor)return
     const hwExt=EXT_TO_HW[form.exteriorColor]
@@ -1383,12 +1508,11 @@ function DoorForm({initial,onSave,onCancel}) {
     setForm(f=>({
       ...f,
       handleColorExt: hwExt||f.handleColorExt,
-      hingeColorExt:  hwExt||f.hingeColorExt,       // outswing french exterior hinge matches exterior handle
+      hingeColorExt:  hwExt||f.hingeColorExt,
       bifoldExtHingeColor: bifoldExt,
     }))
   },[form.exteriorColor])
 
-  // Auto-populate interior handle color, inswing hinge, and bifold int hinge/panel handle from interior color
   useEffect(()=>{
     if(!form.interiorColor)return
     const hwInt=INT_TO_HW[form.interiorColor]
@@ -1396,7 +1520,7 @@ function DoorForm({initial,onSave,onCancel}) {
     setForm(f=>({
       ...f,
       handleColorInt: hwInt||f.handleColorInt,
-      hingeColorInt:  hwInt||f.hingeColorInt,        // inswing french interior hinge matches interior handle
+      hingeColorInt:  hwInt||f.hingeColorInt,
       bifoldIntHingeColor: bifoldInt,
       bifoldPanelHandleColor: bifoldInt,
     }))
@@ -1435,7 +1559,6 @@ function DoorForm({initial,onSave,onCancel}) {
     onSave({...form,style:currentStyle,configuration:finalConfig,itemType:'door'})
   }
 
-  // ── Category toggle button style helper
   const catBtn=(cat,label)=>{
     const sel=form.doorCategory===cat
     return(
@@ -1462,6 +1585,20 @@ function DoorForm({initial,onSave,onCancel}) {
       <div style={{fontFamily:'var(--font-head)',fontSize:16,fontWeight:700,letterSpacing:'0.08em',color:'var(--charcoal)',marginBottom:16,textTransform:'uppercase'}}>Patio Door Details</div>
       <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'0 20px'}}>
 
+        {/* ── Carry-Over Banner ── */}
+        {bannerState==='offered'&&prevOptions&&(
+          <CarryOverBanner
+            prevItem={prevOptions}
+            onApply={applyCarryOver}
+            onDismiss={()=>setBannerState('dismissed')}
+          />
+        )}
+        {bannerState==='applied'&&(
+          <div style={{gridColumn:'1/-1',marginBottom:12,padding:'8px 14px',background:'rgba(39,174,96,0.08)',border:'1px solid rgba(39,174,96,0.3)',borderRadius:8,fontSize:12,color:'#27ae60',fontWeight:600,display:'flex',alignItems:'center',gap:8}}>
+            <span>✓</span> Options copied from previous item — adjust anything below as needed.
+          </div>
+        )}
+
         {/* ── Step 1: Door Category ── */}
         <div style={{gridColumn:'1/-1',marginBottom:16}}>
           <label style={{display:'block',fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:8}}>Door Type *</label>
@@ -1472,7 +1609,6 @@ function DoorForm({initial,onSave,onCancel}) {
           </div>
         </div>
 
-        {/* ── Step 2 (Sliding): French toggle + panel count ── */}
         {form.doorCategory==='sliding'&&<>
           <div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:20,marginBottom:12,flexWrap:'wrap'}}>
             <label style={{display:'flex',alignItems:'center',gap:10,cursor:'pointer',userSelect:'none'}}>
@@ -1489,7 +1625,6 @@ function DoorForm({initial,onSave,onCancel}) {
           </div>
         </>}
 
-        {/* ── Step 2 (French): Inswing/Outswing + panel count ── */}
         {form.doorCategory==='french'&&<>
           <div style={{gridColumn:'1/-1',marginBottom:12}}>
             <ToggleRow label="Swing Direction *" value={form.frenchSwing} onChange={v=>setForm(f=>({...f,frenchSwing:v,panelCount:null,configuration:'',handing:'',callWidth:'',callHeight:''}))} options={['inswing','outswing']} labelFn={v=>v==='inswing'?'Inswing':'Outswing'}/>
@@ -1500,7 +1635,6 @@ function DoorForm({initial,onSave,onCancel}) {
           </div>
         </>}
 
-        {/* ── Step 2 (Bifold): Subtype + panel count ── */}
         {form.doorCategory==='bifold'&&<>
           <div style={{gridColumn:'1/-1',marginBottom:12}}>
             <ToggleRow label="Bi-Fold Type *" value={form.bifoldSubtype} onChange={v=>setForm(f=>({...f,bifoldSubtype:v,panelCount:null,configuration:'',handing:'',callWidth:'',callHeight:''}))} options={['uni','access','bipart']} labelFn={v=>({uni:'Unidirectional',access:'w/ Access Panel',bipart:'Bi-Parting'}[v])}/>
@@ -1511,10 +1645,7 @@ function DoorForm({initial,onSave,onCancel}) {
           </div>
         </>}
 
-        {/* ── Style preview + rest of form (once style is determined) ── */}
         {currentStyle&&<>
-
-          {/* Style preview image */}
           {IMG.doors[currentStyle]&&<div style={{gridColumn:'1/-1',display:'flex',alignItems:'center',gap:14,padding:'10px 14px',background:'rgba(192,57,43,0.05)',border:'1px solid rgba(192,57,43,0.2)',borderRadius:8,marginBottom:8}}>
             <div style={{width:80,height:64,overflow:'hidden',borderRadius:4,flexShrink:0}}>
               <img src={IMG.doors[currentStyle]} alt={currentStyle} style={{width:'100%',height:'100%',objectFit:'cover',objectPosition:'center'}}/>
@@ -1522,7 +1653,6 @@ function DoorForm({initial,onSave,onCancel}) {
             <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:14,color:'var(--text)'}}>{currentStyle}</div>
           </div>}
 
-          {/* Configuration */}
           {autoConf ? (()=>{
             const configImgMap=getDoorConfigImgMap(form.doorCategory,form.isFrenchSliding,form.frenchSwing,form.bifoldSubtype)
             const configImg=configImgMap?.[autoConf]
@@ -1540,7 +1670,6 @@ function DoorForm({initial,onSave,onCancel}) {
             </div>
           ) : null}
 
-          {/* Handing */}
           {handingOpts&&(()=>{
             const handingImgMap=getHandingImgMap(form.doorCategory,form.isFrenchSliding,form.frenchSwing,form.panelCount,activeConfig)
             return handingImgMap
@@ -1548,7 +1677,6 @@ function DoorForm({initial,onSave,onCancel}) {
               : <Field label="Handing *" col="1/-1"><select value={form.handing} onChange={e=>set('handing',e.target.value)}><option value="">Select...</option>{handingOpts.map(h=><option key={h}>{h}</option>)}</select></Field>
           })()}
 
-          {/* Measurement */}
           <SectionHeader>Measurement</SectionHeader>
           <Field label="Measurement Type" col="1/-1">
             <select value={form.measurementType} onChange={e=>set('measurementType',e.target.value)}>
@@ -1570,7 +1698,6 @@ function DoorForm({initial,onSave,onCancel}) {
             <Field label="Rough Opening Height (inches) *"><MeasurementInput value={form.height} frac={form.heightFrac} onValue={v=>set('height',v)} onFrac={v=>set('heightFrac',v)}/></Field>
           </>}
 
-          {/* Color & Glass — Ext+Int color LEFT, Glass surface+Deco glass RIGHT */}
           <SectionHeader>Color & Glass</SectionHeader>
           <div>
             <SelectWithPreview label="Exterior Color *" value={form.exteriorColor} onChange={v=>set('exteriorColor',v)} imgMap={IMG.exteriorColor} opts={EXT_COLORS} placeholder="Select..."/>
@@ -1581,19 +1708,16 @@ function DoorForm({initial,onSave,onCancel}) {
             <SelectWithPreview label="Decorative Glass" value={form.decorativeGlass} onChange={v=>set('decorativeGlass',v)} imgMap={IMG.decorativeGlass} opts={['None',...decoOpts]} placeholder="None"/>
           </div>
 
-          {/* Grille */}
           <SectionHeader>Grille</SectionHeader>
           <SelectWithPreview label="Grille Type" value={form.grilleType} onChange={v=>{set('grilleType',v);set('grillePattern','')}} imgMap={IMG.grilleType} opts={['','GBG','SDL']} placeholder="None"/>
           {form.grilleType&&<SelectWithPreview label="Grille Pattern" value={form.grillePattern} onChange={v=>set('grillePattern',v)} imgMap={IMG.grillePattern} opts={STD_PATTERNS} placeholder="Select..."/>}
 
-          {/* Hardware — layout varies by door category and panel count */}
           <SectionHeader>Hardware</SectionHeader>
           {noHw&&<div style={{gridColumn:'1/-1',padding:'10px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.2)',borderRadius:6,fontSize:13,color:'var(--text-muted)',fontStyle:'italic'}}>No hardware options for this configuration.</div>}
           {!noHw&&(()=>{
             const pc=form.panelCount
             const cat=category
 
-            // Sliding: Ext+Int handle color LEFT, Handle style RIGHT
             if(cat==='sliding') return(<>
               <div>
                 <SelectWithPreview label="Exterior Handle Color" value={form.handleColorExt} onChange={v=>set('handleColorExt',v)} imgMap={IMG.doorHandleColorExt} opts={HARDWARE_COLORS} placeholder="Select..."/>
@@ -1604,7 +1728,6 @@ function DoorForm({initial,onSave,onCancel}) {
               </div>
             </>)
 
-            // French (inswing + outswing): Ext+Int handle color LEFT, Handle style + Hinge color(s) RIGHT
             if(cat==='inswing_french') return(<>
               <div>
                 <SelectWithPreview label="Exterior Handle Color" value={form.handleColorExt} onChange={v=>set('handleColorExt',v)} imgMap={IMG.doorHandleColorExt} opts={HARDWARE_COLORS} placeholder="Select..."/>
@@ -1626,12 +1749,6 @@ function DoorForm({initial,onSave,onCancel}) {
               </div>
             </>)
 
-            // Bifold — layout depends on panel count / which fields are shown
-            // Odd uni panels (1,3,5,7) and access panel and bipart-6: Handle style+Ext+Int handle LEFT, Bifold panel+Ext+Int hinge RIGHT
-            // Even non-bipart (2,4,6 uni) and bipart-4: Bifold Ext+Int hinge LEFT, Bifold panel handle RIGHT
-            // Bipart-2 and uni-1: Ext+Int handle LEFT, Handle style + Bifold ext hinge RIGHT
-
-            // Bipart-2 layout (same as uni-1)
             if((cat==='bifold_bipart'&&pc===2)||(cat==='bifold_uni'&&pc===1)) return(<>
               <div>
                 <SelectWithPreview label="Exterior Handle Color" value={form.handleColorExt} onChange={v=>set('handleColorExt',v)} imgMap={IMG.doorHandleColorExt} opts={HARDWARE_COLORS} placeholder="Select..."/>
@@ -1643,7 +1760,6 @@ function DoorForm({initial,onSave,onCancel}) {
               </div>
             </>)
 
-            // Even uni (2,4,6) and bipart-4: Bifold Ext+Int hinge LEFT, Bifold panel handle RIGHT
             if((cat==='bifold_uni'&&[2,4,6].includes(pc))||(cat==='bifold_bipart'&&pc===4)) return(<>
               <div>
                 <SelectWithPreview label="BiFold Exterior Hinge Color" value={form.bifoldExtHingeColor} onChange={v=>set('bifoldExtHingeColor',v)} imgMap={IMG.bifoldExtHinge} opts={BIFOLD_HINGE_COLORS} placeholder="Select..."/>
@@ -1654,7 +1770,6 @@ function DoorForm({initial,onSave,onCancel}) {
               </div>
             </>)
 
-            // Odd uni (3,5,7), access panel, bipart-6: Handle style+Ext+Int handle LEFT, Bifold panel+Ext+Int hinge RIGHT
             return(<>
               <div>
                 <SelectWithPreview label="Handle Style" value={form.handleStyle} onChange={v=>set('handleStyle',v)} imgMap={handleImgMap} opts={DOOR_HANDLE_STYLES} placeholder="Select..."/>
@@ -1669,10 +1784,8 @@ function DoorForm({initial,onSave,onCancel}) {
             </>)
           })()}
 
-          {/* Jamb Size (inswing french only) */}
           {dtc?.jamb&&<><SectionHeader>Jamb Size</SectionHeader><Field label="Jamb Size" col="1/-1"><select value={form.jambSize} onChange={e=>set('jambSize',e.target.value)}><option>4-9/16"</option><option>6-9/16"</option></select></Field></>}
 
-          {/* Screen */}
           <SectionHeader>Screen</SectionHeader>
           {!sc.show&&<div style={{gridColumn:'1/-1',padding:'8px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.2)',borderRadius:6,fontSize:13,color:'var(--text-muted)',fontStyle:'italic'}}>Screen not available on outswing French doors.</div>}
           {sc.show&&sc.always&&<>
@@ -1687,7 +1800,6 @@ function DoorForm({initial,onSave,onCancel}) {
             }
           </>}
 
-          {/* Casing */}
           <SectionHeader>Extension Jamb & Casing</SectionHeader>
           <div style={{gridColumn:'1/-1',fontSize:12,color:'var(--text-muted)',marginBottom:4,fontStyle:'italic'}}>Leave blank if not needed.</div>
           <Field label="Jamb Depth (inches)"><MeasurementInput value={form.jambDepth} frac={form.jambDepthFrac} onValue={v=>set('jambDepth',v)} onFrac={v=>set('jambDepthFrac',v)}/></Field>
@@ -1699,7 +1811,6 @@ function DoorForm({initial,onSave,onCancel}) {
           <SelectWithPreview label="Casing Style" value={form.casingStyle} onChange={v=>set('casingStyle',v)} imgMap={IMG.casingStyle} opts={CASING_STYLES} placeholder="Select..."/>
           <Field label="LP Trim Color"><input placeholder="e.g. White (leave blank if none)" value={form.lpTrimColor} onChange={e=>set('lpTrimColor',e.target.value)}/></Field>
 
-          {/* Photos & Notes */}
           <SectionHeader>Photos & Notes</SectionHeader>
           <Field label="Photos" col="1/-1">
             <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handlePhoto}/>
@@ -1744,6 +1855,11 @@ export default function App() {
   const [submitting,setSubmitting]=useState(false)
   const [submitted,setSubmitted]=useState(false)
 
+  // ── Last saved item's carry-over options (global across all rooms) ──────────
+  // We track this at the app level so it persists even if you switch rooms.
+  // It stores the extracted carry fields from the most recently saved item.
+  const [lastOptions,setLastOptions]=useState(null)
+
   const allItems=rooms.flatMap(r=>r.items)
   const setJob=(k,v)=>setJobInfo(f=>({...f,[k]:v}))
   const handleJobSelect=s=>setJobInfo(f=>({...f,customerName:s.customerName,jobId:s.jobId,jobName:s.jobName,address:s.address}))
@@ -1753,8 +1869,17 @@ export default function App() {
   const deleteRoom=id=>setRooms(rs=>rs.filter(r=>r.id!==id))
 
   const saveItem=item=>{
-    if(editInfo){setRooms(rs=>rs.map(r=>r.id===editInfo.roomId?{...r,items:r.items.map((it,i)=>i===editInfo.itemIndex?item:it)}:r));setEditInfo(null)}
-    else{setRooms(rs=>rs.map(r=>r.id===addForm.roomId?{...r,items:[...r.items,item]}:r));setAddForm(null)}
+    // Extract carry-over options from the saved item
+    const fields = item.itemType==='door' ? DOOR_CARRY_FIELDS : WINDOW_CARRY_FIELDS
+    setLastOptions(extractCarryFields(item, fields))
+
+    if(editInfo){
+      setRooms(rs=>rs.map(r=>r.id===editInfo.roomId?{...r,items:r.items.map((it,i)=>i===editInfo.itemIndex?item:it)}:r))
+      setEditInfo(null)
+    } else {
+      setRooms(rs=>rs.map(r=>r.id===addForm.roomId?{...r,items:[...r.items,item]}:r))
+      setAddForm(null)
+    }
   }
   const removeItem=(roomId,idx)=>setRooms(rs=>rs.map(r=>r.id===roomId?{...r,items:r.items.filter((_,i)=>i!==idx)}:r))
 
@@ -1800,6 +1925,14 @@ export default function App() {
       setSubmitted(true)
       if(photoErrors.length>0)alert(`PDF uploaded successfully, but ${photoErrors.length} photo(s) failed:\n• ${photoErrors.join('\n• ')}`)
     }catch(err){alert('JobTread error: '+err.message)}finally{setSubmitting(false)}
+  }
+
+  // Determine what prevOptions to pass to the currently open form.
+  // Only pass if there's a last item AND we're adding (not editing).
+  const getPrevOptions = () => {
+    if (editInfo) return null   // editing an existing item — no carry-over prompt
+    if (!lastOptions) return null // first item ever
+    return lastOptions
   }
 
   let gNum=1
@@ -1865,16 +1998,16 @@ export default function App() {
                   const num=gNum++
                   const isEditing=editInfo?.roomId===room.id&&editInfo?.itemIndex===idx
                   if(isEditing) return item.itemType==='door'
-                    ?<DoorForm key={idx} initial={item} onSave={saveItem} onCancel={()=>setEditInfo(null)}/>
-                    :<WindowForm key={idx} initial={item} onSave={saveItem} onCancel={()=>setEditInfo(null)}/>
+                    ?<DoorForm key={idx} initial={item} onSave={saveItem} onCancel={()=>setEditInfo(null)} prevOptions={null}/>
+                    :<WindowForm key={idx} initial={item} onSave={saveItem} onCancel={()=>setEditInfo(null)} prevOptions={null}/>
                   return item.itemType==='door'
                     ?<DoorCard key={idx} door={item} index={num-1} onEdit={()=>{setAddForm(null);setEditInfo({roomId:room.id,itemIndex:idx})}} onRemove={()=>removeItem(room.id,idx)}/>
                     :<WindowCard key={idx} win={item} index={num-1} onEdit={()=>{setAddForm(null);setEditInfo({roomId:room.id,itemIndex:idx})}} onRemove={()=>removeItem(room.id,idx)}/>
                 })}
                 {addForm?.roomId===room.id&&!editInfo&&(
                   addForm.type==='door'
-                    ?<DoorForm onSave={saveItem} onCancel={()=>setAddForm(null)}/>
-                    :<WindowForm onSave={saveItem} onCancel={()=>setAddForm(null)}/>
+                    ?<DoorForm onSave={saveItem} onCancel={()=>setAddForm(null)} prevOptions={getPrevOptions()}/>
+                    :<WindowForm onSave={saveItem} onCancel={()=>setAddForm(null)} prevOptions={getPrevOptions()}/>
                 )}
                 {(!addForm||addForm.roomId!==room.id)&&!editInfo&&(
                   <div style={{display:'flex',gap:8}}>
@@ -1932,7 +2065,7 @@ export default function App() {
                   <div style={{color:'var(--text-muted)',fontSize:13,marginTop:4}}>Estimate Notes.pdf uploaded to <strong>{jobInfo.jobName}</strong>.</div>
                 </div>
               )}
-              <button className="btn-outline" style={{width:'100%',fontSize:14,padding:12}} onClick={()=>{setStep('job');setJobInfo({customerName:'',jobId:'',jobName:'',address:'',estimator:'',notes:''});setRooms([newRoom()]);setSubmitted(false)}}>Start New Estimate</button>
+              <button className="btn-outline" style={{width:'100%',fontSize:14,padding:12}} onClick={()=>{setStep('job');setJobInfo({customerName:'',jobId:'',jobName:'',address:'',estimator:'',notes:''});setRooms([newRoom()]);setSubmitted(false);setLastOptions(null)}}>Start New Estimate</button>
             </div>
           </div>
         )}
