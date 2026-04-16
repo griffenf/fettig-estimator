@@ -444,7 +444,7 @@ const DOOR_CARRY_FIELDS = [
 ]
 
 function extractCarryFields(item, fields) {
-  const out = {}
+  const out = { itemType: item.itemType }  // always carry itemType for banner label
   fields.forEach(f => { if (item[f] !== undefined) out[f] = item[f] })
   return out
 }
@@ -1544,8 +1544,22 @@ function DoorForm({initial,onSave,onCancel,prevOptions}) {
 
   const applyCarryOver = () => {
     if (!prevOptions) return
-    pendingCarryRef.current = prevOptions
-    setForm(f => ({ ...f, ...prevOptions }))
+    // Derive door hardware colors from the carried colors when the previous item
+    // was a window (which has no door hardware fields).
+    const ext = prevOptions.exteriorColor || ''
+    const int = prevOptions.interiorColor || ''
+    const derived = {
+      handleColorExt:        prevOptions.handleColorExt        || EXT_TO_HW[ext]  || '',
+      handleColorInt:        prevOptions.handleColorInt        || INT_TO_HW[int]  || '',
+      hingeColorInt:         prevOptions.hingeColorInt         || INT_TO_HW[int]  || '',
+      hingeColorExt:         prevOptions.hingeColorExt         || EXT_TO_HW[ext]  || '',
+      bifoldExtHingeColor:   prevOptions.bifoldExtHingeColor   || EXT_TO_BIFOLD(ext) || '',
+      bifoldIntHingeColor:   prevOptions.bifoldIntHingeColor   || INT_TO_BIFOLD(int) || '',
+      bifoldPanelHandleColor:prevOptions.bifoldPanelHandleColor|| INT_TO_BIFOLD(int) || '',
+    }
+    const merged = { ...prevOptions, ...derived }
+    pendingCarryRef.current = merged
+    setForm(f => ({ ...f, ...merged }))
     setBannerState('applied')
   }
 
