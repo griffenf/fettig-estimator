@@ -79,24 +79,34 @@ module.exports = async function handler(req, res) {
     if (action === 'loadEstimateData') {
       if (!jobId) return res.status(400).json({ error: 'Missing jobId' })
 
-      // Find the most recent Estimate Data.json file on this job
-      const filesRes = await pave({
-        '$': { grantKey },
-        job: {
-          '$': { id: jobId },
-          files: {
-            '$': {
-              where: [['name', 'like', 'Estimate Data%']],
-              sortBy: [{ field: 'createdAt', order: 'desc' }],
-              size: 5
-            },
-            nodes: { id: {}, name: {}, createdAt: {}, url: {} }
+      // Fetch all files for the job and find Estimate Data.json in JS
+      // (JobTread doesn't support name filtering on files)
+      let allFiles = []
+      let filePage = null
+      do {
+        const filesRes = await pave({
+          '$': { grantKey },
+          job: {
+            '$': { id: jobId },
+            files: {
+              '$': {
+                sortBy: [{ field: 'createdAt', order: 'desc' }],
+                size: 50,
+                ...(filePage ? { page: filePage } : {})
+              },
+              nextPage: {},
+              nodes: { id: {}, name: {}, createdAt: {}, url: {} }
+            }
           }
-        }
-      })
+        })
+        const conn = filesRes?.job?.files
+        allFiles = allFiles.concat(conn?.nodes || [])
+        filePage = conn?.nextPage || null
+        // Stop early if we already found the file
+        if (allFiles.some(f => f.name === 'Estimate Data.json')) break
+      } while (filePage)
 
-      const files = filesRes?.job?.files?.nodes || []
-      const jsonFile = files.find(f => f.name === 'Estimate Data.json')
+      const jsonFile = allFiles.find(f => f.name === 'Estimate Data.json')
 
       if (!jsonFile) return res.status(200).json({ estimateData: null })
 
