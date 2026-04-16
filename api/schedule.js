@@ -162,13 +162,13 @@ function shapeTask(task) {
   }
 }
 
-export default async function handler(req, res) {
+module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
 
-  const grantKey = process.env.JOBTREAD_GRANT_KEY
-  if (!grantKey) return res.status(500).json({ error: 'Missing JOBTREAD_GRANT_KEY' })
+  const grantKey = process.env.JOBTREAD_API_KEY
+  if (!grantKey) return res.status(500).json({ error: 'JOBTREAD_API_KEY not configured in Vercel.' })
 
   try {
     // Paginate through all estimate tasks
