@@ -1978,6 +1978,18 @@ export default function App() {
   // It stores the extracted carry fields from the most recently saved item.
   const [lastOptions,setLastOptions]=useState(null)
 
+  // ── Brian's schedule ────────────────────────────────────────────────────────
+  const [schedule,setSchedule]=useState([])
+  const [scheduleLoading,setScheduleLoading]=useState(true)
+  const [scheduleError,setScheduleError]=useState(null)
+  useEffect(()=>{
+    fetch('/api/schedule')
+      .then(r=>r.json())
+      .then(d=>{if(d.error)throw new Error(d.error);setSchedule(d.tasks||[])})
+      .catch(e=>setScheduleError(e.message))
+      .finally(()=>setScheduleLoading(false))
+  },[])
+
   const allItems=rooms.flatMap(r=>r.items)
   const setJob=(k,v)=>setJobInfo(f=>({...f,[k]:v}))
   const handleJobSelect=s=>setJobInfo(f=>({...f,customerName:s.customerName,jobId:s.jobId,jobName:s.jobName,address:s.address}))
@@ -2069,33 +2081,98 @@ export default function App() {
       <div style={{padding:'20px 20px 0'}}>
 
         {step==='job'&&(
-          <div>
-            <div style={{marginBottom:20}}>
-              <div style={{fontFamily:'var(--font-head)',fontSize:22,fontWeight:700,letterSpacing:'0.04em',marginBottom:4,color:'var(--text)'}}>Job Information</div>
-              <div style={{color:'var(--text-muted)',fontSize:13}}>Search for a customer to pull their jobs from JobTread.</div>
-            </div>
-            <div style={{marginBottom:14}}>
-              <label style={{display:'block',fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Search Customer</label>
-              <CustomerJobSearch onSelect={handleJobSelect}/>
-            </div>
-            {jobInfo.customerName&&(
-              <div style={{background:'rgba(192,57,43,0.08)',border:'1.5px solid var(--red)',borderRadius:8,padding:'12px 16px',marginBottom:16}}>
-                <div style={{fontSize:11,color:'var(--red)',fontWeight:700,letterSpacing:'0.08em',marginBottom:6}}>SELECTED JOB</div>
-                <div style={{fontWeight:700,fontSize:15}}>{jobInfo.customerName}</div>
-                {jobInfo.jobName&&<div style={{fontSize:13,color:'var(--text-muted)',marginTop:3}}>📋 {jobInfo.jobName}</div>}
-                {jobInfo.address&&<div style={{fontSize:13,color:'var(--text-muted)',marginTop:2}}>📍 {jobInfo.address}</div>}
-                <button className="btn-outline" style={{marginTop:10,padding:'5px 12px',fontSize:12}} onClick={()=>setJobInfo({customerName:'',jobId:'',jobName:'',address:'',estimator:jobInfo.estimator,notes:jobInfo.notes})}>✕ Clear & search again</button>
+          <div style={{display:'flex',gap:16,alignItems:'flex-start',flexWrap:'wrap'}}>
+
+            {/* ── Left: Brian's Schedule Panel ── */}
+            <div style={{flex:'0 0 340px',minWidth:280,maxHeight:'calc(100vh - 140px)',overflowY:'auto',background:'var(--surface)',border:'1.5px solid var(--border)',borderRadius:10,boxShadow:'0 1px 4px rgba(0,0,0,0.06)',position:'sticky',top:80}}>
+              <div style={{padding:'12px 14px',borderBottom:'1px solid var(--border)',background:'rgba(232,98,42,0.05)'}}>
+                <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:13,letterSpacing:'0.07em',color:'#e8622a',textTransform:'uppercase'}}>Brian's Estimates</div>
+                <div style={{fontSize:11,color:'var(--text-muted)',marginTop:2}}>Tap a job to select it</div>
               </div>
-            )}
-            <div style={{marginBottom:14}}>
-              <label style={{display:'block',fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Estimator Name</label>
-              <input placeholder="Your name" value={jobInfo.estimator} onChange={e=>setJob('estimator',e.target.value)}/>
+              {scheduleLoading&&<div style={{padding:'24px 14px',textAlign:'center',fontSize:13,color:'var(--text-muted)'}}>Loading schedule…</div>}
+              {scheduleError&&<div style={{padding:'14px',fontSize:12,color:'#e74c3c',background:'#fff5f5',margin:10,borderRadius:6,border:'1px solid #fed7d7'}}>⚠️ {scheduleError}</div>}
+              {!scheduleLoading&&!scheduleError&&schedule.length===0&&(
+                <div style={{padding:'24px 14px',textAlign:'center',fontSize:13,color:'var(--text-muted)'}}>No upcoming window or patio door estimates found.</div>
+              )}
+              {schedule.map(task=>{
+                const isSelected=jobInfo.jobId&&jobInfo.jobId===task.jobId
+                const isClickable=!!task.jobId
+                return(
+                  <div key={task.taskId}
+                    onClick={()=>{
+                      if(!isClickable)return
+                      handleJobSelect({customerName:task.customerName||'',jobId:task.jobId,jobName:task.jobName||'',address:task.address||''})
+                    }}
+                    style={{
+                      padding:'12px 14px',
+                      borderBottom:'1px solid var(--border)',
+                      cursor:isClickable?'pointer':'default',
+                      background:isSelected?'rgba(232,98,42,0.08)':'transparent',
+                      borderLeft:isSelected?'3px solid #e8622a':'3px solid transparent',
+                      transition:'background 0.12s',
+                      opacity:isClickable?1:0.55,
+                    }}
+                    onMouseEnter={e=>{if(isClickable&&!isSelected)e.currentTarget.style.background='rgba(232,98,42,0.04)'}}
+                    onMouseLeave={e=>{if(!isSelected)e.currentTarget.style.background='transparent'}}
+                  >
+                    {/* Date + time row */}
+                    <div style={{display:'flex',alignItems:'center',gap:6,marginBottom:5}}>
+                      <span style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:12,color:'#e8622a',letterSpacing:'0.04em'}}>{task.dateLabel||'No date'}</span>
+                      {task.timeLabel&&<span style={{fontSize:11,color:'var(--text-muted)'}}>· {task.timeLabel}</span>}
+                      {!task.jobId&&<span style={{marginLeft:'auto',fontSize:9,fontWeight:700,color:'var(--text-muted)',textTransform:'uppercase',letterSpacing:'0.06em',background:'var(--border)',padding:'1px 5px',borderRadius:3}}>No Job</span>}
+                      {isSelected&&<span style={{marginLeft:'auto',fontSize:9,fontWeight:700,color:'#e8622a',textTransform:'uppercase',letterSpacing:'0.06em'}}>✓ Selected</span>}
+                    </div>
+                    {/* Customer name */}
+                    {task.customerName&&<div style={{fontWeight:700,fontSize:14,color:'var(--text)',marginBottom:2,lineHeight:1.3}}>{task.customerName}</div>}
+                    {/* Job name */}
+                    {task.jobName&&<div style={{fontSize:12,color:'#4a90d9',fontWeight:600,marginBottom:4}}>{task.jobName}</div>}
+                    {/* Address + phone */}
+                    {(task.address||task.phone)&&(
+                      <div style={{fontSize:11,color:'var(--text-muted)',lineHeight:1.6,marginBottom:5}}>
+                        {task.address&&<div>📍 {task.address}</div>}
+                        {task.phone&&<div>📞 {task.phone}</div>}
+                      </div>
+                    )}
+                    {/* Divider */}
+                    <div style={{borderTop:'1px solid var(--border)',paddingTop:5,marginTop:2}}>
+                      <div style={{fontSize:11,fontWeight:700,color:'var(--text)',marginBottom:task.taskDescription?2:0}}>{task.taskName}</div>
+                      {task.taskDescription&&<div style={{fontSize:11,color:'var(--text-muted)',fontStyle:'italic',lineHeight:1.4}}>{task.taskDescription}</div>}
+                    </div>
+                  </div>
+                )
+              })}
             </div>
-            <div style={{marginBottom:14}}>
-              <label style={{display:'block',fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>General Job Notes</label>
-              <textarea rows={3} placeholder="Any general notes about this job..." value={jobInfo.notes} onChange={e=>setJob('notes',e.target.value)} style={{resize:'vertical'}}/>
+
+            {/* ── Right: Job Info Form ── */}
+            <div style={{flex:'1 1 300px',minWidth:260}}>
+              <div style={{marginBottom:20}}>
+                <div style={{fontFamily:'var(--font-head)',fontSize:22,fontWeight:700,letterSpacing:'0.04em',marginBottom:4,color:'var(--text)'}}>Job Information</div>
+                <div style={{color:'var(--text-muted)',fontSize:13}}>Select from Brian's schedule or search below.</div>
+              </div>
+              <div style={{marginBottom:14}}>
+                <label style={{display:'block',fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Search Customer</label>
+                <CustomerJobSearch onSelect={handleJobSelect}/>
+              </div>
+              {jobInfo.customerName&&(
+                <div style={{background:'rgba(232,98,42,0.08)',border:'1.5px solid #e8622a',borderRadius:8,padding:'12px 16px',marginBottom:16}}>
+                  <div style={{fontSize:11,color:'#e8622a',fontWeight:700,letterSpacing:'0.08em',marginBottom:6}}>SELECTED JOB</div>
+                  <div style={{fontWeight:700,fontSize:15}}>{jobInfo.customerName}</div>
+                  {jobInfo.jobName&&<div style={{fontSize:13,color:'var(--text-muted)',marginTop:3}}>📋 {jobInfo.jobName}</div>}
+                  {jobInfo.address&&<div style={{fontSize:13,color:'var(--text-muted)',marginTop:2}}>📍 {jobInfo.address}</div>}
+                  <button className="btn-outline" style={{marginTop:10,padding:'5px 12px',fontSize:12}} onClick={()=>setJobInfo({customerName:'',jobId:'',jobName:'',address:'',estimator:jobInfo.estimator,notes:jobInfo.notes})}>✕ Clear & search again</button>
+                </div>
+              )}
+              <div style={{marginBottom:14}}>
+                <label style={{display:'block',fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Estimator Name</label>
+                <input placeholder="Your name" value={jobInfo.estimator} onChange={e=>setJob('estimator',e.target.value)}/>
+              </div>
+              <div style={{marginBottom:14}}>
+                <label style={{display:'block',fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>General Job Notes</label>
+                <textarea rows={3} placeholder="Any general notes about this job..." value={jobInfo.notes} onChange={e=>setJob('notes',e.target.value)} style={{resize:'vertical'}}/>
+              </div>
+              <button className="btn-gold" style={{width:'100%',fontSize:16,padding:14,opacity:jobValid?1:0.5}} onClick={()=>jobValid&&setStep('windows')}>Next: Add Windows & Doors →</button>
             </div>
-            <button className="btn-gold" style={{width:'100%',fontSize:16,padding:14,opacity:jobValid?1:0.5}} onClick={()=>jobValid&&setStep('windows')}>Next: Add Windows & Doors →</button>
+
           </div>
         )}
 
