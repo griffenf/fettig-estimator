@@ -5,16 +5,22 @@
 //             filter to Brian's tasks with window/door keywords
 //   Pass 2 — fetch full job/location/contact details only for the matched tasks (by job ID)
 
-const ORG_ID        = '22MsEHuFtmri'
-const BRIAN_MEMBER  = '22MsEHuVFXCv'  // Brian Fettig's membership ID
-const ESTIMATE_TYPE = '22NQYsZ7efY7'  // "Estimates" task type ID
-const PAGE_SIZE     = 50              // smaller pages to avoid 413
+const ORG_ID          = '22MsEHuFtmri'
+const BRIAN_MEMBER    = '22MsEHuVFXCv'  // Brian Fettig's membership ID
+const ESTIMATE_TYPE   = '22NQYsZ7efY7'  // "Estimates" task type ID
+const TODO_TYPE       = '22NQYsZ7efYB'  // "To-Do Tasks" task type ID
+const PAGE_SIZE       = 50              // smaller pages to avoid 413
 
 const WINDOW_KEYWORDS = ['window', 'windows', 'patio door', 'patio doors']
+const FINAL_KEYWORD   = 'final measurement'
 
 function isWindowOrDoorTask(name = '', description = '') {
   const haystack = `${name} ${description}`.toLowerCase()
   return WINDOW_KEYWORDS.some(kw => haystack.includes(kw))
+}
+
+function isFinalMeasurementTask(name = '') {
+  return name.toLowerCase().includes(FINAL_KEYWORD)
 }
 
 function formatPhone(raw) {
@@ -55,8 +61,8 @@ async function pave(grantKey, query) {
   return res.json()
 }
 
-// Pass 1: fetch lightweight task list (no job details), paginated
-async function fetchAllEstimateTasks(grantKey) {
+// Pass 1: fetch lightweight task list for a given task type, paginated
+async function fetchTasksOfType(grantKey, taskTypeId, filterFn) {
   let allTasks = []
   let pageToken = null
 
@@ -69,7 +75,7 @@ async function fetchAllEstimateTasks(grantKey) {
             size: PAGE_SIZE,
             sortBy: [{ field: 'startDate', order: 'asc' }],
             where: { and: [
-              [['taskType', 'id'], ESTIMATE_TYPE],
+              [['taskType', 'id'], taskTypeId],
               ['completed', 0],
             ]},
             ...(pageToken ? { page: pageToken } : {}),
@@ -96,16 +102,24 @@ async function fetchAllEstimateTasks(grantKey) {
     const nodes = conn?.nodes || []
     pageToken = conn?.nextPage || null
 
-    // Filter to Brian + window/door keywords right away
     const matched = nodes.filter(t =>
       t.taskAssignments?.nodes?.some(a => a.membership?.id === BRIAN_MEMBER) &&
-      isWindowOrDoorTask(t.name, t.description)
+      filterFn(t)
     )
 
     allTasks = allTasks.concat(matched)
   } while (pageToken)
 
   return allTasks
+}
+
+async function fetchAllEstimateTasks(grantKey) {
+  // Fetch Estimate tasks (window/patio door) and To-Do Tasks (final measurement) in parallel
+  const [estimateTasks, todoTasks] = await Promise.all([
+    fetchTasksOfType(grantKey, ESTIMATE_TYPE, t => isWindowOrDoorTask(t.name, t.description)),
+    fetchTasksOfType(grantKey, TODO_TYPE, t => isFinalMeasurementTask(t.name)),
+  ])
+  return [...estimateTasks, ...todoTasks]
 }
 
 // Pass 2: fetch job details for a single job ID
