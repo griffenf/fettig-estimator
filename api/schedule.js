@@ -1,13 +1,15 @@
 // api/schedule.js
-// Returns Brian's estimate tasks from JobTread, filtered to window/patio door related estimates only.
-// Paginates through all results, filters by task name/description, sorts by startDate asc.
+// Returns Brian's window/patio door estimate tasks from JobTread.
+// Two-pass approach to stay under request size limits:
+//   Pass 1 — fetch all Estimate tasks (lightweight: id, name, description, startDate, startTime, taskAssignments)
+//             filter to Brian's tasks with window/door keywords
+//   Pass 2 — fetch full job/location/contact details only for the matched tasks (by job ID)
 
-const ORG_ID         = '22MsEHuFtmri'
-const BRIAN_MEMBER   = '22MsEHuVFXCv'  // Brian Fettig's membership ID
-const ESTIMATE_TYPE  = '22NQYsZ7efY7'  // "Estimates" task type ID
-const PAGE_SIZE      = 100
+const ORG_ID        = '22MsEHuFtmri'
+const BRIAN_MEMBER  = '22MsEHuVFXCv'  // Brian Fettig's membership ID
+const ESTIMATE_TYPE = '22NQYsZ7efY7'  // "Estimates" task type ID
+const PAGE_SIZE     = 50              // smaller pages to avoid 413
 
-// Keywords that qualify a task as window/patio door related (case-insensitive)
 const WINDOW_KEYWORDS = ['window', 'windows', 'patio door', 'patio doors']
 
 function isWindowOrDoorTask(name = '', description = '') {
@@ -17,7 +19,6 @@ function isWindowOrDoorTask(name = '', description = '') {
 
 function formatPhone(raw) {
   if (!raw) return null
-  // Strip to digits only (handles +1XXXXXXXXXX format)
   const digits = raw.replace(/\D/g, '')
   if (digits.length === 11 && digits[0] === '1') {
     const d = digits.slice(1)
@@ -29,59 +30,107 @@ function formatPhone(raw) {
   return raw
 }
 
-async function fetchPage(grantKey, pageToken) {
-  const query = {
-    organization: {
-      $: { id: ORG_ID },
-      tasks: {
-        $: {
-          size: PAGE_SIZE,
-          sortBy: [{ field: 'startDate', order: 'asc' }],
-          where: {
-            and: [
-              [['taskType', 'id'], ESTIMATE_TYPE],
-            ]
+function formatDate(startDate) {
+  if (!startDate) return null
+  const [y, m, d] = startDate.split('-').map(Number)
+  const dt = new Date(y, m - 1, d)
+  return dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
+}
+
+function formatTime(startTime) {
+  if (!startTime) return null
+  const [hh, mm] = startTime.split(':').map(Number)
+  const ampm = hh >= 12 ? 'PM' : 'AM'
+  const h12 = hh % 12 || 12
+  return `${h12}:${String(mm).padStart(2,'0')} ${ampm}`
+}
+
+async function pave(grantKey, query) {
+  const res = await fetch('https://api.jobtread.com/pave', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ query: { $: { grantKey }, ...query } }),
+  })
+  if (!res.ok) throw new Error(`JobTread API error: ${res.status}`)
+  return res.json()
+}
+
+// Pass 1: fetch lightweight task list (no job details), paginated
+async function fetchAllEstimateTasks(grantKey) {
+  let allTasks = []
+  let pageToken = null
+
+  do {
+    const data = await pave(grantKey, {
+      organization: {
+        $: { id: ORG_ID },
+        tasks: {
+          $: {
+            size: PAGE_SIZE,
+            sortBy: [{ field: 'startDate', order: 'asc' }],
+            where: [['taskType', 'id'], ESTIMATE_TYPE],
+            ...(pageToken ? { page: pageToken } : {}),
           },
-          ...(pageToken ? { page: pageToken } : {}),
-        },
-        nextPage: {},
-        nodes: {
-          id: {},
-          name: {},
-          description: {},
-          startDate: {},
-          startTime: {},
-          taskAssignments: {
-            nodes: {
-              membership: {
-                id: {},
-              }
-            }
-          },
-          job: {
+          nextPage: {},
+          nodes: {
             id: {},
             name: {},
-            location: {
-              formattedAddress: {},
-              street: {},
-              city: {},
-              state: {},
-              postalCode: {},
-              account: {
-                id: {},
+            description: {},
+            startDate: {},
+            startTime: {},
+            job: { id: {} },
+            taskAssignments: {
+              nodes: {
+                membership: { id: {} }
+              }
+            }
+          }
+        }
+      }
+    })
+
+    const conn = data?.organization?.tasks
+    const nodes = conn?.nodes || []
+    pageToken = conn?.nextPage || null
+
+    // Filter to Brian + window/door keywords right away
+    const matched = nodes.filter(t =>
+      t.taskAssignments?.nodes?.some(a => a.membership?.id === BRIAN_MEMBER) &&
+      isWindowOrDoorTask(t.name, t.description)
+    )
+
+    allTasks = allTasks.concat(matched)
+  } while (pageToken)
+
+  return allTasks
+}
+
+// Pass 2: fetch job details for a single job ID
+async function fetchJobDetails(grantKey, jobId) {
+  if (!jobId) return null
+  try {
+    const data = await pave(grantKey, {
+      job: {
+        $: { id: jobId },
+        id: {},
+        name: {},
+        location: {
+          formattedAddress: {},
+          street: {},
+          city: {},
+          state: {},
+          account: {
+            id: {},
+            name: {},
+            contacts: {
+              $: { size: 2 },
+              nodes: {
                 name: {},
-                contacts: {
-                  $: { size: 3 },
+                customFieldValues: {
+                  $: { size: 8 },
                   nodes: {
-                    id: {},
-                    name: {},
-                    customFieldValues: {
-                      $: { size: 10 },
-                      nodes: {
-                        customField: { name: {} },
-                        value: {},
-                      }
-                    }
+                    customField: { name: {} },
+                    value: {},
                   }
                 }
               }
@@ -89,77 +138,22 @@ async function fetchPage(grantKey, pageToken) {
           }
         }
       }
-    }
-  }
-
-  const res = await fetch('https://api.jobtread.com/pave', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: { $: { grantKey }, ...query } }),
-  })
-
-  if (!res.ok) throw new Error(`JobTread API error: ${res.status}`)
-  const data = await res.json()
-  const conn = data?.organization?.tasks
-  return {
-    nodes: conn?.nodes || [],
-    nextPage: conn?.nextPage || null,
+    })
+    return data?.job || null
+  } catch {
+    return null
   }
 }
 
-function shapeTask(task) {
-  const job = task.job
-  const loc = job?.location
-  const account = loc?.account
-  const contacts = account?.contacts?.nodes || []
-
-  // Find primary phone from first contact's customFieldValues
-  let phone = null
+function extractPhone(job) {
+  const contacts = job?.location?.account?.contacts?.nodes || []
   for (const contact of contacts) {
     const phoneField = contact.customFieldValues?.nodes?.find(
       cfv => cfv.customField?.name?.toLowerCase().includes('phone')
     )
-    if (phoneField?.value) {
-      phone = formatPhone(phoneField.value)
-      break
-    }
+    if (phoneField?.value) return formatPhone(phoneField.value)
   }
-
-  // Format address
-  const address = loc?.formattedAddress
-    || [loc?.street, loc?.city, loc?.state].filter(Boolean).join(', ')
-    || null
-
-  // Format date: "Mon Apr 14" style
-  let dateLabel = null
-  if (task.startDate) {
-    const [y, m, d] = task.startDate.split('-').map(Number)
-    const dt = new Date(y, m - 1, d)
-    dateLabel = dt.toLocaleDateString('en-US', { weekday: 'short', month: 'short', day: 'numeric' })
-  }
-
-  // Format time: "1:30 PM" style
-  let timeLabel = null
-  if (task.startTime) {
-    const [hh, mm] = task.startTime.split(':').map(Number)
-    const ampm = hh >= 12 ? 'PM' : 'AM'
-    const h12 = hh % 12 || 12
-    timeLabel = `${h12}:${String(mm).padStart(2,'0')} ${ampm}`
-  }
-
-  return {
-    taskId: task.id,
-    taskName: task.name,
-    taskDescription: task.description || null,
-    startDate: task.startDate,
-    dateLabel,
-    timeLabel,
-    jobId: job?.id || null,
-    jobName: job?.name || null,
-    customerName: account?.name || null,
-    address,
-    phone,
-  }
+  return null
 }
 
 module.exports = async function handler(req, res) {
@@ -171,35 +165,46 @@ module.exports = async function handler(req, res) {
   if (!grantKey) return res.status(500).json({ error: 'JOBTREAD_API_KEY not configured in Vercel.' })
 
   try {
-    // Paginate through all estimate tasks
-    let allTasks = []
-    let pageToken = null
+    // Pass 1: get all matching tasks (lightweight)
+    const tasks = await fetchAllEstimateTasks(grantKey)
 
-    do {
-      const { nodes, nextPage } = await fetchPage(grantKey, pageToken)
+    // Pass 2: fetch job details in parallel (only for tasks that have a job)
+    const jobIds = [...new Set(tasks.map(t => t.job?.id).filter(Boolean))]
+    const jobMap = {}
 
-      // Filter to Brian's tasks only (taskAssignments membership match)
-      const brianTasks = nodes.filter(t =>
-        t.taskAssignments?.nodes?.some(a => a.membership?.id === BRIAN_MEMBER)
-      )
+    // Fetch in small batches to avoid overwhelming the API
+    const BATCH = 5
+    for (let i = 0; i < jobIds.length; i += BATCH) {
+      const batch = jobIds.slice(i, i + BATCH)
+      const results = await Promise.all(batch.map(id => fetchJobDetails(grantKey, id)))
+      batch.forEach((id, idx) => { if (results[idx]) jobMap[id] = results[idx] })
+    }
 
-      // Filter to window/patio door related by name or description
-      const relevant = brianTasks.filter(t =>
-        isWindowOrDoorTask(t.name, t.description)
-      )
+    // Shape the final response
+    const shaped = tasks.map(task => {
+      const job = task.job?.id ? jobMap[task.job.id] : null
+      const loc = job?.location
+      const account = loc?.account
 
-      allTasks = allTasks.concat(relevant)
-      pageToken = nextPage
-    } while (pageToken)
+      const address = loc?.formattedAddress
+        || [loc?.street, loc?.city, loc?.state].filter(Boolean).join(', ')
+        || null
 
-    // Sort by startDate ascending (nulls last)
-    allTasks.sort((a, b) => {
-      if (!a.startDate) return 1
-      if (!b.startDate) return -1
-      return a.startDate.localeCompare(b.startDate)
+      return {
+        taskId: task.id,
+        taskName: task.name,
+        taskDescription: task.description || null,
+        startDate: task.startDate,
+        dateLabel: formatDate(task.startDate),
+        timeLabel: formatTime(task.startTime),
+        jobId: job?.id || null,
+        jobName: job?.name || null,
+        customerName: account?.name || null,
+        address,
+        phone: extractPhone(job),
+      }
     })
 
-    const shaped = allTasks.map(shapeTask)
     return res.status(200).json({ tasks: shaped })
 
   } catch (err) {
