@@ -1226,8 +1226,12 @@ function WindowForm({initial,onSave,onCancel,prevOptions}) {
   const decorGlasses=DECORATIVE_GLASSES[form.pane]||[]
   const topOpts=getTopOptions(form.style)
 
+  // pendingCarryRef holds the options to apply so catBtn can re-merge them after resetting
+  const pendingCarryRef = useRef(null)
+
   const applyCarryOver = () => {
     if (!prevOptions) return
+    pendingCarryRef.current = prevOptions
     setForm(f => ({ ...f, ...prevOptions }))
     setBannerState('applied')
   }
@@ -1662,7 +1666,7 @@ function DoorForm({initial,onSave,onCancel,prevOptions}) {
   const catBtn=(cat,label)=>{
     const sel=form.doorCategory===cat
     return(
-      <button type="button" key={cat} onClick={()=>{setForm(f=>({...DOOR_EMPTY,doorCategory:cat,measurementType:'Call Size',photos:f.photos,qty:f.qty,notes:f.notes}))}}
+      <button type="button" key={cat} onClick={()=>{setForm(f=>({...DOOR_EMPTY,...(pendingCarryRef.current||{}),doorCategory:cat,measurementType:'Call Size',photos:f.photos,qty:f.qty,notes:f.notes}))}}
         style={{flex:1,padding:'14px 8px',borderRadius:8,border:`2px solid ${sel?'var(--red)':'var(--border)'}`,background:sel?'rgba(192,57,43,0.08)':'transparent',color:sel?'var(--red)':'var(--text-muted)',fontFamily:'var(--font-head)',fontWeight:700,fontSize:14,letterSpacing:'0.04em',cursor:'pointer',transition:'all 0.12s',textAlign:'center'}}>
         {label}
       </button>
