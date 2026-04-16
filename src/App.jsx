@@ -1226,12 +1226,8 @@ function WindowForm({initial,onSave,onCancel,prevOptions}) {
   const decorGlasses=DECORATIVE_GLASSES[form.pane]||[]
   const topOpts=getTopOptions(form.style)
 
-  // pendingCarryRef holds the options to apply so catBtn can re-merge them after resetting
-  const pendingCarryRef = useRef(null)
-
   const applyCarryOver = () => {
     if (!prevOptions) return
-    pendingCarryRef.current = prevOptions
     setForm(f => ({ ...f, ...prevOptions }))
     setBannerState('applied')
   }
@@ -1543,8 +1539,12 @@ function DoorForm({initial,onSave,onCancel,prevOptions}) {
   const set=(k,v)=>setForm(f=>({...f,[k]:v}))
   const cameraRef=useRef(null)
 
+  // pendingCarryRef holds options so catBtn can re-merge them after resetting to DOOR_EMPTY
+  const pendingCarryRef = useRef(null)
+
   const applyCarryOver = () => {
     if (!prevOptions) return
+    pendingCarryRef.current = prevOptions
     setForm(f => ({ ...f, ...prevOptions }))
     setBannerState('applied')
   }
