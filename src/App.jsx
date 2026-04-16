@@ -812,10 +812,20 @@ function buildWindowPDFRows(w,orig=null) {
   const R=[]
   const sec=(l)=>R.push({type:'section',label:l})
   // changed: marks a field as changed vs original — only when orig exists and value differs
-  // Normalize both sides: undefined/null/false → '' so missing keys don't false-positive
-  const norm=(v)=>v===undefined||v===null||v===false?'':String(v)
-  const chk=(key,val)=>orig?norm(orig[key])!==norm(val):false
-  const chkMeas=(kv,kf,val,frac)=>orig?`${norm(orig[kv])}${norm(orig[kf])}`!==`${norm(val)}${norm(frac)}`:false
+  // Only flag as changed if: orig exists AND orig has that key AND values differ after normalization
+  // norm: undefined/null → '', boolean false → 'false', everything else → String()
+  const norm=(v)=>{if(v===undefined||v===null)return '';return String(v)}
+  const chk=(key,val)=>{
+    if(!orig)return false
+    // If the key was never set in the original, don't flag as changed
+    if(!(key in orig))return false
+    return norm(orig[key])!==norm(val)
+  }
+  const chkMeas=(kv,kf,val,frac)=>{
+    if(!orig)return false
+    if(!(kv in orig)&&!(kf in orig))return false
+    return `${norm(orig[kv])}${norm(orig[kf])}`!==`${norm(val)}${norm(frac)}`
+  }
   const pair=(al,av,bl,bv,aKey,bKey)=>R.push({type:'pair',
     a:{l:al,v:String(av??''),changed:aKey?chk(aKey,av):false},
     b:bl!=null?{l:bl,v:String(bv??''),changed:bKey?chk(bKey,bv):false}:null})
@@ -904,8 +914,12 @@ function buildWindowPDFRows(w,orig=null) {
 function buildDoorPDFRows(d,orig=null) {
   const R=[]
   const sec=(l)=>R.push({type:'section',label:l})
-  const norm=(v)=>v===undefined||v===null||v===false?'':String(v)
-  const chk=(key,val)=>orig?norm(orig[key])!==norm(val):false
+  const norm=(v)=>{if(v===undefined||v===null)return '';return String(v)}
+  const chk=(key,val)=>{
+    if(!orig)return false
+    if(!(key in orig))return false
+    return norm(orig[key])!==norm(val)
+  }
   const pair=(al,av,bl,bv,aKey,bKey)=>R.push({type:'pair',
     a:{l:al,v:String(av??''),changed:aKey?chk(aKey,av):false},
     b:bl!=null?{l:bl,v:String(bv??''),changed:bKey?chk(bKey,bv):false}:null})
@@ -914,7 +928,11 @@ function buildDoorPDFRows(d,orig=null) {
 
   const dtc=DOOR_TYPE_CONFIG[d.style]
   const category=dtc?.category||''
-  const chkMeas=(kv,kf,val,frac)=>orig?`${norm(orig[kv])}${norm(orig[kf])}`!==`${norm(val)}${norm(frac)}`:false
+  const chkMeas=(kv,kf,val,frac)=>{
+    if(!orig)return false
+    if(!(kv in orig)&&!(kf in orig))return false
+    return `${norm(orig[kv])}${norm(orig[kf])}`!==`${norm(val)}${norm(frac)}`
+  }
 
   if(d.insert) flag('INSERT DOOR')
 
@@ -1019,39 +1037,34 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
   const LGRAY=[180,185,195]
   const cX=M+36,cW=W-M-cX
   const col2X=cX+cW/2
-  const renderField=(label,value,x,maxW)=>{
-    const lbl=label+': '
-    doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...BLUE)
-    const lw=doc.getTextWidth(lbl);doc.text(lbl,x,y)
-    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...TEXTDK)
-    const avail=maxW-lw-2
-    let val=String(value)
-    while(val.length>4&&doc.getTextWidth(val)>avail)val=val.slice(0,-1)
-    if(val!==String(value))val=val.slice(0,-1)+'…'
-    doc.text(val,x+lw,y)
-  }
   const YELLOW=[255,248,180],CHANGED=[140,90,0]
-  // Draws yellow highlight rect snugly behind text at current y, then renders label+value
-  const renderFieldChanged=(label,value,x,maxW)=>{
-    // Set fonts first so getTextWidth is accurate
+  // Draw a single field: label in blue bold 7.5pt, value in dark normal 8.5pt
+  // If changed=true: yellow rect behind text, both label+value in amber, label prefixed with [*]
+  const drawField=(label,value,x,maxW,changed)=>{
+    const prefix=changed?'[*] ':''
+    const lbl=prefix+label+': '
+    // Measure with correct fonts before drawing anything
     doc.setFont('helvetica','bold');doc.setFontSize(7.5)
-    const lbl='★ '+label+': '
     const lw=doc.getTextWidth(lbl)
     doc.setFont('helvetica','normal');doc.setFontSize(8.5)
-    const avail=maxW-lw-2
-    let val=String(value)
-    while(val.length>4&&doc.getTextWidth(val)>avail)val=val.slice(0,-1)
-    if(val!==String(value))val=val.slice(0,-1)+'…'
-    const totalW=Math.min(lw+doc.getTextWidth(val)+4,maxW+4)
-    // Draw highlight only behind the text, not the full column
-    doc.setFillColor(...YELLOW);doc.rect(x-2,y-8,totalW,11,'F')
-    // Render label
-    doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...CHANGED)
+    const avail=maxW-lw-4
+    let val=String(value??'')
+    while(val.length>3&&doc.getTextWidth(val)>avail)val=val.slice(0,-1)
+    if(val!==String(value??''))val=val.slice(0,-2)+'...'
+    const totalW=lw+doc.getTextWidth(val)+6
+    // Draw highlight rect first (before any text)
+    if(changed){doc.setFillColor(...YELLOW);doc.rect(x-2,y-8,Math.min(totalW,maxW+4),11,'F')}
+    // Draw label
+    doc.setFont('helvetica','bold');doc.setFontSize(7.5)
+    doc.setTextColor(...(changed?CHANGED:BLUE))
     doc.text(lbl,x,y)
-    // Render value
-    doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...CHANGED)
+    // Draw value
+    doc.setFont('helvetica','normal');doc.setFontSize(8.5)
+    doc.setTextColor(...(changed?CHANGED:TEXTDK))
     doc.text(val,x+lw,y)
   }
+  // renderField: alias for drawField with changed=false (used for unchanged fields)
+  const renderField=(label,value,x,maxW)=>drawField(label,value,x,maxW,false)
   const renderRow=(row)=>{
     if(row.type==='section'){
       y+=4
@@ -1066,17 +1079,12 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
       doc.text(row.label,cX,y);y+=14;return
     }
     if(row.type==='pair'){
-      if(row.a?.changed) renderFieldChanged(row.a.l,row.a.v,cX,cW/2-4)
-      else renderField(row.a.l,row.a.v,cX,cW/2-4)
-      if(row.b){
-        if(row.b.changed) renderFieldChanged(row.b.l,row.b.v,col2X,cW/2-4)
-        else renderField(row.b.l,row.b.v,col2X,cW/2-4)
-      }
+      drawField(row.a.l,row.a.v,cX,cW/2-4,!!row.a?.changed)
+      if(row.b) drawField(row.b.l,row.b.v,col2X,cW/2-4,!!row.b?.changed)
       y+=13;return
     }
     if(row.type==='single'){
-      if(row.changed) renderFieldChanged(row.l,row.v,cX,cW-4)
-      else renderField(row.l,row.v,cX,cW-4)
+      drawField(row.l,row.v,cX,cW-4,!!row.changed)
       y+=13;return
     }
   }
@@ -1105,13 +1113,13 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
       doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...WHITE)
       doc.text(String(itemNum),M+14,y+4,{align:'center'})
 
-      // Title — append ★ CHANGED if this item has any differences
-      doc.setFontSize(11);doc.setTextColor(...CHARCOAL)
+      // Title — set font first, measure, then draw; append [CHANGED] if needed
+      doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...CHARCOAL)
       doc.text(titleText,cX,y+4)
       if(hasChanges){
-        doc.setFontSize(8);doc.setTextColor(...ORANGE)
         const tw=doc.getTextWidth(titleText)
-        doc.text(' ★ CHANGED',cX+tw,y+4)
+        doc.setFont('helvetica','bold');doc.setFontSize(8);doc.setTextColor(...ORANGE)
+        doc.text(' [CHANGED]',cX+tw,y+4)
       }
       y+=20
 
