@@ -975,7 +975,7 @@ function buildDoorPDFRows(d) {
 
 // ─── PDF Generator ────────────────────────────────────────────────────────────
 
-function generatePDF(jobInfo,rooms) {
+function generatePDF(jobInfo,rooms,isFinalMeasurement=false) {
   const doc=new jsPDF({unit:'pt',format:'letter'})
   const W=doc.internal.pageSize.getWidth(),pH=doc.internal.pageSize.getHeight()
   const M=48; let y=0
@@ -983,7 +983,8 @@ function generatePDF(jobInfo,rooms) {
   const addFooter=()=>{doc.setFillColor(...CHARCOAL);doc.rect(0,pH-32,W,32,'F');doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MGRAY);doc.text('Fettig Millwork & Windows, Inc.  —  Estimate',M,pH-11);doc.setTextColor(...ORANGE);doc.text('CONFIDENTIAL',W-M,pH-11,{align:'right'})}
   doc.setFillColor(...WHITE);doc.rect(0,0,W,72,'F');doc.setFillColor(...ORANGE);doc.rect(0,72,W,4,'F')
   doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...CHARCOAL);doc.text('FETTIG MILLWORK & WINDOWS, INC.',M,32)
-  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(...TEXTMD);doc.text('Window & Door Estimate',M,52);doc.text(new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),W-M,52,{align:'right'})
+  const docLabel=isFinalMeasurement?'Final Measurement':'Window & Door Estimate'
+  doc.setFontSize(10);doc.setFont('helvetica','normal');doc.setTextColor(...TEXTMD);doc.text(docLabel,M,52);doc.text(new Date().toLocaleDateString('en-US',{year:'numeric',month:'long',day:'numeric'}),W-M,52,{align:'right'})
   y=96
   const fields=[['Customer',jobInfo.customerName],['Job Name',jobInfo.jobName],['Job Address',jobInfo.address],['Estimator',jobInfo.estimator]].filter(([,v])=>v)
   doc.setFontSize(9);doc.setFont('helvetica','bold');doc.setTextColor(...ORANGE);doc.text('JOB INFORMATION',M,y);y+=14
@@ -1978,6 +1979,12 @@ export default function App() {
   // It stores the extracted carry fields from the most recently saved item.
   const [lastOptions,setLastOptions]=useState(null)
 
+  // ── Final Measurement mode ─────────────────────────────────────────────────
+  const [isFinalMeasurement,setIsFinalMeasurement]=useState(false)
+  const [prevEstimateDate,setPrevEstimateDate]=useState(null)
+  const [loadingPrevious,setLoadingPrevious]=useState(false)
+  const [loadPreviousError,setLoadPreviousError]=useState(null)
+
   // ── Brian's schedule ────────────────────────────────────────────────────────
   const [schedule,setSchedule]=useState([])
   const [scheduleLoading,setScheduleLoading]=useState(true)
@@ -1992,7 +1999,26 @@ export default function App() {
 
   const allItems=rooms.flatMap(r=>r.items)
   const setJob=(k,v)=>setJobInfo(f=>({...f,[k]:v}))
-  const handleJobSelect=s=>setJobInfo(f=>({...f,customerName:s.customerName,jobId:s.jobId,jobName:s.jobName,address:s.address}))
+  const handleJobSelect=async s=>{
+    setJobInfo(f=>({...f,customerName:s.customerName,jobId:s.jobId,jobName:s.jobName,address:s.address}))
+    // Try to load previous estimate data for this job
+    if(!s.jobId)return
+    setLoadingPrevious(true)
+    setLoadPreviousError(null)
+    setIsFinalMeasurement(false)
+    setPrevEstimateDate(null)
+    try{
+      const res=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'loadEstimateData',jobId:s.jobId})})
+      const d=await res.json()
+      if(d.error)throw new Error(d.error)
+      if(d.estimateData){
+        // Store the previous data — estimator can choose to load it
+        setJobInfo(f=>({...f,_previousEstimate:d.estimateData,_previousEstimateDate:d.createdAt}))
+        setPrevEstimateDate(d.createdAt)
+      }
+    }catch(e){setLoadPreviousError(e.message)}
+    finally{setLoadingPrevious(false)}
+  }
   const jobValid=jobInfo.customerName.trim().length>0
 
   const updateRoom=(id,key,val)=>setRooms(rs=>rs.map(r=>r.id===id?{...r,[key]:val}:r))
@@ -2013,7 +2039,7 @@ export default function App() {
   }
   const removeItem=(roomId,idx)=>setRooms(rs=>rs.map(r=>r.id===roomId?{...r,items:r.items.filter((_,i)=>i!==idx)}:r))
 
-  const handleDownloadPDF=()=>{const doc=generatePDF(jobInfo,rooms);doc.save(`Fettig-Estimate-${jobInfo.customerName.replace(/\s+/g,'-')||'Draft'}-${Date.now()}.pdf`)}
+  const handleDownloadPDF=()=>{const doc=generatePDF(jobInfo,rooms,isFinalMeasurement);const prefix=isFinalMeasurement?'Fettig-FinalMeasurement':'Fettig-Estimate';doc.save(`${prefix}-${jobInfo.customerName.replace(/\s+/g,'-')||'Draft'}-${Date.now()}.pdf`)}
 
   const compressPhoto=async(dataUrl,maxPx=1200,quality=0.75)=>new Promise(resolve=>{
     const img=new Image();img.onload=()=>{
@@ -2035,8 +2061,16 @@ export default function App() {
         if(!res.ok)throw new Error(d.error||`Failed to upload ${fn}`)
       }
       const sanitize=n=>n.replace(/[/\\:*?"<>|]/g,'_').trim()
-      const doc=generatePDF(jobInfo,rooms)
-      await upload(doc.output('datauristring').split(',')[1],'Estimate Notes.pdf','application/pdf')
+      const pdfName=isFinalMeasurement?'Final Measurement.pdf':'Estimate Notes.pdf'
+      const doc=generatePDF(jobInfo,rooms,isFinalMeasurement)
+      await upload(doc.output('datauristring').split(',')[1],pdfName,'application/pdf')
+      // Save estimate data as JSON (always — for future final measurements)
+      if(!isFinalMeasurement){
+        try{
+          const estimateData={jobInfo:{...jobInfo,_previousEstimate:undefined,_previousEstimateDate:undefined},rooms,savedAt:new Date().toISOString()}
+          await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'saveEstimateData',jobId:jobInfo.jobId,estimateData})})
+        }catch(e){console.warn('Could not save estimate data:',e.message)}
+      }
       const rc={}
       const photoErrors=[]
       for(const room of rooms){
@@ -2153,6 +2187,43 @@ export default function App() {
                 <label style={{display:'block',fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>Search Customer</label>
                 <CustomerJobSearch onSelect={handleJobSelect}/>
               </div>
+              {loadingPrevious&&<div style={{marginBottom:12,padding:'10px 14px',background:'rgba(74,144,217,0.06)',border:'1px solid rgba(74,144,217,0.2)',borderRadius:8,fontSize:12,color:'var(--text-muted)'}}>🔍 Checking for previous estimate…</div>}
+              {loadPreviousError&&<div style={{marginBottom:12,padding:'10px 14px',background:'#fff5f5',border:'1px solid #fed7d7',borderRadius:8,fontSize:12,color:'#e74c3c'}}>⚠️ Could not load previous estimate: {loadPreviousError}</div>}
+              {prevEstimateDate&&!loadingPrevious&&!isFinalMeasurement&&(
+                <div style={{marginBottom:14,borderRadius:10,overflow:'hidden',border:'1.5px solid rgba(232,98,42,0.4)',boxShadow:'0 2px 8px rgba(232,98,42,0.08)'}}>
+                  <div style={{padding:'10px 14px',background:'linear-gradient(135deg,rgba(232,98,42,0.10),rgba(232,98,42,0.03))',borderBottom:'1px solid rgba(232,98,42,0.18)',display:'flex',alignItems:'center',gap:8}}>
+                    <span style={{fontSize:16}}>📋</span>
+                    <div>
+                      <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:12,color:'#e8622a',letterSpacing:'0.08em',textTransform:'uppercase'}}>Previous Estimate Found</div>
+                      <div style={{fontSize:11,color:'var(--text-muted)',marginTop:1}}>Submitted {new Date(prevEstimateDate).toLocaleDateString('en-US',{month:'short',day:'numeric',year:'numeric'})}</div>
+                    </div>
+                  </div>
+                  <div style={{padding:'10px 14px',background:'rgba(0,0,0,0.02)',display:'flex',gap:8}}>
+                    <button type="button" onClick={()=>{
+                      const prev=jobInfo._previousEstimate
+                      if(!prev)return
+                      setRooms(prev.rooms||[newRoom()])
+                      setIsFinalMeasurement(true)
+                    }} style={{flex:1,padding:'9px 14px',borderRadius:6,border:'1.5px solid #e8622a',background:'#e8622a',color:'#fff',fontFamily:'var(--font-head)',fontWeight:700,fontSize:13,cursor:'pointer',transition:'opacity 0.12s'}}
+                      onMouseEnter={e=>e.currentTarget.style.opacity='0.85'} onMouseLeave={e=>e.currentTarget.style.opacity='1'}>
+                      📐 Load for Final Measurement
+                    </button>
+                    <button type="button" onClick={()=>{setPrevEstimateDate(null)}} style={{padding:'9px 14px',borderRadius:6,border:'1.5px solid var(--border)',background:'transparent',color:'var(--text-muted)',fontFamily:'var(--font-head)',fontWeight:700,fontSize:13,cursor:'pointer'}}>
+                      Start Fresh
+                    </button>
+                  </div>
+                </div>
+              )}
+              {isFinalMeasurement&&(
+                <div style={{marginBottom:14,padding:'10px 14px',background:'rgba(74,144,217,0.08)',border:'1.5px solid rgba(74,144,217,0.35)',borderRadius:8,display:'flex',alignItems:'center',gap:10}}>
+                  <span style={{fontSize:18}}>📐</span>
+                  <div style={{flex:1}}>
+                    <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:12,color:'#4a90d9',letterSpacing:'0.08em',textTransform:'uppercase'}}>Final Measurement Mode</div>
+                    <div style={{fontSize:11,color:'var(--text-muted)',marginTop:1}}>Loaded from estimate — update measurements as needed</div>
+                  </div>
+                  <button type="button" onClick={()=>{setIsFinalMeasurement(false);setRooms([newRoom()])}} style={{padding:'5px 10px',borderRadius:5,border:'1px solid rgba(74,144,217,0.4)',background:'transparent',color:'#4a90d9',fontSize:11,fontWeight:700,cursor:'pointer'}}>✕ Cancel</button>
+                </div>
+              )}
               {jobInfo.customerName&&(
                 <div style={{background:'rgba(232,98,42,0.08)',border:'1.5px solid #e8622a',borderRadius:8,padding:'12px 16px',marginBottom:16}}>
                   <div style={{fontSize:11,color:'#e8622a',fontWeight:700,letterSpacing:'0.08em',marginBottom:6}}>SELECTED JOB</div>
@@ -2170,7 +2241,7 @@ export default function App() {
                 <label style={{display:'block',fontSize:11,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.07em',marginBottom:5}}>General Job Notes</label>
                 <textarea rows={3} placeholder="Any general notes about this job..." value={jobInfo.notes} onChange={e=>setJob('notes',e.target.value)} style={{resize:'vertical'}}/>
               </div>
-              <button className="btn-gold" style={{width:'100%',fontSize:16,padding:14,opacity:jobValid?1:0.5}} onClick={()=>jobValid&&setStep('windows')}>Next: Add Windows & Doors →</button>
+              <button className="btn-gold" style={{width:'100%',fontSize:16,padding:14,opacity:jobValid?1:0.5}} onClick={()=>jobValid&&setStep('windows')}>{isFinalMeasurement?'Next: Review Measurements →':'Next: Add Windows & Doors →'}</button>
             </div>
 
           </div>
@@ -2216,18 +2287,18 @@ export default function App() {
               </div>
             ))}
             <button className="btn-outline" style={{width:'100%',padding:12,fontSize:14,marginBottom:16}} onClick={()=>setRooms(rs=>[...rs,newRoom()])}>+ Add Another Room</button>
-            {allItems.length>0&&<button className="btn-gold" style={{width:'100%',fontSize:16,padding:14}} onClick={()=>setStep('review')}>Review Estimate ({allItems.length} item{allItems.length!==1?'s':''}) →</button>}
+            {allItems.length>0&&<button className="btn-gold" style={{width:'100%',fontSize:16,padding:14}} onClick={()=>setStep('review')}>{isFinalMeasurement?'Review Final Measurement':'Review Estimate'} ({allItems.length} item{allItems.length!==1?'s':''}) →</button>}
           </div>
         )}
 
         {step==='review'&&(
           <div>
             <div style={{marginBottom:20}}>
-              <div style={{fontFamily:'var(--font-head)',fontSize:22,fontWeight:700,letterSpacing:'0.04em',marginBottom:4,color:'var(--text)'}}>Review & Submit</div>
-              <div style={{color:'var(--text-muted)',fontSize:13}}>Review everything, then send straight to JobTread.</div>
+              <div style={{fontFamily:'var(--font-head)',fontSize:22,fontWeight:700,letterSpacing:'0.04em',marginBottom:4,color:'var(--text)'}}>{isFinalMeasurement?'Review Final Measurement':'Review & Submit'}</div>
+              <div style={{color:'var(--text-muted)',fontSize:13}}>{isFinalMeasurement?'Review updated measurements, then submit to JobTread.':'Review everything, then send straight to JobTread.'}</div>
             </div>
             <div style={{background:'var(--surface)',border:'1.5px solid var(--border)',boxShadow:'0 1px 4px rgba(0,0,0,0.06)',borderRadius:10,padding:'16px 18px',marginBottom:20}}>
-              <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:15,color:'var(--red)',letterSpacing:'0.06em',marginBottom:10}}>ESTIMATE SUMMARY</div>
+              <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:15,color:'var(--red)',letterSpacing:'0.06em',marginBottom:10}}>{isFinalMeasurement?'FINAL MEASUREMENT SUMMARY':'ESTIMATE SUMMARY'}</div>
               <div style={{display:'grid',gridTemplateColumns:'1fr 1fr',gap:'8px 16px',fontSize:13}}>
                 <div><span style={{color:'var(--text-muted)'}}>Customer:</span> <strong>{jobInfo.customerName}</strong></div>
                 {jobInfo.jobName&&<div><span style={{color:'var(--text-muted)'}}>Job:</span> {jobInfo.jobName}</div>}
@@ -2251,16 +2322,16 @@ export default function App() {
               <button className="btn-outline" style={{width:'100%',fontSize:16,padding:14}} onClick={handleDownloadPDF}>📄 Download PDF</button>
               {!submitted?(
                 <button className="btn-gold" style={{width:'100%',fontSize:16,padding:14}} onClick={handleSubmitToJobTread} disabled={submitting}>
-                  {submitting?'⏳ Posting to JobTread...':`🔗 Post Estimate to ${jobInfo.jobName||'JobTread Job'}`}
+                  {submitting?'⏳ Posting to JobTread...':`🔗 ${isFinalMeasurement?'Submit Final Measurement':'Post Estimate'} to ${jobInfo.jobName||'JobTread Job'}`}
                 </button>
               ):(
                 <div style={{background:'#f0fff4',border:'1.5px solid var(--green)',borderRadius:8,padding:16,textAlign:'center'}}>
                   <div style={{fontSize:24,marginBottom:6}}>✅</div>
                   <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:16}}>Sent to JobTread!</div>
-                  <div style={{color:'var(--text-muted)',fontSize:13,marginTop:4}}>Estimate Notes.pdf uploaded to <strong>{jobInfo.jobName}</strong>.</div>
+                  <div style={{color:'var(--text-muted)',fontSize:13,marginTop:4}}>{isFinalMeasurement?'Final Measurement.pdf':'Estimate Notes.pdf'} uploaded to <strong>{jobInfo.jobName}</strong>.</div>
                 </div>
               )}
-              <button className="btn-outline" style={{width:'100%',fontSize:14,padding:12}} onClick={()=>{setStep('job');setJobInfo({customerName:'',jobId:'',jobName:'',address:'',estimator:'',notes:''});setRooms([newRoom()]);setSubmitted(false);setLastOptions(null)}}>Start New Estimate</button>
+              <button className="btn-outline" style={{width:'100%',fontSize:14,padding:12}} onClick={()=>{setStep('job');setJobInfo({customerName:'',jobId:'',jobName:'',address:'',estimator:'',notes:''});setRooms([newRoom()]);setSubmitted(false);setLastOptions(null);setIsFinalMeasurement(false);setPrevEstimateDate(null);setLoadPreviousError(null)}}>Start New Estimate</button>
             </div>
           </div>
         )}
