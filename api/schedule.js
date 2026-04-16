@@ -68,7 +68,10 @@ async function fetchAllEstimateTasks(grantKey) {
           $: {
             size: PAGE_SIZE,
             sortBy: [{ field: 'startDate', order: 'asc' }],
-            where: [['taskType', 'id'], ESTIMATE_TYPE],
+            where: { and: [
+              [['taskType', 'id'], ESTIMATE_TYPE],
+              ['completed', 0],
+            ]},
             ...(pageToken ? { page: pageToken } : {}),
           },
           nextPage: {},
