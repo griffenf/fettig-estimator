@@ -808,11 +808,16 @@ function summarizeDoor(d) {
 
 // ─── PDF Row Builders ─────────────────────────────────────────────────────────
 
-function buildWindowPDFRows(w) {
+function buildWindowPDFRows(w,orig=null) {
   const R=[]
   const sec=(l)=>R.push({type:'section',label:l})
-  const pair=(al,av,bl,bv)=>R.push({type:'pair',a:{l:al,v:String(av??'')},b:bl!=null?{l:bl,v:String(bv??'')}:null})
-  const single=(l,v)=>R.push({type:'single',l,v:String(v??'')})
+  // changed: marks a field as changed vs original — only when orig exists and value differs
+  const chk=(key,val)=>orig&&orig[key]!==undefined?String(orig[key]??'')!==String(val??''):false
+  const chkMeas=(kv,kf,val,frac)=>orig?`${orig[kv]??''}${orig[kf]??''}`!==`${val??''}${frac??''}`:false
+  const pair=(al,av,bl,bv,aKey,bKey)=>R.push({type:'pair',
+    a:{l:al,v:String(av??''),changed:aKey?chk(aKey,av):false},
+    b:bl!=null?{l:bl,v:String(bv??''),changed:bKey?chk(bKey,bv):false}:null})
+  const single=(l,v,key)=>R.push({type:'single',l,v:String(v??''),changed:key?chk(key,v):false})
   const flag=(l)=>R.push({type:'flag',label:l})
 
   if(w.insert) flag('INSERT WINDOW')
@@ -820,154 +825,169 @@ function buildWindowPDFRows(w) {
   sec('Window')
   const wideStr=w.numberWide>1?`${w.numberWide} Wide`:'1 Wide'
   const highStr=w.numberHigh===2?'2 High':'1 High'
-  pair('Style',w.style,'Size',`${wideStr} · ${highStr}`)
-  if(w.facing&&w.sashSplit) pair('Facing (exterior)',w.facing,'Sash Split',w.sashSplit)
-  else if(w.facing) single('Facing (exterior)',w.facing)
-  else if(w.sashSplit) single('Sash Split',w.sashSplit)
-  if(w.configuration) single('Configuration',w.configuration)
+  pair('Style',w.style,'Size',`${wideStr} · ${highStr}`,'style',null)
+  if(w.facing&&w.sashSplit) pair('Facing (exterior)',w.facing,'Sash Split',w.sashSplit,'facing','sashSplit')
+  else if(w.facing) single('Facing (exterior)',w.facing,'facing')
+  else if(w.sashSplit) single('Sash Split',w.sashSplit,'sashSplit')
+  if(w.configuration) single('Configuration',w.configuration,'configuration')
 
   sec('Measurements')
-  single('Measurement Type',w.measurementType||'Frame Size')
+  single('Measurement Type',w.measurementType||'Frame Size','measurementType')
   if(w.numberHigh===2) {
-    pair('Overall Height',w.overallHeight?fmtMeasurement(w.overallHeight,w.overallHeightFrac):'—','Bottom Height',w.height?fmtMeasurement(w.height,w.heightFrac):'—')
-    if(w.topHeight) single('Top Height (calculated)',fmtMeasurement(w.topHeight,w.topHeightFrac))
+    const ohChanged=chkMeas('overallHeight','overallHeightFrac',w.overallHeight,w.overallHeightFrac)
+    const bhChanged=chkMeas('height','heightFrac',w.height,w.heightFrac)
+    R.push({type:'pair',a:{l:'Overall Height',v:w.overallHeight?fmtMeasurement(w.overallHeight,w.overallHeightFrac):'—',changed:ohChanged},b:{l:'Bottom Height',v:w.height?fmtMeasurement(w.height,w.heightFrac):'—',changed:bhChanged}})
+    if(w.topHeight){const thChanged=chkMeas('topHeight','topHeightFrac',w.topHeight,w.topHeightFrac);R.push({type:'single',l:'Top Height (calculated)',v:fmtMeasurement(w.topHeight,w.topHeightFrac),changed:thChanged})}
   } else if(w.widthOrHeight) {
-    single('Width or Height',fmtMeasurement(w.widthOrHeight,w.widthOrHeightFrac))
+    const wohChanged=chkMeas('widthOrHeight','widthOrHeightFrac',w.widthOrHeight,w.widthOrHeightFrac)
+    R.push({type:'single',l:'Width or Height',v:fmtMeasurement(w.widthOrHeight,w.widthOrHeightFrac),changed:wohChanged})
   } else {
-    pair('Width',w.width?fmtMeasurement(w.width,w.widthFrac):'—','Height',w.height?fmtMeasurement(w.height,w.heightFrac):'—')
+    const wChanged=chkMeas('width','widthFrac',w.width,w.widthFrac)
+    const hChanged=chkMeas('height','heightFrac',w.height,w.heightFrac)
+    R.push({type:'pair',a:{l:'Width',v:w.width?fmtMeasurement(w.width,w.widthFrac):'—',changed:wChanged},b:{l:'Height',v:w.height?fmtMeasurement(w.height,w.heightFrac):'—',changed:hChanged}})
   }
-  if(w.shortSideHeight) single('Short Side Height',fmtMeasurement(w.shortSideHeight,w.shortSideHeightFrac))
-  if(w.angleOfDeflection||w.flankerRatio) pair('Angle of Deflection',w.angleOfDeflection||'—','Flanker Ratio',w.flankerRatio||'—')
+  if(w.shortSideHeight){const sChanged=chkMeas('shortSideHeight','shortSideHeightFrac',w.shortSideHeight,w.shortSideHeightFrac);R.push({type:'single',l:'Short Side Height',v:fmtMeasurement(w.shortSideHeight,w.shortSideHeightFrac),changed:sChanged})}
+  if(w.angleOfDeflection||w.flankerRatio) pair('Angle of Deflection',w.angleOfDeflection||'—','Flanker Ratio',w.flankerRatio||'—','angleOfDeflection','flankerRatio')
 
   if(w.numberHigh===2) {
     sec('Top Window')
     const ts=w.topWindowWidth===2?`${w.topLeftStyle||'—'} | ${w.topRightStyle||'—'}`:(w.topStyle||'—')
-    pair('Top Style',ts,'Top Facing',w.topFacing||'Same as bottom')
-    pair('Top Tempered',(w.topTempered&&w.topTempered!==w.tempered)?w.topTempered:'Same as bottom','Top Deco Glass',(w.topDecorativeGlass&&w.topDecorativeGlass!=='Same as bottom')?w.topDecorativeGlass:'Same as bottom')
-    pair('Top Grille Type',(w.topGrilleType&&w.topGrilleType!=='Same as bottom')?w.topGrilleType:'Same as bottom','Top Grille Pattern',(w.topGrillePattern&&w.topGrillePattern!=='Same as bottom')?w.topGrillePattern:(w.topGrilleType==='None'?'N/A':'Same as bottom'))
+    pair('Top Style',ts,'Top Facing',w.topFacing||'Same as bottom','topStyle','topFacing')
+    pair('Top Tempered',(w.topTempered&&w.topTempered!==w.tempered)?w.topTempered:'Same as bottom','Top Deco Glass',(w.topDecorativeGlass&&w.topDecorativeGlass!=='Same as bottom')?w.topDecorativeGlass:'Same as bottom','topTempered','topDecorativeGlass')
+    pair('Top Grille Type',(w.topGrilleType&&w.topGrilleType!=='Same as bottom')?w.topGrilleType:'Same as bottom','Top Grille Pattern',(w.topGrillePattern&&w.topGrillePattern!=='Same as bottom')?w.topGrillePattern:(w.topGrilleType==='None'?'N/A':'Same as bottom'),'topGrilleType','topGrillePattern')
   }
 
   sec('Color & Glass')
-  pair('Exterior Color',w.exteriorColor||'—','Interior Color',w.interiorColor||'—')
-  pair('Pane',w.pane||'Double','Tempered',w.tempered||'No')
-  pair('Glass Surface',w.glassSurface||'—','Decorative Glass',(w.decorativeGlass&&w.decorativeGlass!=='None')?w.decorativeGlass:'None')
+  pair('Exterior Color',w.exteriorColor||'—','Interior Color',w.interiorColor||'—','exteriorColor','interiorColor')
+  pair('Pane',w.pane||'Double','Tempered',w.tempered||'No','pane','tempered')
+  pair('Glass Surface',w.glassSurface||'—','Decorative Glass',(w.decorativeGlass&&w.decorativeGlass!=='None')?w.decorativeGlass:'None','glassSurface','decorativeGlass')
 
   if(w.grilleType) {
     sec('Grille')
     const isMP=MULTI_PANE_STYLES.includes(w.style)
     if(isMP) {
-      pair('Grille Type',w.grilleType,'Pane Application',w.grillePaneApplication||'Both Panes')
-      if(w.grillePaneApplication==='Both Panes') pair('Top Pane Pattern',w.topPaneGrillePattern||'—','Bottom Pane Pattern',w.bottomPaneGrillePattern||'—')
-      else if(w.grillePattern) single('Grille Pattern',w.grillePattern)
+      pair('Grille Type',w.grilleType,'Pane Application',w.grillePaneApplication||'Both Panes','grilleType','grillePaneApplication')
+      if(w.grillePaneApplication==='Both Panes') pair('Top Pane Pattern',w.topPaneGrillePattern||'—','Bottom Pane Pattern',w.bottomPaneGrillePattern||'—','topPaneGrillePattern','bottomPaneGrillePattern')
+      else if(w.grillePattern) single('Grille Pattern',w.grillePattern,'grillePattern')
     } else {
-      pair('Grille Type',w.grilleType,'Grille Pattern',w.grillePattern||'—')
-      if(w.simulatedRail) single('Simulated Rail',w.simulatedRail)
+      pair('Grille Type',w.grilleType,'Grille Pattern',w.grillePattern||'—','grilleType','grillePattern')
+      if(w.simulatedRail) single('Simulated Rail',w.simulatedRail,'simulatedRail')
     }
   }
 
   if(w.hardwareColor||w.screenColor||w.screenMesh) {
     sec('Hardware & Screen')
-    if(w.hardwareColor||w.screenColor) pair('Hardware Color',w.hardwareColor||'—','Screen Color',w.screenColor||'—')
-    if(w.screenMesh) single('Screen Mesh',w.screenMesh)
+    if(w.hardwareColor||w.screenColor) pair('Hardware Color',w.hardwareColor||'—','Screen Color',w.screenColor||'—','hardwareColor','screenColor')
+    if(w.screenMesh) single('Screen Mesh',w.screenMesh,'screenMesh')
   }
 
   if(w.jambDepth||w.jambType||w.casingWidth||w.casingType||w.casingStyle||w.lpTrimColor) {
     sec('Extension Jamb & Casing')
-    pair('Jamb Depth',w.jambDepth?fmtMeasurement(w.jambDepth,w.jambDepthFrac):'—','Jamb Type',w.jambType?(w.jambType==='Other'?w.jambTypeOther||'Other':w.jambType):'—')
-    pair('Casing Width',w.casingWidth?fmtMeasurement(w.casingWidth,w.casingWidthFrac):'—','Casing Type',w.casingType?(w.casingType==='Other'?w.casingTypeOther||'Other':w.casingType):'—')
-    if(w.casingStyle||w.lpTrimColor) pair('Casing Style',w.casingStyle||'—','LP Trim Color',w.lpTrimColor||'—')
+    const jdChanged=chkMeas('jambDepth','jambDepthFrac',w.jambDepth,w.jambDepthFrac)
+    const cwChanged=chkMeas('casingWidth','casingWidthFrac',w.casingWidth,w.casingWidthFrac)
+    R.push({type:'pair',a:{l:'Jamb Depth',v:w.jambDepth?fmtMeasurement(w.jambDepth,w.jambDepthFrac):'—',changed:jdChanged},b:{l:'Jamb Type',v:w.jambType?(w.jambType==='Other'?w.jambTypeOther||'Other':w.jambType):'—',changed:chk('jambType',w.jambType)}})
+    R.push({type:'pair',a:{l:'Casing Width',v:w.casingWidth?fmtMeasurement(w.casingWidth,w.casingWidthFrac):'—',changed:cwChanged},b:{l:'Casing Type',v:w.casingType?(w.casingType==='Other'?w.casingTypeOther||'Other':w.casingType):'—',changed:chk('casingType',w.casingType)}})
+    if(w.casingStyle||w.lpTrimColor) pair('Casing Style',w.casingStyle||'—','LP Trim Color',w.lpTrimColor||'—','casingStyle','lpTrimColor')
   }
 
   if(w.cutSiding||w.takeDownSiding) {
     sec('Additional')
-    if(w.cutSiding&&w.takeDownSiding) pair('Cut Siding','YES','Take Down Siding','YES')
-    else if(w.cutSiding) single('Cut Siding','YES')
-    else single('Take Down Siding','YES')
+    if(w.cutSiding&&w.takeDownSiding) pair('Cut Siding','YES','Take Down Siding','YES','cutSiding','takeDownSiding')
+    else if(w.cutSiding) single('Cut Siding','YES','cutSiding')
+    else single('Take Down Siding','YES','takeDownSiding')
   }
   return R
 }
 
-function buildDoorPDFRows(d) {
+function buildDoorPDFRows(d,orig=null) {
   const R=[]
   const sec=(l)=>R.push({type:'section',label:l})
-  const pair=(al,av,bl,bv)=>R.push({type:'pair',a:{l:al,v:String(av??'')},b:bl!=null?{l:bl,v:String(bv??'')}:null})
-  const single=(l,v)=>R.push({type:'single',l,v:String(v??'')})
+  const chk=(key,val)=>orig&&orig[key]!==undefined?String(orig[key]??'')!==String(val??''):false
+  const pair=(al,av,bl,bv,aKey,bKey)=>R.push({type:'pair',
+    a:{l:al,v:String(av??''),changed:aKey?chk(aKey,av):false},
+    b:bl!=null?{l:bl,v:String(bv??''),changed:bKey?chk(bKey,bv):false}:null})
+  const single=(l,v,key)=>R.push({type:'single',l,v:String(v??''),changed:key?chk(key,v):false})
   const flag=(l)=>R.push({type:'flag',label:l})
 
   const dtc=DOOR_TYPE_CONFIG[d.style]
   const category=dtc?.category||''
+  const chkMeas=(kv,kf,val,frac)=>orig?`${orig[kv]??''}${orig[kf]??''}`!==`${val??''}${frac??''}`:false
 
   if(d.insert) flag('INSERT DOOR')
 
   sec('Door')
-  pair('Style',d.style,'Panels',d.panelCount||'—')
-  pair('Configuration',d.configuration||'—','Handing',d.handing||'—')
+  pair('Style',d.style,'Panels',d.panelCount||'—','style','panelCount')
+  pair('Configuration',d.configuration||'—','Handing',d.handing||'—','configuration','handing')
 
   sec('Measurements')
   const mt=d.measurementType||'Call Size'
-  single('Measurement Type',mt)
+  single('Measurement Type',mt,'measurementType')
   if(mt==='Call Size') {
     const wk=d.bifoldWidthKey||dtc?.widthKey
     const hk=dtc?.heightKey||'h_french'
     const cwLabel=d.callWidth&&wk?(()=>{const wd=CALL_WIDTH_DATA[wk]?.[d.callWidth];return wd?`${d.callWidth}" — Frame: ${wd.frame} · RO: ${wd.ro}`:`${d.callWidth}"`})():'—'
     const chLabel=d.callHeight?(()=>{const hd=CALL_HEIGHT_DATA[hk]?.[d.callHeight];return hd?`${d.callHeight}" — Frame: ${hd.frame} · RO: ${hd.ro}`:`${d.callHeight}"`})():'—'
-    single('Call Width',cwLabel)
-    single('Call Height',chLabel)
+    single('Call Width',cwLabel,'callWidth')
+    single('Call Height',chLabel,'callHeight')
   } else {
-    pair('Width',d.width?fmtMeasurement(d.width,d.widthFrac):'—','Height',d.height?fmtMeasurement(d.height,d.heightFrac):'—')
+    const wChanged=chkMeas('width','widthFrac',d.width,d.widthFrac)
+    const hChanged=chkMeas('height','heightFrac',d.height,d.heightFrac)
+    R.push({type:'pair',a:{l:'Width',v:d.width?fmtMeasurement(d.width,d.widthFrac):'—',changed:wChanged},b:{l:'Height',v:d.height?fmtMeasurement(d.height,d.heightFrac):'—',changed:hChanged}})
   }
 
   sec('Color & Glass')
-  pair('Exterior Color',d.exteriorColor||'—','Interior Color',d.interiorColor||'—')
-  pair('Glass Surface',d.glassSurface||'—','Pane','Double (Tempered)')
-  if(d.decorativeGlass&&d.decorativeGlass!=='None') single('Decorative Glass',d.decorativeGlass)
+  pair('Exterior Color',d.exteriorColor||'—','Interior Color',d.interiorColor||'—','exteriorColor','interiorColor')
+  pair('Glass Surface',d.glassSurface||'—','Pane','Double (Tempered)','glassSurface',null)
+  if(d.decorativeGlass&&d.decorativeGlass!=='None') single('Decorative Glass',d.decorativeGlass,'decorativeGlass')
 
   if(d.grilleType) {
     sec('Grille')
-    pair('Grille Type',d.grilleType,'Grille Pattern',d.grillePattern||'—')
+    pair('Grille Type',d.grilleType,'Grille Pattern',d.grillePattern||'—','grilleType','grillePattern')
   }
 
   const hw=getDoorHardwareCfg(category,d.panelCount)
   const hasHW=hw.stdHandle||hw.handleColorInt||hw.handleColorExt||hw.hingeInt||hw.hingeExt||hw.bifoldPanel||hw.bifoldExt||hw.bifoldInt
   if(hasHW) {
     sec('Hardware')
-    if(hw.stdHandle) pair('Handle Style',d.handleStyle||'—',hw.handleColorExt?'Ext. Handle Color':null,hw.handleColorExt?d.handleColorExt||'—':null)
+    if(hw.stdHandle) pair('Handle Style',d.handleStyle||'—',hw.handleColorExt?'Ext. Handle Color':null,hw.handleColorExt?d.handleColorExt||'—':null,'handleStyle',hw.handleColorExt?'handleColorExt':null)
     if(hw.handleColorInt) {
-      if(hw.hingeInt) pair('Int. Handle Color',d.handleColorInt||'—','Int. Hinge Color',d.hingeColorInt||'—')
-      else if(hw.hingeExt) pair('Int. Handle Color',d.handleColorInt||'—','Ext. Hinge Color',d.hingeColorExt||'—')
-      else single('Int. Handle Color',d.handleColorInt||'—')
-    } else if(hw.hingeExt&&!hw.stdHandle) single('Ext. Hinge Color',d.hingeColorExt||'—')
+      if(hw.hingeInt) pair('Int. Handle Color',d.handleColorInt||'—','Int. Hinge Color',d.hingeColorInt||'—','handleColorInt','hingeColorInt')
+      else if(hw.hingeExt) pair('Int. Handle Color',d.handleColorInt||'—','Ext. Hinge Color',d.hingeColorExt||'—','handleColorInt','hingeColorExt')
+      else single('Int. Handle Color',d.handleColorInt||'—','handleColorInt')
+    } else if(hw.hingeExt&&!hw.stdHandle) single('Ext. Hinge Color',d.hingeColorExt||'—','hingeColorExt')
     if(hw.bifoldExt||hw.bifoldPanel) {
-      if(hw.bifoldPanel&&hw.bifoldExt) pair('BiFold Panel Handle',d.bifoldPanelHandleColor||'—','BiFold Ext. Hinge',d.bifoldExtHingeColor||'—')
-      else if(hw.bifoldExt) single('BiFold Ext. Hinge Color',d.bifoldExtHingeColor||'—')
+      if(hw.bifoldPanel&&hw.bifoldExt) pair('BiFold Panel Handle',d.bifoldPanelHandleColor||'—','BiFold Ext. Hinge',d.bifoldExtHingeColor||'—','bifoldPanelHandleColor','bifoldExtHingeColor')
+      else if(hw.bifoldExt) single('BiFold Ext. Hinge Color',d.bifoldExtHingeColor||'—','bifoldExtHingeColor')
     }
-    if(hw.bifoldInt) single('BiFold Int. Hinge Color',d.bifoldIntHingeColor||'—')
+    if(hw.bifoldInt) single('BiFold Int. Hinge Color',d.bifoldIntHingeColor||'—','bifoldIntHingeColor')
   }
 
   const sc=getScreenCfg(category,d.panelCount)
   sec('Screen')
   if(!sc.show) single('Screen','N/A (Outswing)')
-  else if(sc.always) pair('Screen','Included (Exterior)','Screen Mesh',d.screenMesh||'—')
+  else if(sc.always) pair('Screen','Included (Exterior)','Screen Mesh',d.screenMesh||'—',null,'screenMesh')
   else {
-    pair('Screen Type',d.screenType||'No Screen',d.screenType&&d.screenType!=='No Screen'?'Mesh':null,d.screenType&&d.screenType!=='No Screen'?'Pleated Charcoal Mesh':null)
+    pair('Screen Type',d.screenType||'No Screen',d.screenType&&d.screenType!=='No Screen'?'Mesh':null,d.screenType&&d.screenType!=='No Screen'?'Pleated Charcoal Mesh':null,'screenType',null)
   }
 
   if(dtc?.jamb&&d.jambSize) {
     sec('Jamb Size')
-    single('Jamb Size',d.jambSize)
+    single('Jamb Size',d.jambSize,'jambSize')
   }
 
   if(d.jambDepth||d.jambType||d.casingWidth||d.casingType||d.casingStyle||d.lpTrimColor) {
     sec('Extension Jamb & Casing')
-    pair('Jamb Depth',d.jambDepth?fmtMeasurement(d.jambDepth,d.jambDepthFrac):'—','Jamb Type',d.jambType?(d.jambType==='Other'?d.jambTypeOther||'Other':d.jambType):'—')
-    pair('Casing Width',d.casingWidth?fmtMeasurement(d.casingWidth,d.casingWidthFrac):'—','Casing Type',d.casingType?(d.casingType==='Other'?d.casingTypeOther||'Other':d.casingType):'—')
-    if(d.casingStyle||d.lpTrimColor) pair('Casing Style',d.casingStyle||'—','LP Trim Color',d.lpTrimColor||'—')
+    const jdChanged=chkMeas('jambDepth','jambDepthFrac',d.jambDepth,d.jambDepthFrac)
+    const cwChanged=chkMeas('casingWidth','casingWidthFrac',d.casingWidth,d.casingWidthFrac)
+    R.push({type:'pair',a:{l:'Jamb Depth',v:d.jambDepth?fmtMeasurement(d.jambDepth,d.jambDepthFrac):'—',changed:jdChanged},b:{l:'Jamb Type',v:d.jambType?(d.jambType==='Other'?d.jambTypeOther||'Other':d.jambType):'—',changed:chk('jambType',d.jambType)}})
+    R.push({type:'pair',a:{l:'Casing Width',v:d.casingWidth?fmtMeasurement(d.casingWidth,d.casingWidthFrac):'—',changed:cwChanged},b:{l:'Casing Type',v:d.casingType?(d.casingType==='Other'?d.casingTypeOther||'Other':d.casingType):'—',changed:chk('casingType',d.casingType)}})
+    if(d.casingStyle||d.lpTrimColor) pair('Casing Style',d.casingStyle||'—','LP Trim Color',d.lpTrimColor||'—','casingStyle','lpTrimColor')
   }
 
   if(d.cutSiding||d.takeDownSiding) {
     sec('Additional')
-    if(d.cutSiding&&d.takeDownSiding) pair('Cut Siding','YES','Take Down Siding','YES')
-    else if(d.cutSiding) single('Cut Siding','YES')
+    if(d.cutSiding&&d.takeDownSiding) pair('Cut Siding','YES','Take Down Siding','YES','cutSiding','takeDownSiding')
+    else if(d.cutSiding) single('Cut Siding','YES','cutSiding')
     else single('Take Down Siding','YES')
   }
   return R
@@ -975,12 +995,13 @@ function buildDoorPDFRows(d) {
 
 // ─── PDF Generator ────────────────────────────────────────────────────────────
 
-function generatePDF(jobInfo,rooms,isFinalMeasurement=false) {
+function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) {
   const doc=new jsPDF({unit:'pt',format:'letter'})
   const W=doc.internal.pageSize.getWidth(),pH=doc.internal.pageSize.getHeight()
   const M=48; let y=0
   const CHARCOAL=[30,36,50],ORANGE=[232,98,42],BLUE=[74,144,217],WHITE=[255,255,255],MGRAY=[226,230,237],TEXTDK=[26,31,46],TEXTMD=[74,85,104]
-  const addFooter=()=>{doc.setFillColor(...CHARCOAL);doc.rect(0,pH-32,W,32,'F');doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MGRAY);doc.text('Fettig Millwork & Windows, Inc.  —  Estimate',M,pH-11);doc.setTextColor(...ORANGE);doc.text('CONFIDENTIAL',W-M,pH-11,{align:'right'})}
+  const footerLabel=isFinalMeasurement?'Fettig Millwork & Windows, Inc.  —  Final Measurement':'Fettig Millwork & Windows, Inc.  —  Estimate'
+  const addFooter=()=>{doc.setFillColor(...CHARCOAL);doc.rect(0,pH-32,W,32,'F');doc.setFont('helvetica','normal');doc.setFontSize(8.5);doc.setTextColor(...MGRAY);doc.text(footerLabel,M,pH-11);doc.setTextColor(...ORANGE);doc.text('CONFIDENTIAL',W-M,pH-11,{align:'right'})}
   doc.setFillColor(...WHITE);doc.rect(0,0,W,72,'F');doc.setFillColor(...ORANGE);doc.rect(0,72,W,4,'F')
   doc.setFont('helvetica','bold');doc.setFontSize(22);doc.setTextColor(...CHARCOAL);doc.text('FETTIG MILLWORK & WINDOWS, INC.',M,32)
   const docLabel=isFinalMeasurement?'Final Measurement':'Window & Door Estimate'
@@ -1006,6 +1027,21 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false) {
     if(val!==String(value))val=val.slice(0,-1)+'…'
     doc.text(val,x+lw,y)
   }
+  const YELLOW=[255,251,200],CHANGED=[180,120,0]
+  // renderField variant for changed values — draws highlight + star prefix
+  const renderFieldChanged=(label,value,x,maxW)=>{
+    // yellow highlight rect behind the row
+    doc.setFillColor(...YELLOW);doc.rect(x-2,y-9,maxW+4,12,'F')
+    const lbl='★ '+label+': '
+    doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...CHANGED)
+    const lw=doc.getTextWidth(lbl);doc.text(lbl,x,y)
+    doc.setFont('helvetica','bold');doc.setFontSize(8.5);doc.setTextColor(...CHANGED)
+    const avail=maxW-lw-2
+    let val=String(value)
+    while(val.length>4&&doc.getTextWidth(val)>avail)val=val.slice(0,-1)
+    if(val!==String(value))val=val.slice(0,-1)+'…'
+    doc.text(val,x+lw,y)
+  }
   const renderRow=(row)=>{
     if(row.type==='section'){
       y+=4
@@ -1020,27 +1056,33 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false) {
       doc.text(row.label,cX,y);y+=14;return
     }
     if(row.type==='pair'){
-      renderField(row.a.l,row.a.v,cX,cW/2-4)
-      if(row.b) renderField(row.b.l,row.b.v,col2X,cW/2-4)
+      const aFn=row.a?.changed?renderFieldChanged:renderField
+      const bFn=row.b?.changed?renderFieldChanged:renderField
+      aFn(row.a.l,row.a.v,cX,cW/2-4)
+      if(row.b) bFn(row.b.l,row.b.v,col2X,cW/2-4)
       y+=13;return
     }
     if(row.type==='single'){
-      renderField(row.l,row.v,cX,cW-4);y+=13;return
+      const fn=row.changed?renderFieldChanged:renderField
+      fn(row.l,row.v,cX,cW-4);y+=13;return
     }
   }
 
   let itemNum=1
   let firstItemOnPage=true
-  rooms.forEach(room=>{
+  rooms.forEach((room,ri)=>{
     if(!room.items.length)return
-    room.items.forEach(item=>{
+    room.items.forEach((item,itemIdx)=>{
       if(!firstItemOnPage){addFooter();doc.addPage();y=40}
       firstItemOnPage=false
 
       if(room.name){doc.setFillColor(...ORANGE);doc.rect(M,y-10,W-M*2,22,'F');doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...WHITE);doc.text(room.name.toUpperCase(),M+8,y+5);y+=24}
 
       const isDoor=item.itemType==='door'
-      const rows=isDoor?buildDoorPDFRows(item):buildWindowPDFRows(item)
+      // Find matching original item for change highlighting (same room index, same item index)
+      const origRoom=originalRooms?.[ri]
+      const origItem=origRoom?.items?.[itemIdx]||null
+      const rows=isDoor?buildDoorPDFRows(item,origItem):buildWindowPDFRows(item,origItem)
       const titleText=`${item.style}${isDoor?' (Patio Door)':''}${parseInt(item.qty)>1?` × ${item.qty}`:''}`
 
       doc.setFillColor(...LGRAY);doc.rect(M,y-10,28,22,'F')
@@ -2039,7 +2081,7 @@ export default function App() {
   }
   const removeItem=(roomId,idx)=>setRooms(rs=>rs.map(r=>r.id===roomId?{...r,items:r.items.filter((_,i)=>i!==idx)}:r))
 
-  const handleDownloadPDF=()=>{const doc=generatePDF(jobInfo,rooms,isFinalMeasurement);const prefix=isFinalMeasurement?'Fettig-FinalMeasurement':'Fettig-Estimate';doc.save(`${prefix}-${jobInfo.customerName.replace(/\s+/g,'-')||'Draft'}-${Date.now()}.pdf`)}
+  const handleDownloadPDF=()=>{const origRooms=isFinalMeasurement?(jobInfo._previousEstimate?.rooms||null):null;const doc=generatePDF(jobInfo,rooms,isFinalMeasurement,origRooms);const prefix=isFinalMeasurement?'Fettig-FinalMeasurement':'Fettig-Estimate';doc.save(`${prefix}-${jobInfo.customerName.replace(/\s+/g,'-')||'Draft'}-${Date.now()}.pdf`)}
 
   const compressPhoto=async(dataUrl,maxPx=1200,quality=0.75)=>new Promise(resolve=>{
     const img=new Image();img.onload=()=>{
@@ -2062,7 +2104,8 @@ export default function App() {
       }
       const sanitize=n=>n.replace(/[/\\:*?"<>|]/g,'_').trim()
       const pdfName=isFinalMeasurement?'Final Measurement.pdf':'Estimate Notes.pdf'
-      const doc=generatePDF(jobInfo,rooms,isFinalMeasurement)
+      const origRooms=isFinalMeasurement?(jobInfo._previousEstimate?.rooms||null):null
+      const doc=generatePDF(jobInfo,rooms,isFinalMeasurement,origRooms)
       await upload(doc.output('datauristring').split(',')[1],pdfName,'application/pdf')
       // Save estimate data as JSON (always — for future final measurements)
       if(!isFinalMeasurement){
