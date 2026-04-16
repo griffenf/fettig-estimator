@@ -453,11 +453,64 @@ function extractCarryFields(item, fields) {
 
 function CarryOverBanner({ prevItem, onApply, onDismiss }) {
   const isWindow = prevItem.itemType !== 'door'
-  const ext = prevItem.exteriorColor
-  const int = prevItem.interiorColor
-  const glass = prevItem.glassSurface
 
-  const chips = [ext, int, glass].filter(Boolean)
+  // Build a comprehensive list of chips from all meaningful non-default filled values.
+  // Skips size/dimension fields and structural fields — only "options" the user chose.
+  const chips = []
+
+  // Colors
+  if (prevItem.exteriorColor) chips.push({ label: 'Ext Color', value: prevItem.exteriorColor })
+  if (prevItem.interiorColor)  chips.push({ label: 'Int Color', value: prevItem.interiorColor })
+
+  // Pane (window only — only show if non-default Triple)
+  if (isWindow && prevItem.pane && prevItem.pane !== 'Double') chips.push({ label: 'Pane', value: prevItem.pane })
+
+  // Glass
+  if (prevItem.glassSurface) chips.push({ label: 'Glass', value: prevItem.glassSurface })
+
+  // Tempered (window only — only if Yes)
+  if (isWindow && prevItem.tempered === 'Yes') chips.push({ label: 'Tempered', value: 'Yes' })
+
+  // Decorative glass (only if not None)
+  if (prevItem.decorativeGlass && prevItem.decorativeGlass !== 'None') chips.push({ label: 'Deco Glass', value: prevItem.decorativeGlass })
+
+  // Grille
+  if (prevItem.grilleType) {
+    const gVal = prevItem.grillePattern ? `${prevItem.grilleType} · ${prevItem.grillePattern}` : prevItem.grilleType
+    chips.push({ label: 'Grille', value: gVal })
+  }
+  if (prevItem.simulatedRail) chips.push({ label: 'Sim. Rail', value: prevItem.simulatedRail })
+
+  // Hardware (window)
+  if (isWindow && prevItem.hardwareColor) chips.push({ label: 'Hardware', value: prevItem.hardwareColor })
+  if (isWindow && prevItem.screenColor)   chips.push({ label: 'Screen Color', value: prevItem.screenColor })
+
+  // Screen mesh
+  if (prevItem.screenMesh) chips.push({ label: 'Screen Mesh', value: prevItem.screenMesh === 'Bright View Mesh' ? 'Bright View' : 'Charcoal Mesh' })
+
+  // Door hardware
+  if (!isWindow) {
+    if (prevItem.handleStyle && prevItem.handleStyle !== 'Cambridge') chips.push({ label: 'Handle', value: prevItem.handleStyle })
+    if (prevItem.handleColorExt) chips.push({ label: 'Ext Handle', value: prevItem.handleColorExt })
+    if (prevItem.handleColorInt) chips.push({ label: 'Int Handle', value: prevItem.handleColorInt })
+    if (prevItem.hingeColorInt) chips.push({ label: 'Int Hinge', value: prevItem.hingeColorInt })
+    if (prevItem.hingeColorExt) chips.push({ label: 'Ext Hinge', value: prevItem.hingeColorExt })
+    if (prevItem.bifoldExtHingeColor) chips.push({ label: 'BiFold Ext Hinge', value: prevItem.bifoldExtHingeColor })
+    if (prevItem.bifoldIntHingeColor) chips.push({ label: 'BiFold Int Hinge', value: prevItem.bifoldIntHingeColor })
+    if (prevItem.bifoldPanelHandleColor) chips.push({ label: 'Panel Handle', value: prevItem.bifoldPanelHandleColor })
+  }
+
+  // Jamb & Casing
+  if (prevItem.jambDepth) chips.push({ label: 'Jamb Depth', value: fmtMeasurement(prevItem.jambDepth, prevItem.jambDepthFrac) })
+  if (prevItem.jambType)  chips.push({ label: 'Jamb Type', value: prevItem.jambType === 'Other' ? (prevItem.jambTypeOther || 'Other') : prevItem.jambType })
+  if (prevItem.casingWidth) chips.push({ label: 'Casing Width', value: fmtMeasurement(prevItem.casingWidth, prevItem.casingWidthFrac) })
+  if (prevItem.casingType)  chips.push({ label: 'Casing Type', value: prevItem.casingType === 'Other' ? (prevItem.casingTypeOther || 'Other') : prevItem.casingType })
+  if (prevItem.casingStyle) chips.push({ label: 'Casing Style', value: prevItem.casingStyle })
+  if (prevItem.lpTrimColor) chips.push({ label: 'LP Trim', value: prevItem.lpTrimColor })
+
+  const ORANGE = '#e8622a'
+  const CHARCOAL = '#1e2432'
+  const BLUE = '#4a90d9'
 
   return (
     <div style={{
@@ -465,13 +518,13 @@ function CarryOverBanner({ prevItem, onApply, onDismiss }) {
       marginBottom: 16,
       borderRadius: 10,
       overflow: 'hidden',
-      border: '1.5px solid rgba(232,98,42,0.4)',
-      boxShadow: '0 2px 12px rgba(232,98,42,0.12)',
+      border: `1.5px solid rgba(232,98,42,0.45)`,
+      boxShadow: '0 2px 12px rgba(232,98,42,0.10)',
     }}>
       {/* Header bar */}
       <div style={{
-        background: 'linear-gradient(135deg, rgba(232,98,42,0.15) 0%, rgba(232,98,42,0.05) 100%)',
-        borderBottom: '1px solid rgba(232,98,42,0.2)',
+        background: `linear-gradient(135deg, rgba(232,98,42,0.10) 0%, rgba(232,98,42,0.03) 100%)`,
+        borderBottom: '1px solid rgba(232,98,42,0.18)',
         padding: '10px 14px',
         display: 'flex',
         alignItems: 'center',
@@ -479,40 +532,37 @@ function CarryOverBanner({ prevItem, onApply, onDismiss }) {
       }}>
         <span style={{ fontSize: 16 }}>🎨</span>
         <div style={{ flex: 1 }}>
-          <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 12, color: 'var(--red)', letterSpacing: '0.08em', textTransform: 'uppercase' }}>
+          <div style={{ fontFamily: 'var(--font-head)', fontWeight: 700, fontSize: 12, color: ORANGE, letterSpacing: '0.08em', textTransform: 'uppercase' }}>
             Copy Options from Previous {isWindow ? 'Window' : 'Door'}?
           </div>
           <div style={{ fontSize: 11, color: 'var(--text-muted)', marginTop: 2 }}>
-            Colors, glass, hardware, screen &amp; casing — you can change anything after.
+            Colors, glass, hardware, screen &amp; casing — adjust anything after.
           </div>
         </div>
       </div>
 
       {/* Preview chips */}
-      <div style={{ padding: '10px 14px', background: 'rgba(0,0,0,0.04)' }}>
-        <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 10 }}>
-          {chips.map((c, i) => (
-            <span key={i} style={{
-              background: 'var(--surface)',
-              border: '1px solid var(--border)',
-              borderRadius: 20,
-              padding: '3px 10px',
-              fontSize: 11,
-              fontWeight: 600,
-              color: 'var(--text)',
-            }}>{c}</span>
-          ))}
-          {prevItem.grilleType && (
-            <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 600, color: 'var(--text)' }}>
-              {prevItem.grilleType}{prevItem.grillePattern ? ` · ${prevItem.grillePattern}` : ''}
-            </span>
-          )}
-          {prevItem.screenMesh && (
-            <span style={{ background: 'var(--surface)', border: '1px solid var(--border)', borderRadius: 20, padding: '3px 10px', fontSize: 11, fontWeight: 600, color: 'var(--text)' }}>
-              {prevItem.screenMesh}
-            </span>
-          )}
-        </div>
+      <div style={{ padding: '10px 14px', background: 'rgba(0,0,0,0.03)' }}>
+        {chips.length > 0 && (
+          <div style={{ display: 'flex', gap: 5, flexWrap: 'wrap', marginBottom: 10 }}>
+            {chips.map((c, i) => (
+              <span key={i} style={{
+                background: 'var(--surface)',
+                border: `1px solid rgba(74,144,217,0.3)`,
+                borderRadius: 20,
+                padding: '3px 9px',
+                fontSize: 11,
+                color: CHARCOAL,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+              }}>
+                <span style={{ color: BLUE, fontWeight: 700, fontSize: 10, textTransform: 'uppercase', letterSpacing: '0.05em' }}>{c.label}</span>
+                <span style={{ color: 'var(--text)', fontWeight: 500 }}>{c.value}</span>
+              </span>
+            ))}
+          </div>
+        )}
 
         {/* Action buttons */}
         <div style={{ display: 'flex', gap: 8 }}>
@@ -523,15 +573,15 @@ function CarryOverBanner({ prevItem, onApply, onDismiss }) {
               flex: 1,
               padding: '9px 14px',
               borderRadius: 6,
-              border: '1.5px solid var(--red)',
-              background: 'var(--red)',
+              border: `1.5px solid ${ORANGE}`,
+              background: ORANGE,
               color: '#fff',
               fontFamily: 'var(--font-head)',
               fontWeight: 700,
               fontSize: 13,
               letterSpacing: '0.04em',
               cursor: 'pointer',
-              transition: 'all 0.12s',
+              transition: 'opacity 0.12s',
             }}
             onMouseEnter={e => e.currentTarget.style.opacity = '0.85'}
             onMouseLeave={e => e.currentTarget.style.opacity = '1'}
@@ -553,7 +603,7 @@ function CarryOverBanner({ prevItem, onApply, onDismiss }) {
               cursor: 'pointer',
               transition: 'all 0.12s',
             }}
-            onMouseEnter={e => { e.currentTarget.style.borderColor = 'var(--text-muted)'; e.currentTarget.style.color = 'var(--text)' }}
+            onMouseEnter={e => { e.currentTarget.style.borderColor = CHARCOAL; e.currentTarget.style.color = CHARCOAL }}
             onMouseLeave={e => { e.currentTarget.style.borderColor = 'var(--border)'; e.currentTarget.style.color = 'var(--text-muted)' }}
           >
             No, Start Fresh
@@ -1182,15 +1232,44 @@ function WindowForm({initial,onSave,onCancel,prevOptions}) {
     setBannerState('applied')
   }
 
-  useEffect(()=>{if(!form.style||!WIN[form.style])return;const c=WIN[form.style];setForm(f=>({...f,numberWide:c.wide[0],measurementType:c.mt===1?'Rough Opening':'Frame Size',configType:'standard',standardConfig:'',panelConfigs:Array(c.wide[0]).fill(''),facing:'',sashSplit:'',grilleType:'',grillePattern:'',simulatedRail:'',grillePaneApplication:'Both Panes',topPaneGrillePattern:'',bottomPaneGrillePattern:''}))},[form.style])
-  useEffect(()=>{setForm(f=>({...f,panelConfigs:Array(f.numberWide).fill(''),standardConfig:''}))},[form.numberWide])
-  useEffect(()=>{setForm(f=>({...f,topStyle:'',topGrilleType:'',topGrillePattern:''}))},[form.topWindowWidth])
-  useEffect(()=>{setForm(f=>({...f,glassSurface:'',decorativeGlass:'None'}))},[form.pane])
-  useEffect(()=>{setForm(f=>({...f,grillePattern:'',simulatedRail:''}))},[form.grilleType])
+  // mountedRef guards: skip reset effects on initial render so editing doesn't wipe saved values
+  const wStyleMounted=useRef(false)
+  useEffect(()=>{
+    if(!wStyleMounted.current){wStyleMounted.current=true;return}
+    if(!form.style||!WIN[form.style])return
+    const c=WIN[form.style]
+    setForm(f=>({...f,numberWide:c.wide[0],measurementType:c.mt===1?'Rough Opening':'Frame Size',configType:'standard',standardConfig:'',panelConfigs:Array(c.wide[0]).fill(''),facing:'',sashSplit:'',grilleType:'',grillePattern:'',simulatedRail:'',grillePaneApplication:'Both Panes',topPaneGrillePattern:'',bottomPaneGrillePattern:''}))
+  },[form.style])
+  const wNumWideMounted=useRef(false)
+  useEffect(()=>{
+    if(!wNumWideMounted.current){wNumWideMounted.current=true;return}
+    setForm(f=>({...f,panelConfigs:Array(f.numberWide).fill(''),standardConfig:''}))
+  },[form.numberWide])
+  const wTopWidthMounted=useRef(false)
+  useEffect(()=>{
+    if(!wTopWidthMounted.current){wTopWidthMounted.current=true;return}
+    setForm(f=>({...f,topStyle:'',topGrilleType:'',topGrillePattern:''}))
+  },[form.topWindowWidth])
+  const wPaneMounted=useRef(false)
+  useEffect(()=>{
+    if(!wPaneMounted.current){wPaneMounted.current=true;return}
+    setForm(f=>({...f,glassSurface:'',decorativeGlass:'None'}))
+  },[form.pane])
+  const wGrilleMounted=useRef(false)
+  useEffect(()=>{
+    if(!wGrilleMounted.current){wGrilleMounted.current=true;return}
+    setForm(f=>({...f,grillePattern:'',simulatedRail:''}))
+  },[form.grilleType])
+  // Safe on mount — validates/cascades rather than resetting
   useEffect(()=>{if(form.interiorColor&&!getIntColors(form.exteriorColor).includes(form.interiorColor))set('interiorColor','')},[form.exteriorColor])
   useEffect(()=>{if(!form.overallHeight||!form.height)return;const o=parseFloat(form.overallHeight)+fracToDecimal(form.overallHeightFrac),b=parseFloat(form.height)+fracToDecimal(form.heightFrac);if(isNaN(o)||isNaN(b)||b>=o)return;const{whole,frac}=decimalToFrac(o-b);setForm(f=>({...f,topHeight:whole,topHeightFrac:frac}))},[form.overallHeight,form.overallHeightFrac,form.height,form.heightFrac])
   useEffect(()=>{if(form.jambType&&!form.casingType)set('casingType',form.jambType)},[form.jambType])
-  useEffect(()=>{if(!form.interiorColor)return;setForm(f=>({...f,hardwareColor:INT_TO_HW[f.interiorColor]||f.hardwareColor,screenColor:INT_TO_SCREEN[f.interiorColor]||f.screenColor}))},[form.interiorColor])
+  const wHwMounted=useRef(false)
+  useEffect(()=>{
+    if(!wHwMounted.current){wHwMounted.current=true;return}
+    if(!form.interiorColor)return
+    setForm(f=>({...f,hardwareColor:INT_TO_HW[f.interiorColor]||f.hardwareColor,screenColor:INT_TO_SCREEN[f.interiorColor]||f.screenColor}))
+  },[form.interiorColor])
 
   const handlePhoto=e=>{const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>set('photos',[...(form.photos||[]),ev.target.result]);r.readAsDataURL(file);e.target.value=''}
   const removePhoto=i=>set('photos',form.photos.filter((_,j)=>j!==i))
@@ -1496,12 +1575,33 @@ function DoorForm({initial,onSave,onCancel,prevOptions}) {
   const widthKey=isBifold?(panelRow?.widthKey||''):(dtc?.widthKey||'')
   const heightKey=dtc?.heightKey||'h_french'
 
-  useEffect(()=>{setForm(f=>({...f,configuration:'',handing:'',callWidth:'',callHeight:'',bifoldWidthKey:''}))},[currentStyle,form.panelCount])
-  useEffect(()=>{if(isBifold&&panelRow)set('bifoldWidthKey',panelRow.widthKey||'')},[currentStyle,form.panelCount])
-  useEffect(()=>{set('handing','')},[form.configuration])
-  useEffect(()=>{if(form.interiorColor&&!getIntColors(form.exteriorColor).includes(form.interiorColor))set('interiorColor','')},[form.exteriorColor])
-
+  // mountedRef guards: skip reset effects on initial render so editing doesn't wipe saved values
+  const dStyleMounted=useRef(false)
   useEffect(()=>{
+    if(!dStyleMounted.current){dStyleMounted.current=true;return}
+    setForm(f=>({...f,configuration:'',handing:'',callWidth:'',callHeight:'',bifoldWidthKey:''}))
+  },[currentStyle,form.panelCount])
+  const dBifoldKeyMounted=useRef(false)
+  useEffect(()=>{
+    if(!dBifoldKeyMounted.current){dBifoldKeyMounted.current=true;return}
+    if(isBifold&&panelRow)set('bifoldWidthKey',panelRow.widthKey||'')
+  },[currentStyle,form.panelCount])
+  const dHandingMounted=useRef(false)
+  useEffect(()=>{
+    if(!dHandingMounted.current){dHandingMounted.current=true;return}
+    set('handing','')
+  },[form.configuration])
+  const dGrilleMounted=useRef(false)
+  useEffect(()=>{
+    if(!dGrilleMounted.current){dGrilleMounted.current=true;return}
+    setForm(f=>({...f,grillePattern:''}))
+  },[form.grilleType])
+  // Safe on mount — validates/cascades
+  useEffect(()=>{if(form.interiorColor&&!getIntColors(form.exteriorColor).includes(form.interiorColor))set('interiorColor','')},[form.exteriorColor])
+  // Hardware/screen cascade — skip on mount so editing preserves saved values
+  const dExtColorMounted=useRef(false)
+  useEffect(()=>{
+    if(!dExtColorMounted.current){dExtColorMounted.current=true;return}
     if(!form.exteriorColor)return
     const hwExt=EXT_TO_HW[form.exteriorColor]
     const bifoldExt=EXT_TO_BIFOLD(form.exteriorColor)
@@ -1512,8 +1612,9 @@ function DoorForm({initial,onSave,onCancel,prevOptions}) {
       bifoldExtHingeColor: bifoldExt,
     }))
   },[form.exteriorColor])
-
+  const dIntColorMounted=useRef(false)
   useEffect(()=>{
+    if(!dIntColorMounted.current){dIntColorMounted.current=true;return}
     if(!form.interiorColor)return
     const hwInt=INT_TO_HW[form.interiorColor]
     const bifoldInt=INT_TO_BIFOLD(form.interiorColor)
@@ -1525,7 +1626,6 @@ function DoorForm({initial,onSave,onCancel,prevOptions}) {
       bifoldPanelHandleColor: bifoldInt,
     }))
   },[form.interiorColor])
-  useEffect(()=>{setForm(f=>({...f,grillePattern:''}))},[form.grilleType])
   useEffect(()=>{if(form.jambType&&!form.casingType)set('casingType',form.jambType)},[form.jambType])
 
   const handlePhoto=e=>{const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>set('photos',[...(form.photos||[]),ev.target.result]);r.readAsDataURL(file);e.target.value=''}
