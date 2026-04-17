@@ -944,8 +944,22 @@ function buildDoorPDFRows(d,orig=null) {
   if(d.insert) flag('INSERT DOOR')
 
   sec('Door')
-  pair('Style',d.style,'Panels',d.panelCount||'—','style','panelCount')
-  pair('Configuration',d.configuration||'—','Handing',d.handing||'—','configuration','handing')
+  // panelCount is numeric — compare as numbers
+  const pcChanged=orig?(Number(orig.panelCount)||0)!==(Number(d.panelCount)||0):false
+  R.push({type:'pair',
+    a:{l:'Style',v:String(d.style??''),changed:chk('style',d.style)},
+    b:{l:'Panels',v:String(d.panelCount||'—'),changed:pcChanged}
+  })
+  // Configuration and handing: compare display values to avoid false positives
+  // from auto-resolved configs (stored as '' in form but resolved to 'OX' etc.)
+  const configDisp=d.configuration||'—'
+  const configOrigDisp=orig?.configuration||'—'
+  const handingDisp=d.handing||'—'
+  const handingOrigDisp=orig?.handing||'—'
+  R.push({type:'pair',
+    a:{l:'Configuration',v:configDisp,changed:orig?configDisp!==configOrigDisp:false},
+    b:{l:'Handing',v:handingDisp,changed:orig?handingDisp!==handingOrigDisp:false}
+  })
 
   sec('Measurements')
   const mt=d.measurementType||'Call Size'
@@ -955,8 +969,11 @@ function buildDoorPDFRows(d,orig=null) {
     const hk=dtc?.heightKey||'h_french'
     const cwLabel=d.callWidth&&wk?(()=>{const wd=CALL_WIDTH_DATA[wk]?.[d.callWidth];return wd?`${d.callWidth}" — Frame: ${wd.frame} · RO: ${wd.ro}`:`${d.callWidth}"`})():'—'
     const chLabel=d.callHeight?(()=>{const hd=CALL_HEIGHT_DATA[hk]?.[d.callHeight];return hd?`${d.callHeight}" — Frame: ${hd.frame} · RO: ${hd.ro}`:`${d.callHeight}"`})():'—'
-    single('Call Width',cwLabel,'callWidth')
-    single('Call Height',chLabel,'callHeight')
+    // Compare call sizes numerically to handle number/string type differences
+    const cwChanged=orig?(Number(orig.callWidth)||0)!==(Number(d.callWidth)||0):false
+    const chChanged=orig?(Number(orig.callHeight)||0)!==(Number(d.callHeight)||0):false
+    R.push({type:'single',l:'Call Width',v:cwLabel,changed:cwChanged})
+    R.push({type:'single',l:'Call Height',v:chLabel,changed:chChanged})
   } else {
     const wChanged=chkMeas('width','widthFrac',d.width,d.widthFrac)
     const hChanged=chkMeas('height','heightFrac',d.height,d.heightFrac)
