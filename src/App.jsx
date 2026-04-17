@@ -2174,12 +2174,31 @@ export default function App() {
       const origRooms=isFinalMeasurement?(jobInfo._previousEstimate?.rooms||null):null
       const doc=generatePDF(jobInfo,rooms,isFinalMeasurement,origRooms)
       await upload(doc.output('datauristring').split(',')[1],pdfName,'application/pdf')
-      // Save estimate data as JSON (always — for future final measurements)
+      // Save estimate data as JSON for future final measurements
+      // Strip photo data (base64) from rooms — photos are already uploaded to JobTread separately
+      // and including them would make the JSON too large (Vercel 4.5MB limit)
       if(!isFinalMeasurement){
         try{
-          const estimateData={jobInfo:{...jobInfo,_previousEstimate:undefined,_previousEstimateDate:undefined},rooms,savedAt:new Date().toISOString()}
-          await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'saveEstimateData',jobId:jobInfo.jobId,estimateData})})
-        }catch(e){console.warn('Could not save estimate data:',e.message)}
+          const roomsWithoutPhotos=rooms.map(r=>({
+            ...r,
+            items:r.items.map(it=>({...it,photos:[]}))
+          }))
+          const estimateData={
+            jobInfo:{...jobInfo,_previousEstimate:undefined,_previousEstimateDate:undefined},
+            rooms:roomsWithoutPhotos,
+            savedAt:new Date().toISOString()
+          }
+          const saveRes=await fetch('/api/submit',{
+            method:'POST',
+            headers:{'Content-Type':'application/json'},
+            body:JSON.stringify({action:'saveEstimateData',jobId:jobInfo.jobId,estimateData})
+          })
+          if(!saveRes.ok){
+            const saveErr=await saveRes.json().catch(()=>({}))
+            console.error('Failed to save estimate data:',saveErr.error||saveRes.status)
+            // Don't alert — PDF already uploaded successfully, this is secondary
+          }
+        }catch(e){console.error('Could not save estimate data:',e.message)}
       }
       const rc={}
       const photoErrors=[]
