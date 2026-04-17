@@ -611,6 +611,13 @@ function CarryOverBanner({ prevItem, onApply, onDismiss }) {
         </div>
       </div>
     </div>
+    {/* ── Photo Lightbox Overlay ── */}
+    {lightboxSrc&&(
+      <div onClick={()=>setLightboxSrc(null)} style={{position:'fixed',inset:0,zIndex:9999,background:'rgba(0,0,0,0.88)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'zoom-out'}}>
+        <img src={lightboxSrc} alt="" style={{maxWidth:'94vw',maxHeight:'92vh',objectFit:'contain',borderRadius:8,boxShadow:'0 8px 48px rgba(0,0,0,0.8)'}}/>
+        <div style={{position:'absolute',top:16,right:20,color:'#fff',fontSize:28,fontWeight:700,cursor:'pointer',lineHeight:1}} onClick={()=>setLightboxSrc(null)}>✕</div>
+      </div>
+    )}
   )
 }
 
@@ -882,7 +889,14 @@ function buildWindowPDFRows(w,orig=null) {
       if(w.grillePaneApplication==='Both Panes') pair('Top Pane Pattern',w.topPaneGrillePattern||'—','Bottom Pane Pattern',w.bottomPaneGrillePattern||'—','topPaneGrillePattern','bottomPaneGrillePattern')
       else if(w.grillePattern) single('Grille Pattern',w.grillePattern,'grillePattern')
     } else {
-      pair('Grille Type',w.grilleType,'Grille Pattern',w.grillePattern||'—','grilleType','grillePattern')
+      // For grille pattern: compare display values (both empty = no change)
+      const gpDisplayCurr=w.grillePattern||''
+      const gpDisplayOrig=orig?.grillePattern||''
+      const gpChanged=orig?(gpDisplayCurr!==gpDisplayOrig):false
+      R.push({type:'pair',
+        a:{l:'Grille Type',v:String(w.grilleType??''),changed:chk('grilleType',w.grilleType)},
+        b:{l:'Grille Pattern',v:w.grillePattern||'—',changed:gpChanged}
+      })
       if(w.simulatedRail) single('Simulated Rail',w.simulatedRail,'simulatedRail')
     }
   }
@@ -1043,24 +1057,28 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
   const drawField=(label,value,x,maxW,changed)=>{
     const prefix=changed?'[*] ':''
     const lbl=prefix+label+': '
+    // For changed fields: label 7.5pt bold, value 9.5pt bold black (larger+bolder for clarity)
+    // For normal fields: label 7.5pt bold blue, value 8.5pt normal dark
+    const valSize=changed?9.5:8.5
+    const valFont=changed?'bold':'normal'
     // Measure with correct fonts before drawing anything
     doc.setFont('helvetica','bold');doc.setFontSize(7.5)
     const lw=doc.getTextWidth(lbl)
-    doc.setFont('helvetica','normal');doc.setFontSize(8.5)
+    doc.setFont('helvetica',valFont);doc.setFontSize(valSize)
     const avail=maxW-lw-4
     let val=String(value??'')
     while(val.length>3&&doc.getTextWidth(val)>avail)val=val.slice(0,-1)
     if(val!==String(value??''))val=val.slice(0,-2)+'...'
     const totalW=lw+doc.getTextWidth(val)+6
-    // Draw highlight rect first (before any text)
-    if(changed){doc.setFillColor(...YELLOW);doc.rect(x-2,y-8,Math.min(totalW,maxW+4),11,'F')}
+    // Draw highlight rect first (before any text) — taller to fit 9.5pt
+    if(changed){doc.setFillColor(...YELLOW);doc.rect(x-2,y-9,Math.min(totalW,maxW+4),12,'F')}
     // Draw label
     doc.setFont('helvetica','bold');doc.setFontSize(7.5)
     doc.setTextColor(...(changed?CHANGED:BLUE))
     doc.text(lbl,x,y)
-    // Draw value
-    doc.setFont('helvetica','normal');doc.setFontSize(8.5)
-    doc.setTextColor(...(changed?CHANGED:TEXTDK))
+    // Draw value — bold black when changed, normal dark otherwise
+    doc.setFont('helvetica',valFont);doc.setFontSize(valSize)
+    doc.setTextColor(...(changed?TEXTDK:TEXTDK))
     doc.text(val,x+lw,y)
   }
   // renderField: alias for drawField with changed=false (used for unchanged fields)
@@ -1081,11 +1099,11 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
     if(row.type==='pair'){
       drawField(row.a.l,row.a.v,cX,cW/2-4,!!row.a?.changed)
       if(row.b) drawField(row.b.l,row.b.v,col2X,cW/2-4,!!row.b?.changed)
-      y+=13;return
+      y+=(row.a?.changed||row.b?.changed)?15:13;return
     }
     if(row.type==='single'){
       drawField(row.l,row.v,cX,cW-4,!!row.changed)
-      y+=13;return
+      y+=row.changed?15:13;return
     }
   }
 
@@ -1198,7 +1216,7 @@ function CustomerJobSearch({onSelect}) {
 
 // ─── Item Cards ───────────────────────────────────────────────────────────────
 
-function WindowCard({win,index,onEdit,onRemove}) {
+function WindowCard({win,index,onEdit,onRemove,onPhotoClick}) {
   return(
     <div style={{background:'var(--surface)',border:'1.5px solid var(--border)',boxShadow:'0 1px 4px rgba(0,0,0,0.06)',borderRadius:8,padding:'12px 14px',marginBottom:8}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
@@ -1210,7 +1228,7 @@ function WindowCard({win,index,onEdit,onRemove}) {
           </div>
           <div style={{fontSize:12,color:'var(--text-muted)',lineHeight:1.6}}>{summarizeWindow(win)}</div>
           {win.notes&&<div style={{marginTop:4,fontSize:11,color:'var(--text-muted)',fontStyle:'italic'}}>"{win.notes}"</div>}
-          {win.photos?.length>0&&<div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>{win.photos.map((p,i)=><img key={i} src={p} alt="" style={{width:56,height:44,objectFit:'cover',borderRadius:4,border:'1px solid var(--border)'}}/>)}</div>}
+          {win.photos?.length>0&&<div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>{win.photos.map((p,i)=><img key={i} src={p} alt="" onClick={onPhotoClick?()=>onPhotoClick(p):undefined} style={{width:onPhotoClick?80:56,height:onPhotoClick?64:44,objectFit:'cover',borderRadius:4,border:`1.5px solid ${onPhotoClick?'var(--blue)':'var(--border)'}`,cursor:onPhotoClick?'zoom-in':'default',transition:'transform 0.1s'}} onMouseEnter={e=>{if(onPhotoClick)e.currentTarget.style.transform='scale(1.05)'}} onMouseLeave={e=>{if(onPhotoClick)e.currentTarget.style.transform='scale(1)'}}/>)}</div>}
         </div>
         <div style={{display:'flex',gap:6,flexShrink:0}}>
           <button className="btn-outline" onClick={()=>onEdit(index)} style={{padding:'6px 12px',fontSize:13}}>Edit</button>
@@ -1221,7 +1239,7 @@ function WindowCard({win,index,onEdit,onRemove}) {
   )
 }
 
-function DoorCard({door,index,onEdit,onRemove}) {
+function DoorCard({door,index,onEdit,onRemove,onPhotoClick}) {
   return(
     <div style={{background:'var(--surface)',border:'1.5px solid rgba(192,57,43,0.35)',boxShadow:'0 1px 4px rgba(0,0,0,0.06)',borderRadius:8,padding:'12px 14px',marginBottom:8}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
@@ -1234,7 +1252,7 @@ function DoorCard({door,index,onEdit,onRemove}) {
           </div>
           <div style={{fontSize:12,color:'var(--text-muted)',lineHeight:1.6}}>{summarizeDoor(door)}</div>
           {door.notes&&<div style={{marginTop:4,fontSize:11,color:'var(--text-muted)',fontStyle:'italic'}}>"{door.notes}"</div>}
-          {door.photos?.length>0&&<div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>{door.photos.map((p,i)=><img key={i} src={p} alt="" style={{width:56,height:44,objectFit:'cover',borderRadius:4,border:'1px solid var(--border)'}}/>)}</div>}
+          {door.photos?.length>0&&<div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>{door.photos.map((p,i)=><img key={i} src={p} alt="" onClick={onPhotoClick?()=>onPhotoClick(p):undefined} style={{width:onPhotoClick?80:56,height:onPhotoClick?64:44,objectFit:'cover',borderRadius:4,border:`1.5px solid ${onPhotoClick?'var(--blue)':'var(--border)'}`,cursor:onPhotoClick?'zoom-in':'default',transition:'transform 0.1s'}} onMouseEnter={e=>{if(onPhotoClick)e.currentTarget.style.transform='scale(1.05)'}} onMouseLeave={e=>{if(onPhotoClick)e.currentTarget.style.transform='scale(1)'}}/>)}</div>}
         </div>
         <div style={{display:'flex',gap:6,flexShrink:0}}>
           <button className="btn-outline" onClick={()=>onEdit(index)} style={{padding:'6px 12px',fontSize:13}}>Edit</button>
@@ -2051,6 +2069,10 @@ export default function App() {
   // We track this at the app level so it persists even if you switch rooms.
   // It stores the extracted carry fields from the most recently saved item.
   const [lastOptions,setLastOptions]=useState(null)
+  // ── Photo lightbox ──────────────────────────────────────────────────────────
+  const [lightboxSrc,setLightboxSrc]=useState(null)
+  // ── Track original photo URLs so we don't re-upload them in final measurement ──
+  const [originalPhotoUrls,setOriginalPhotoUrls]=useState(new Set())
 
   // ── Final Measurement mode ─────────────────────────────────────────────────
   const [isFinalMeasurement,setIsFinalMeasurement]=useState(false)
@@ -2088,6 +2110,10 @@ export default function App() {
         // Store the previous data — estimator can choose to load it
         setJobInfo(f=>({...f,_previousEstimate:d.estimateData,_previousEstimateDate:d.createdAt}))
         setPrevEstimateDate(d.createdAt)
+        // Collect all original photo URLs so we don't re-upload them in final measurement
+        const origPhotos=new Set()
+        ;(d.estimateData.rooms||[]).forEach(r=>(r.items||[]).forEach(it=>(it.photos||[]).forEach(p=>origPhotos.add(p))))
+        setOriginalPhotoUrls(origPhotos)
       }
     }catch(e){setLoadPreviousError(e.message)}
     finally{setLoadingPrevious(false)}
@@ -2150,6 +2176,8 @@ export default function App() {
       for(const room of rooms){
         for(const item of room.items){
           for(const rawUrl of(item.photos||[])){
+            // Skip photos that were in the original estimate — no re-uploading duplicates
+            if(isFinalMeasurement&&originalPhotoUrls.has(rawUrl))continue
             const rn=sanitize(room.name||'Unknown Room')
             rc[rn]=(rc[rn]||0)+1
             const cnt=rc[rn]
@@ -2341,8 +2369,8 @@ export default function App() {
                     ?<DoorForm key={idx} initial={item} onSave={saveItem} onCancel={()=>setEditInfo(null)} prevOptions={null}/>
                     :<WindowForm key={idx} initial={item} onSave={saveItem} onCancel={()=>setEditInfo(null)} prevOptions={null}/>
                   return item.itemType==='door'
-                    ?<DoorCard key={idx} door={item} index={num-1} onEdit={()=>{setAddForm(null);setEditInfo({roomId:room.id,itemIndex:idx})}} onRemove={()=>removeItem(room.id,idx)}/>
-                    :<WindowCard key={idx} win={item} index={num-1} onEdit={()=>{setAddForm(null);setEditInfo({roomId:room.id,itemIndex:idx})}} onRemove={()=>removeItem(room.id,idx)}/>
+                    ?<DoorCard key={idx} door={item} index={num-1} onEdit={()=>{setAddForm(null);setEditInfo({roomId:room.id,itemIndex:idx})}} onRemove={()=>removeItem(room.id,idx)} onPhotoClick={isFinalMeasurement?setLightboxSrc:undefined}/>
+                    :<WindowCard key={idx} win={item} index={num-1} onEdit={()=>{setAddForm(null);setEditInfo({roomId:room.id,itemIndex:idx})}} onRemove={()=>removeItem(room.id,idx)} onPhotoClick={isFinalMeasurement?setLightboxSrc:undefined}/>
                 })}
                 {addForm?.roomId===room.id&&!editInfo&&(
                   addForm.type==='door'
@@ -2388,8 +2416,8 @@ export default function App() {
               <div key={room.id} style={{marginBottom:16}}>
                 <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:13,color:'var(--red)',letterSpacing:'0.08em',marginBottom:8,textTransform:'uppercase'}}>{room.name||'Unnamed Room'}</div>
                 {room.items.map((item,idx)=>{const num=n++;return item.itemType==='door'
-                  ?<DoorCard key={idx} door={item} index={num-1} onEdit={()=>{setStep('windows');setTimeout(()=>setEditInfo({roomId:room.id,itemIndex:idx}),50)}} onRemove={()=>removeItem(room.id,idx)}/>
-                  :<WindowCard key={idx} win={item} index={num-1} onEdit={()=>{setStep('windows');setTimeout(()=>setEditInfo({roomId:room.id,itemIndex:idx}),50)}} onRemove={()=>removeItem(room.id,idx)}/>})}
+                  ?<DoorCard key={idx} door={item} index={num-1} onEdit={()=>{setStep('windows');setTimeout(()=>setEditInfo({roomId:room.id,itemIndex:idx}),50)}} onRemove={()=>removeItem(room.id,idx)} onPhotoClick={isFinalMeasurement?setLightboxSrc:undefined}/>
+                  :<WindowCard key={idx} win={item} index={num-1} onEdit={()=>{setStep('windows');setTimeout(()=>setEditInfo({roomId:room.id,itemIndex:idx}),50)}} onRemove={()=>removeItem(room.id,idx)} onPhotoClick={isFinalMeasurement?setLightboxSrc:undefined}/>})}
               </div>
             ))})()}
             <div style={{display:'flex',flexDirection:'column',gap:12,marginTop:8}}>
@@ -2405,7 +2433,7 @@ export default function App() {
                   <div style={{color:'var(--text-muted)',fontSize:13,marginTop:4}}>{isFinalMeasurement?'Final Measurement.pdf':'Estimate Notes.pdf'} uploaded to <strong>{jobInfo.jobName}</strong>.</div>
                 </div>
               )}
-              <button className="btn-outline" style={{width:'100%',fontSize:14,padding:12}} onClick={()=>{setStep('job');setJobInfo({customerName:'',jobId:'',jobName:'',address:'',estimator:'',notes:''});setRooms([newRoom()]);setSubmitted(false);setLastOptions(null);setIsFinalMeasurement(false);setPrevEstimateDate(null);setLoadPreviousError(null)}}>Start New Estimate</button>
+              <button className="btn-outline" style={{width:'100%',fontSize:14,padding:12}} onClick={()=>{setStep('job');setJobInfo({customerName:'',jobId:'',jobName:'',address:'',estimator:'',notes:''});setRooms([newRoom()]);setSubmitted(false);setLastOptions(null);setIsFinalMeasurement(false);setPrevEstimateDate(null);setLoadPreviousError(null);setOriginalPhotoUrls(new Set())}}>Start New Estimate</button>
             </div>
           </div>
         )}
