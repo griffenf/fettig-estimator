@@ -611,14 +611,6 @@ function CarryOverBanner({ prevItem, onApply, onDismiss }) {
         </div>
       </div>
     </div>
-    {/* ── Photo Lightbox Overlay ── */}
-    {lightboxSrc&&(
-      <div onClick={()=>setLightboxSrc(null)} style={{position:'fixed',inset:0,zIndex:9999,background:'rgba(0,0,0,0.88)',display:'flex',alignItems:'center',justifyContent:'center',cursor:'zoom-out'}}>
-        <img src={lightboxSrc} alt="" style={{maxWidth:'94vw',maxHeight:'92vh',objectFit:'contain',borderRadius:8,boxShadow:'0 8px 48px rgba(0,0,0,0.8)'}}/>
-        <div style={{position:'absolute',top:16,right:20,color:'#fff',fontSize:28,fontWeight:700,cursor:'pointer',lineHeight:1}} onClick={()=>setLightboxSrc(null)}>✕</div>
-      </div>
-    )}
-  </>
   )
 }
 
