@@ -1189,10 +1189,11 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
       const gap=8
       const perRow=Math.min(Math.max(photos.length,1),2)
       const rawPhotoW=Math.floor((availW-(perRow-1)*gap)/perRow)
-      const photoH=Math.min(Math.round(rawPhotoW*0.75),200) // cap at 200pt tall
-      const photoW=Math.round(photoH/0.75)                  // re-derive width from capped height
-      const photoRows=photos.length>0?Math.ceil(photos.length/perRow):0
-      const photosH=photos.length>0?photoRows*(photoH+gap)+12:0
+      const photoH=Math.min(Math.round(rawPhotoW*0.75),200) // preferred max 200pt tall
+      const photoW=Math.round(photoH/0.75)
+      const photoRowCount=photos.length>0?Math.ceil(photos.length/perRow):0
+      const photosH=photos.length>0?photoRowCount*(photoH+gap)+12:0
+      // Total height if photos render at preferred size; render step will shrink if needed
       const itemTotalH=roomBannerH+titleH+fieldsH+notesH+photosH+20
 
       const pageContentH=pH-80-40 // usable height (top 40 + bottom footer 40)
@@ -1244,24 +1245,36 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
         y+=12
       }
 
-      // ── Render photos (sized to stay on same page, capped height) ─────────
+      // ── Render photos — always on same page, shrink to fit if needed ────────
       if(photos.length>0){
         y+=6
-        // Center each row of photos on the page
-        const totalRowW=(n)=>n*photoW+(n-1)*gap
+        // How much vertical space remains on this page above the footer?
+        const remainingY=pH-60-y
+        const photoRows=Math.ceil(photos.length/perRow)
+        // Ideal height uses the pre-calculated photoH; shrink if it won't fit
+        const idealTotalH=photoRows*(photoH+gap)
+        let finalPhotoH=photoH
+        let finalPhotoW=photoW
+        if(idealTotalH>remainingY&&remainingY>20){
+          // Shrink proportionally so all rows fit in remaining space
+          const rowH=Math.max(Math.floor((remainingY-(photoRows-1)*gap)/photoRows),20)
+          finalPhotoH=rowH
+          finalPhotoW=Math.round(rowH/0.75)
+        }
+        // Center each row on the page
+        const totalRowW=(n)=>n*finalPhotoW+(n-1)*gap
         let col=0,rowStart=0
         for(let i=0;i<photos.length;i++){
           if(col===0){
-            // Calculate how many photos are in this row
             const inThisRow=Math.min(perRow,photos.length-i)
             rowStart=M+(availW-totalRowW(inThisRow))/2
           }
-          const px=rowStart+col*(photoW+gap)
-          try{ doc.addImage(photos[i],'JPEG',px,y,photoW,photoH) }catch(e){/* skip */}
+          const px=rowStart+col*(finalPhotoW+gap)
+          try{ doc.addImage(photos[i],'JPEG',px,y,finalPhotoW,finalPhotoH) }catch(e){/* skip */}
           col++
-          if(col>=perRow){col=0;y+=photoH+gap}
+          if(col>=perRow){col=0;y+=finalPhotoH+gap}
         }
-        if(col>0)y+=photoH+gap
+        if(col>0)y+=finalPhotoH+gap
         y+=4
       }
 
