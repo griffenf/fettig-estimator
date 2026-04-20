@@ -18,13 +18,23 @@ module.exports = async function handler(req, res) {
   const protocol = host.includes('localhost') ? 'http' : 'https'
 
   async function pave(query) {
-    const r = await fetch('https://api.jobtread.com/pave', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query })
-    })
-    const text = await r.text()
-    try { return JSON.parse(text) } catch { throw new Error(`Pave: ${text.slice(0, 200)}`) }
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 25000) // 25s timeout
+    try {
+      const r = await fetch('https://api.jobtread.com/pave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+        signal: controller.signal,
+      })
+      const text = await r.text()
+      try { return JSON.parse(text) } catch { throw new Error(`Pave: ${text.slice(0, 200)}`) }
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error('JobTread API timed out — please try again')
+      throw e
+    } finally {
+      clearTimeout(timeout)
+    }
   }
 
   // Shared upload helper — stores file in pdf.js temp store, then uploads to JobTread
@@ -32,11 +42,18 @@ module.exports = async function handler(req, res) {
     const fileId = Date.now().toString(36) + Math.random().toString(36).slice(2)
     const publicUrl = `${protocol}://${host}/api/pdf?id=${fileId}`
 
-    await fetch(`${protocol}://${host}/api/pdf`, {
-      method: 'PUT',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ id: fileId, pdfBase64: base64, mimeType: mime })
-    })
+    const putController = new AbortController()
+    const putTimeout = setTimeout(() => putController.abort(), 30000)
+    try {
+      await fetch(`${protocol}://${host}/api/pdf`, {
+        method: 'PUT',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id: fileId, pdfBase64: base64, mimeType: mime }),
+        signal: putController.signal,
+      })
+    } finally {
+      clearTimeout(putTimeout)
+    }
 
     const uploadReq = await pave({
       '$': { grantKey },
@@ -119,8 +136,15 @@ module.exports = async function handler(req, res) {
 
       if (!jsonFile) return res.status(200).json({ estimateData: null })
 
-      // Download the JSON from the CDN URL
-      const dlRes = await fetch(jsonFile.url)
+      // Download the JSON from the CDN URL (with timeout)
+      const cdnController = new AbortController()
+      const cdnTimeout = setTimeout(() => cdnController.abort(), 15000)
+      let dlRes
+      try {
+        dlRes = await fetch(jsonFile.url, { signal: cdnController.signal })
+      } finally {
+        clearTimeout(cdnTimeout)
+      }
       if (!dlRes.ok) throw new Error(`Failed to download estimate data: ${dlRes.status}`)
 
       const text = await dlRes.text()
