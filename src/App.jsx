@@ -818,9 +818,14 @@ function buildWindowPDFRows(w,orig=null) {
   const norm=(v)=>{if(v===undefined||v===null)return '';return String(v)}
   const chk=(key,val)=>{
     if(!orig)return false
-    // If the key was never set in the original, don't flag as changed
     if(!(key in orig))return false
     return norm(orig[key])!==norm(val)
+  }
+  // chkBool: for boolean fields stored as true/false — compare truthiness directly
+  const chkBool=(key,val)=>{
+    if(!orig)return false
+    if(!(key in orig))return false
+    return !!orig[key]!==!!val
   }
   const chkMeas=(kv,kf,val,frac)=>{
     if(!orig)return false
@@ -832,8 +837,6 @@ function buildWindowPDFRows(w,orig=null) {
     b:bl!=null?{l:bl,v:String(bv??''),changed:bKey?chk(bKey,bv):false}:null})
   const single=(l,v,key)=>R.push({type:'single',l,v:String(v??''),changed:key?chk(key,v):false})
   const flag=(l)=>R.push({type:'flag',label:l})
-
-  if(w.insert) flag('INSERT WINDOW')
 
   sec('Window')
   const wideStr=w.numberWide>1?`${w.numberWide} Wide`:'1 Wide'
@@ -931,10 +934,13 @@ function buildWindowPDFRows(w,orig=null) {
 
   if(w.cutSiding||w.takeDownSiding) {
     sec('Additional')
-    if(w.cutSiding&&w.takeDownSiding) pair('Cut Siding','YES','Take Down Siding','YES','cutSiding','takeDownSiding')
-    else if(w.cutSiding) single('Cut Siding','YES','cutSiding')
-    else single('Take Down Siding','YES','takeDownSiding')
+    if(w.cutSiding&&w.takeDownSiding) R.push({type:'pair',
+      a:{l:'Cut Siding',v:'YES',changed:chkBool('cutSiding',w.cutSiding)},
+      b:{l:'Take Down Siding',v:'YES',changed:chkBool('takeDownSiding',w.takeDownSiding)}})
+    else if(w.cutSiding) R.push({type:'single',l:'Cut Siding',v:'YES',changed:chkBool('cutSiding',w.cutSiding)})
+    else R.push({type:'single',l:'Take Down Siding',v:'YES',changed:chkBool('takeDownSiding',w.takeDownSiding)})
   }
+  if(w.insert) R.push({type:'flag',label:'INSERT WINDOW'})
   return R
 }
 
@@ -946,6 +952,11 @@ function buildDoorPDFRows(d,orig=null) {
     if(!orig)return false
     if(!(key in orig))return false
     return norm(orig[key])!==norm(val)
+  }
+  const chkBool=(key,val)=>{
+    if(!orig)return false
+    if(!(key in orig))return false
+    return !!orig[key]!==!!val
   }
   const pair=(al,av,bl,bv,aKey,bKey)=>R.push({type:'pair',
     a:{l:al,v:String(av??''),changed:aKey?chk(aKey,av):false},
@@ -961,7 +972,7 @@ function buildDoorPDFRows(d,orig=null) {
     return `${norm(orig[kv])}${norm(orig[kf])}`!==`${norm(val)}${norm(frac)}`
   }
 
-  if(d.insert) flag('INSERT DOOR')
+  if(d.insert) R.push({type:'flag',label:'INSERT DOOR'})  // Note: insert is display-only, no change tracking needed
 
   sec('Door')
   // panelCount is numeric — compare as numbers
@@ -1057,9 +1068,11 @@ function buildDoorPDFRows(d,orig=null) {
 
   if(d.cutSiding||d.takeDownSiding) {
     sec('Additional')
-    if(d.cutSiding&&d.takeDownSiding) pair('Cut Siding','YES','Take Down Siding','YES','cutSiding','takeDownSiding')
-    else if(d.cutSiding) single('Cut Siding','YES','cutSiding')
-    else single('Take Down Siding','YES')
+    if(d.cutSiding&&d.takeDownSiding) R.push({type:'pair',
+      a:{l:'Cut Siding',v:'YES',changed:chkBool('cutSiding',d.cutSiding)},
+      b:{l:'Take Down Siding',v:'YES',changed:chkBool('takeDownSiding',d.takeDownSiding)}})
+    else if(d.cutSiding) R.push({type:'single',l:'Cut Siding',v:'YES',changed:chkBool('cutSiding',d.cutSiding)})
+    else R.push({type:'single',l:'Take Down Siding',v:'YES',changed:chkBool('takeDownSiding',d.takeDownSiding)})
   }
   return R
 }
@@ -1188,20 +1201,30 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
         y+=12
       }
 
-      // Add photos inline under each item
-      const photos=item.photos||[]
+      // Add photos — sized to fill available width, all on same page as item
+      const photos=(item.photos||[]).filter(Boolean)
       if(photos.length>0){
-        y+=4
-        const photoH=72,photoW=96,gap=6
-        let px=cX
+        y+=8
+        const availW=W-M*2
+        // Size photos to fit all on one row if ≤3, else two rows
+        const perRow=Math.min(photos.length,3)
+        const gap=8
+        const photoW=Math.floor((availW-(perRow-1)*gap)/perRow)
+        const photoH=Math.round(photoW*0.75) // 4:3 aspect
+        const rows=Math.ceil(photos.length/perRow)
+        const totalPhotoH=rows*(photoH+gap)
+        // If photos won't fit on remaining page, start fresh page
+        if(y+totalPhotoH>pH-60){addFooter();doc.addPage();y=40}
+        let px=M,row=0,col=0
         for(const photo of photos){
           try{
-            if(px+photoW>W-M){px=cX;y+=photoH+gap}
             doc.addImage(photo,'JPEG',px,y,photoW,photoH)
-            px+=photoW+gap
-          }catch(e){/* skip unrenderable photo */}
+          }catch(e){/* skip unrenderable */}
+          col++;px+=photoW+gap
+          if(col>=perRow){col=0;px=M;row++;y+=photoH+gap}
         }
-        y+=photoH+8
+        if(col>0)y+=photoH+gap // finish partial row
+        y+=4
       }
 
       y+=10;itemNum++
@@ -2238,11 +2261,12 @@ export default function App() {
           // to identify each window visually. Full photos are already on JobTread.
           const compressThumb=async(dataUrl)=>new Promise(resolve=>{
             const img=new Image();img.onload=()=>{
-              const maxPx=120,scale=Math.min(1,maxPx/Math.max(img.width,img.height))
+              // 600px at 85% quality — large enough to see details in lightbox (~30-60KB each)
+              const maxPx=600,scale=Math.min(1,maxPx/Math.max(img.width,img.height))
               const c=document.createElement('canvas')
               c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale)
               c.getContext('2d').drawImage(img,0,0,c.width,c.height)
-              resolve(c.toDataURL('image/jpeg',0.5))
+              resolve(c.toDataURL('image/jpeg',0.85))
             };img.onerror=()=>resolve(null);img.src=dataUrl
           })
           const roomsWithThumbs=await Promise.all(rooms.map(async r=>({
