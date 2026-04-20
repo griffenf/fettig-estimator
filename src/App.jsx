@@ -809,6 +809,7 @@ function summarizeDoor(d) {
 // ─── PDF Row Builders ─────────────────────────────────────────────────────────
 
 function buildWindowPDFRows(w,orig=null) {
+  const cfg=WIN[w.style]||{}
   const R=[]
   const sec=(l)=>R.push({type:'section',label:l})
   // changed: marks a field as changed vs original — only when orig exists and value differs
@@ -894,10 +895,22 @@ function buildWindowPDFRows(w,orig=null) {
     }
   }
 
-  if(w.hardwareColor||w.screenColor||w.screenMesh) {
-    sec('Hardware & Screen')
-    if(w.hardwareColor||w.screenColor) pair('Hardware Color',w.hardwareColor||'—','Screen Color',w.screenColor||'—','hardwareColor','screenColor')
-    if(w.screenMesh) single('Screen Mesh',w.screenMesh,'screenMesh')
+  // Only show hardware/screen if the window type actually supports them (per WIN config)
+  // sc:0 means exterior screen (no screen color field); sm:0 means no screen at all
+  if(cfg.hw||cfg.sm) {
+    const showHw=cfg.hw&&(w.hardwareColor||w.screenColor||w.screenMesh)
+    const showSc=cfg.sc&&w.screenColor  // sc:1 = interior screen color shown
+    const showSm=cfg.sm&&w.screenMesh
+    if(showHw||showSc||showSm) {
+      sec('Hardware & Screen')
+      // Hardware color: show if window has hardware
+      // Screen color: only show if window has interior screen (sc:1) — Double Hung/Slider have exterior screen (sc:0) so no color shown
+      if(cfg.hw&&w.hardwareColor) {
+        if(cfg.sc&&w.screenColor) pair('Hardware Color',w.hardwareColor||'—','Screen Color',w.screenColor||'—','hardwareColor','screenColor')
+        else single('Hardware Color',w.hardwareColor,'hardwareColor')
+      }
+      if(showSm) single('Screen Mesh',w.screenMesh,'screenMesh')
+    }
   }
 
   if(w.jambDepth||w.jambType||w.casingWidth||w.casingType||w.casingStyle||w.lpTrimColor) {
@@ -906,7 +919,14 @@ function buildWindowPDFRows(w,orig=null) {
     const cwChanged=chkMeas('casingWidth','casingWidthFrac',w.casingWidth,w.casingWidthFrac)
     R.push({type:'pair',a:{l:'Jamb Depth',v:w.jambDepth?fmtMeasurement(w.jambDepth,w.jambDepthFrac):'—',changed:jdChanged},b:{l:'Jamb Type',v:w.jambType?(w.jambType==='Other'?w.jambTypeOther||'Other':w.jambType):'—',changed:chk('jambType',w.jambType)}})
     R.push({type:'pair',a:{l:'Casing Width',v:w.casingWidth?fmtMeasurement(w.casingWidth,w.casingWidthFrac):'—',changed:cwChanged},b:{l:'Casing Type',v:w.casingType?(w.casingType==='Other'?w.casingTypeOther||'Other':w.casingType):'—',changed:chk('casingType',w.casingType)}})
-    if(w.casingStyle||w.lpTrimColor) pair('Casing Style',w.casingStyle||'—','LP Trim Color',w.lpTrimColor||'—','casingStyle','lpTrimColor')
+    if(w.casingStyle||w.lpTrimColor) {
+      // Only flag lpTrimColor as changed if it's actually set in either version
+      const lpChanged=orig?((w.lpTrimColor||'')!==(orig.lpTrimColor||'')):false
+      R.push({type:'pair',
+        a:{l:'Casing Style',v:w.casingStyle||'—',changed:chk('casingStyle',w.casingStyle)},
+        b:{l:'LP Trim Color',v:w.lpTrimColor||'—',changed:lpChanged&&!!(w.lpTrimColor||orig?.lpTrimColor)}
+      })
+    }
   }
 
   if(w.cutSiding||w.takeDownSiding) {
@@ -1026,7 +1046,13 @@ function buildDoorPDFRows(d,orig=null) {
     const cwChanged=chkMeas('casingWidth','casingWidthFrac',d.casingWidth,d.casingWidthFrac)
     R.push({type:'pair',a:{l:'Jamb Depth',v:d.jambDepth?fmtMeasurement(d.jambDepth,d.jambDepthFrac):'—',changed:jdChanged},b:{l:'Jamb Type',v:d.jambType?(d.jambType==='Other'?d.jambTypeOther||'Other':d.jambType):'—',changed:chk('jambType',d.jambType)}})
     R.push({type:'pair',a:{l:'Casing Width',v:d.casingWidth?fmtMeasurement(d.casingWidth,d.casingWidthFrac):'—',changed:cwChanged},b:{l:'Casing Type',v:d.casingType?(d.casingType==='Other'?d.casingTypeOther||'Other':d.casingType):'—',changed:chk('casingType',d.casingType)}})
-    if(d.casingStyle||d.lpTrimColor) pair('Casing Style',d.casingStyle||'—','LP Trim Color',d.lpTrimColor||'—','casingStyle','lpTrimColor')
+    if(d.casingStyle||d.lpTrimColor) {
+      const lpChanged=orig?((d.lpTrimColor||'')!==(orig.lpTrimColor||'')):false
+      R.push({type:'pair',
+        a:{l:'Casing Style',v:d.casingStyle||'—',changed:chk('casingStyle',d.casingStyle)},
+        b:{l:'LP Trim Color',v:d.lpTrimColor||'—',changed:lpChanged&&!!(d.lpTrimColor||orig?.lpTrimColor)}
+      })
+    }
   }
 
   if(d.cutSiding||d.takeDownSiding) {
@@ -1162,6 +1188,22 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
         y+=12
       }
 
+      // Add photos inline under each item
+      const photos=item.photos||[]
+      if(photos.length>0){
+        y+=4
+        const photoH=72,photoW=96,gap=6
+        let px=cX
+        for(const photo of photos){
+          try{
+            if(px+photoW>W-M){px=cX;y+=photoH+gap}
+            doc.addImage(photo,'JPEG',px,y,photoW,photoH)
+            px+=photoW+gap
+          }catch(e){/* skip unrenderable photo */}
+        }
+        y+=photoH+8
+      }
+
       y+=10;itemNum++
     })
   })
@@ -1226,7 +1268,7 @@ function CustomerJobSearch({onSelect}) {
 
 // ─── Item Cards ───────────────────────────────────────────────────────────────
 
-function WindowCard({win,index,onEdit,onRemove,onPhotoClick}) {
+function WindowCard({win,index,onEdit,onRemove,onPhotoClick,finalMode}) {
   return(
     <div style={{background:'var(--surface)',border:'1.5px solid var(--border)',boxShadow:'0 1px 4px rgba(0,0,0,0.06)',borderRadius:8,padding:'12px 14px',marginBottom:8}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
@@ -1237,6 +1279,13 @@ function WindowCard({win,index,onEdit,onRemove,onPhotoClick}) {
             {parseInt(win.qty)>1&&<span style={{color:'var(--text-muted)',fontSize:13}}>× {win.qty}</span>}
           </div>
           <div style={{fontSize:12,color:'var(--text-muted)',lineHeight:1.6}}>{summarizeWindow(win)}</div>
+          {finalMode&&(win.width||win.height)&&(
+            <div style={{marginTop:6,padding:'6px 10px',background:'rgba(74,144,217,0.08)',borderRadius:6,display:'flex',gap:16,alignItems:'center',flexWrap:'wrap'}}>
+              {win.width&&<div><span style={{fontSize:10,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.06em'}}>W </span><span style={{fontSize:18,fontWeight:900,color:'var(--charcoal)',letterSpacing:'-0.02em'}}>{fmtMeasurement(win.width,win.widthFrac)}</span></div>}
+              {win.height&&win.numberHigh!==2&&<div><span style={{fontSize:10,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.06em'}}>H </span><span style={{fontSize:18,fontWeight:900,color:'var(--charcoal)',letterSpacing:'-0.02em'}}>{fmtMeasurement(win.height,win.heightFrac)}</span></div>}
+              {win.numberHigh===2&&win.overallHeight&&<div><span style={{fontSize:10,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.06em'}}>H </span><span style={{fontSize:18,fontWeight:900,color:'var(--charcoal)',letterSpacing:'-0.02em'}}>{fmtMeasurement(win.overallHeight,win.overallHeightFrac)}</span></div>}
+            </div>
+          )}
           {win.notes&&<div style={{marginTop:4,fontSize:11,color:'var(--text-muted)',fontStyle:'italic'}}>"{win.notes}"</div>}
           {win.photos?.length>0&&<div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>{win.photos.map((p,i)=><img key={i} src={p} alt="" onClick={onPhotoClick?()=>onPhotoClick(p):undefined} style={{width:onPhotoClick?80:56,height:onPhotoClick?64:44,objectFit:'cover',borderRadius:4,border:`1.5px solid ${onPhotoClick?'var(--blue)':'var(--border)'}`,cursor:onPhotoClick?'zoom-in':'default',transition:'transform 0.1s'}} onMouseEnter={e=>{if(onPhotoClick)e.currentTarget.style.transform='scale(1.05)'}} onMouseLeave={e=>{if(onPhotoClick)e.currentTarget.style.transform='scale(1)'}}/>)}</div>}
         </div>
@@ -1249,7 +1298,7 @@ function WindowCard({win,index,onEdit,onRemove,onPhotoClick}) {
   )
 }
 
-function DoorCard({door,index,onEdit,onRemove,onPhotoClick}) {
+function DoorCard({door,index,onEdit,onRemove,onPhotoClick,finalMode}) {
   return(
     <div style={{background:'var(--surface)',border:'1.5px solid rgba(192,57,43,0.35)',boxShadow:'0 1px 4px rgba(0,0,0,0.06)',borderRadius:8,padding:'12px 14px',marginBottom:8}}>
       <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',gap:8}}>
@@ -1261,6 +1310,12 @@ function DoorCard({door,index,onEdit,onRemove,onPhotoClick}) {
             {parseInt(door.qty)>1&&<span style={{color:'var(--text-muted)',fontSize:13}}>× {door.qty}</span>}
           </div>
           <div style={{fontSize:12,color:'var(--text-muted)',lineHeight:1.6}}>{summarizeDoor(door)}</div>
+          {finalMode&&(door.callWidth||door.width)&&(
+            <div style={{marginTop:6,padding:'6px 10px',background:'rgba(74,144,217,0.08)',borderRadius:6,display:'flex',gap:16,alignItems:'center',flexWrap:'wrap'}}>
+              {door.callWidth?<div><span style={{fontSize:10,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.06em'}}>W </span><span style={{fontSize:18,fontWeight:900,color:'var(--charcoal)',letterSpacing:'-0.02em'}}>{door.callWidth}"</span></div>:door.width?<div><span style={{fontSize:10,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.06em'}}>W </span><span style={{fontSize:18,fontWeight:900,color:'var(--charcoal)',letterSpacing:'-0.02em'}}>{fmtMeasurement(door.width,door.widthFrac)}</span></div>:null}
+              {door.callHeight?<div><span style={{fontSize:10,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.06em'}}>H </span><span style={{fontSize:18,fontWeight:900,color:'var(--charcoal)',letterSpacing:'-0.02em'}}>{door.callHeight}"</span></div>:door.height?<div><span style={{fontSize:10,fontWeight:700,color:'var(--blue)',textTransform:'uppercase',letterSpacing:'0.06em'}}>H </span><span style={{fontSize:18,fontWeight:900,color:'var(--charcoal)',letterSpacing:'-0.02em'}}>{fmtMeasurement(door.height,door.heightFrac)}</span></div>:null}
+            </div>
+          )}
           {door.notes&&<div style={{marginTop:4,fontSize:11,color:'var(--text-muted)',fontStyle:'italic'}}>"{door.notes}"</div>}
           {door.photos?.length>0&&<div style={{display:'flex',gap:6,marginTop:8,flexWrap:'wrap'}}>{door.photos.map((p,i)=><img key={i} src={p} alt="" onClick={onPhotoClick?()=>onPhotoClick(p):undefined} style={{width:onPhotoClick?80:56,height:onPhotoClick?64:44,objectFit:'cover',borderRadius:4,border:`1.5px solid ${onPhotoClick?'var(--blue)':'var(--border)'}`,cursor:onPhotoClick?'zoom-in':'default',transition:'transform 0.1s'}} onMouseEnter={e=>{if(onPhotoClick)e.currentTarget.style.transform='scale(1.05)'}} onMouseLeave={e=>{if(onPhotoClick)e.currentTarget.style.transform='scale(1)'}}/>)}</div>}
         </div>
@@ -2179,13 +2234,27 @@ export default function App() {
       // and including them would make the JSON too large (Vercel 4.5MB limit)
       if(!isFinalMeasurement){
         try{
-          const roomsWithoutPhotos=rooms.map(r=>({
+          // Compress photos to tiny thumbnails (120px) for the JSON — just enough
+          // to identify each window visually. Full photos are already on JobTread.
+          const compressThumb=async(dataUrl)=>new Promise(resolve=>{
+            const img=new Image();img.onload=()=>{
+              const maxPx=120,scale=Math.min(1,maxPx/Math.max(img.width,img.height))
+              const c=document.createElement('canvas')
+              c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale)
+              c.getContext('2d').drawImage(img,0,0,c.width,c.height)
+              resolve(c.toDataURL('image/jpeg',0.5))
+            };img.onerror=()=>resolve(null);img.src=dataUrl
+          })
+          const roomsWithThumbs=await Promise.all(rooms.map(async r=>({
             ...r,
-            items:r.items.map(it=>({...it,photos:[]}))
-          }))
+            items:await Promise.all(r.items.map(async it=>({
+              ...it,
+              photos:await Promise.all((it.photos||[]).map(p=>compressThumb(p))).then(ts=>ts.filter(Boolean))
+            })))
+          })))
           const estimateData={
             jobInfo:{...jobInfo,_previousEstimate:undefined,_previousEstimateDate:undefined},
-            rooms:roomsWithoutPhotos,
+            rooms:roomsWithThumbs,
             savedAt:new Date().toISOString()
           }
           const saveRes=await fetch('/api/submit',{
@@ -2398,8 +2467,8 @@ export default function App() {
                     ?<DoorForm key={idx} initial={item} onSave={saveItem} onCancel={()=>setEditInfo(null)} prevOptions={null}/>
                     :<WindowForm key={idx} initial={item} onSave={saveItem} onCancel={()=>setEditInfo(null)} prevOptions={null}/>
                   return item.itemType==='door'
-                    ?<DoorCard key={idx} door={item} index={num-1} onEdit={()=>{setAddForm(null);setEditInfo({roomId:room.id,itemIndex:idx})}} onRemove={()=>removeItem(room.id,idx)} onPhotoClick={isFinalMeasurement?setLightboxSrc:undefined}/>
-                    :<WindowCard key={idx} win={item} index={num-1} onEdit={()=>{setAddForm(null);setEditInfo({roomId:room.id,itemIndex:idx})}} onRemove={()=>removeItem(room.id,idx)} onPhotoClick={isFinalMeasurement?setLightboxSrc:undefined}/>
+                    ?<DoorCard key={idx} door={item} index={num-1} onEdit={()=>{setAddForm(null);setEditInfo({roomId:room.id,itemIndex:idx})}} onRemove={()=>removeItem(room.id,idx)} onPhotoClick={isFinalMeasurement?setLightboxSrc:undefined} finalMode={isFinalMeasurement}/>
+                    :<WindowCard key={idx} win={item} index={num-1} onEdit={()=>{setAddForm(null);setEditInfo({roomId:room.id,itemIndex:idx})}} onRemove={()=>removeItem(room.id,idx)} onPhotoClick={isFinalMeasurement?setLightboxSrc:undefined} finalMode={isFinalMeasurement}/>
                 })}
                 {addForm?.roomId===room.id&&!editInfo&&(
                   addForm.type==='door'
@@ -2445,8 +2514,8 @@ export default function App() {
               <div key={room.id} style={{marginBottom:16}}>
                 <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:13,color:'var(--red)',letterSpacing:'0.08em',marginBottom:8,textTransform:'uppercase'}}>{room.name||'Unnamed Room'}</div>
                 {room.items.map((item,idx)=>{const num=n++;return item.itemType==='door'
-                  ?<DoorCard key={idx} door={item} index={num-1} onEdit={()=>{setStep('windows');setTimeout(()=>setEditInfo({roomId:room.id,itemIndex:idx}),50)}} onRemove={()=>removeItem(room.id,idx)} onPhotoClick={isFinalMeasurement?setLightboxSrc:undefined}/>
-                  :<WindowCard key={idx} win={item} index={num-1} onEdit={()=>{setStep('windows');setTimeout(()=>setEditInfo({roomId:room.id,itemIndex:idx}),50)}} onRemove={()=>removeItem(room.id,idx)} onPhotoClick={isFinalMeasurement?setLightboxSrc:undefined}/>})}
+                  ?<DoorCard key={idx} door={item} index={num-1} onEdit={()=>{setStep('windows');setTimeout(()=>setEditInfo({roomId:room.id,itemIndex:idx}),50)}} onRemove={()=>removeItem(room.id,idx)} onPhotoClick={isFinalMeasurement?setLightboxSrc:undefined} finalMode={isFinalMeasurement}/>
+                  :<WindowCard key={idx} win={item} index={num-1} onEdit={()=>{setStep('windows');setTimeout(()=>setEditInfo({roomId:room.id,itemIndex:idx}),50)}} onRemove={()=>removeItem(room.id,idx)} onPhotoClick={isFinalMeasurement?setLightboxSrc:undefined} finalMode={isFinalMeasurement}/>})}
               </div>
             ))})()}
             <div style={{display:'flex',flexDirection:'column',gap:12,marginTop:8}}>
