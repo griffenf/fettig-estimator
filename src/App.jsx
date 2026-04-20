@@ -2341,15 +2341,15 @@ export default function App() {
     try{
       // Upload directly to GCS — bypasses the 4.5MB serverless body limit entirely
       const uploadDirect=async(blob,fn,mt,folder)=>{
-        // Step 1: get a signed GCS URL from our API
+        // Step 1: get a signed GCS URL, passing size+mimeType so JobTread can create the slot
         const urlRes=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({action:'getUploadUrl',jobId:jobInfo.jobId,fileName:fn,folder})})
+          body:JSON.stringify({action:'getUploadUrl',jobId:jobInfo.jobId,fileName:fn,fileSize:blob.size,fileMimeType:mt,folder})})
         if(!urlRes.ok){const e=await urlRes.json().catch(()=>({}));throw new Error(e.error||`Failed to get upload URL for ${fn}`)}
         const {uploadRequestId,uploadUrl}=await urlRes.json()
-        // Step 2: PUT file directly to GCS (no size limit)
+        // Step 2: PUT file directly to GCS (no Vercel size limit)
         const gcsRes=await fetch(uploadUrl,{method:'PUT',headers:{'Content-Type':mt},body:blob})
         if(!gcsRes.ok)throw new Error(`GCS upload failed for ${fn}: ${gcsRes.status}`)
-        // Step 3: register the file with JobTread
+        // Step 3: register the uploaded file with JobTread
         const regRes=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({action:'registerFile',jobId:jobInfo.jobId,uploadRequestId,fileName:fn,targetFolder:folder})})
         if(!regRes.ok){const e=await regRes.json().catch(()=>({}));throw new Error(e.error||`Failed to register ${fn}`)}
