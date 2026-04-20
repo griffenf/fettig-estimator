@@ -1157,30 +1157,71 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
   }
 
   let itemNum=1
-  let firstItemOnPage=true
+  let firstItem=true
+
+  // Estimate height needed for an item's rows (without rendering)
+  const estimateRowsH=(rows)=>rows.reduce((h,r)=>{
+    if(r.type==='section')return h+14
+    if(r.type==='flag')return h+14
+    const changed=r.a?.changed||r.b?.changed||r.changed
+    return h+(changed?15:13)
+  },0)
+
   rooms.forEach((room,ri)=>{
     if(!room.items.length)return
     room.items.forEach((item,itemIdx)=>{
-      if(!firstItemOnPage){addFooter();doc.addPage();y=40}
-      firstItemOnPage=false
-
-      if(room.name){doc.setFillColor(...ORANGE);doc.rect(M,y-10,W-M*2,22,'F');doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...WHITE);doc.text(room.name.toUpperCase(),M+8,y+5);y+=24}
-
       const isDoor=item.itemType==='door'
-      // Find matching original item for change highlighting (same room index, same item index)
       const origRoom=originalRooms?.[ri]
       const origItem=origRoom?.items?.[itemIdx]||null
-      const rows=isDoor?buildDoorPDFRows(item,origItem):buildWindowPDFRows(item,origItem)
-      const hasChanges=origItem&&rows.some(r=>(r.a?.changed||r.b?.changed||r.changed))
+      const itemRows=isDoor?buildDoorPDFRows(item,origItem):buildWindowPDFRows(item,origItem)
+      const hasChanges=origItem&&itemRows.some(r=>(r.a?.changed||r.b?.changed||r.changed))
       const titleText=`${item.style}${isDoor?' (Patio Door)':''}${parseInt(item.qty)>1?` × ${item.qty}`:''}`
 
-      // Item number badge — gold if has changes, gray otherwise
+      // ── Calculate total height this item needs ────────────────────────────
+      const roomBannerH=room.name?24:0
+      const titleH=20
+      const fieldsH=estimateRowsH(itemRows)
+      const notesH=item.notes?16:0
+      const photos=(item.photos||[]).filter(Boolean)
+      // Photo layout: up to 3 per row, height = photoW * 0.75 capped so each photo
+      // is at most 120pt tall to keep items compact
+      const availW=W-M*2
+      const gap=8
+      const perRow=Math.min(Math.max(photos.length,1),3)
+      const rawPhotoW=Math.floor((availW-(perRow-1)*gap)/perRow)
+      const photoH=Math.min(Math.round(rawPhotoW*0.75),120) // cap at 120pt tall
+      const photoW=Math.round(photoH/0.75)                  // re-derive width from capped height
+      const photoRows=photos.length>0?Math.ceil(photos.length/perRow):0
+      const photosH=photos.length>0?photoRows*(photoH+gap)+12:0
+      const itemTotalH=roomBannerH+titleH+fieldsH+notesH+photosH+20
+
+      const pageContentH=pH-80-40 // usable height (top 40 + bottom footer 40)
+
+      // ── Page break logic ──────────────────────────────────────────────────
+      if(firstItem){
+        // First item: already have y set from job info section, just check it fits
+        // If item is taller than the full page, we'll just start it here and let it flow
+        firstItem=false
+      } else {
+        // Check if item fits on remaining page
+        const remaining=pH-60-y
+        if(itemTotalH>remaining){
+          addFooter();doc.addPage();y=40
+        }
+      }
+
+      // ── Render room banner ────────────────────────────────────────────────
+      if(room.name){
+        doc.setFillColor(...ORANGE);doc.rect(M,y-10,W-M*2,22,'F')
+        doc.setFont('helvetica','bold');doc.setFontSize(10);doc.setTextColor(...WHITE)
+        doc.text(room.name.toUpperCase(),M+8,y+5);y+=24
+      }
+
+      // ── Render item title ─────────────────────────────────────────────────
       const badgeColor=hasChanges?ORANGE:LGRAY
       doc.setFillColor(...badgeColor);doc.rect(M,y-10,28,22,'F')
       doc.setFont('helvetica','bold');doc.setFontSize(9);doc.setTextColor(...WHITE)
       doc.text(String(itemNum),M+14,y+4,{align:'center'})
-
-      // Title — set font first, measure, then draw; append [CHANGED] if needed
       doc.setFont('helvetica','bold');doc.setFontSize(11);doc.setTextColor(...CHARCOAL)
       doc.text(titleText,cX,y+4)
       if(hasChanges){
@@ -1190,8 +1231,10 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
       }
       y+=20
 
-      rows.forEach(row=>renderRow(row))
+      // ── Render fields ─────────────────────────────────────────────────────
+      itemRows.forEach(row=>renderRow(row))
 
+      // ── Render notes ──────────────────────────────────────────────────────
       if(item.notes){
         y+=4
         doc.setFont('helvetica','bold');doc.setFontSize(7.5);doc.setTextColor(...TEXTMD)
@@ -1201,29 +1244,16 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
         y+=12
       }
 
-      // Add photos — sized to fill available width, all on same page as item
-      const photos=(item.photos||[]).filter(Boolean)
+      // ── Render photos (sized to stay on same page, capped height) ─────────
       if(photos.length>0){
-        y+=8
-        const availW=W-M*2
-        // Size photos to fit all on one row if ≤3, else two rows
-        const perRow=Math.min(photos.length,3)
-        const gap=8
-        const photoW=Math.floor((availW-(perRow-1)*gap)/perRow)
-        const photoH=Math.round(photoW*0.75) // 4:3 aspect
-        const rows=Math.ceil(photos.length/perRow)
-        const totalPhotoH=rows*(photoH+gap)
-        // If photos won't fit on remaining page, start fresh page
-        if(y+totalPhotoH>pH-60){addFooter();doc.addPage();y=40}
-        let px=M,row=0,col=0
+        y+=6
+        let px=M,col=0
         for(const photo of photos){
-          try{
-            doc.addImage(photo,'JPEG',px,y,photoW,photoH)
-          }catch(e){/* skip unrenderable */}
+          try{ doc.addImage(photo,'JPEG',px,y,photoW,photoH) }catch(e){/* skip */}
           col++;px+=photoW+gap
-          if(col>=perRow){col=0;px=M;row++;y+=photoH+gap}
+          if(col>=perRow){col=0;px=M;y+=photoH+gap}
         }
-        if(col>0)y+=photoH+gap // finish partial row
+        if(col>0)y+=photoH+gap
         y+=4
       }
 
