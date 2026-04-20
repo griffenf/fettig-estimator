@@ -2345,10 +2345,10 @@ export default function App() {
         const urlRes=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({action:'getUploadUrl',jobId:jobInfo.jobId,fileName:fn,fileSize:blob.size,fileMimeType:mt,folder})})
         if(!urlRes.ok){const e=await urlRes.json().catch(()=>({}));throw new Error(e.error||`Failed to get upload URL for ${fn}`)}
-        const {uploadRequestId,uploadUrl}=await urlRes.json()
-        // Step 2: PUT file directly to GCS (no Vercel size limit)
-        const gcsRes=await fetch(uploadUrl,{method:'PUT',headers:{'Content-Type':mt},body:blob})
-        if(!gcsRes.ok)throw new Error(`GCS upload failed for ${fn}: ${gcsRes.status}`)
+        const {uploadRequestId,uploadUrl,uploadHeaders={}}=await urlRes.json()
+        // Step 2: PUT file directly to GCS — include all required signed headers
+        const gcsRes=await fetch(uploadUrl,{method:'PUT',headers:{'Content-Type':mt,...uploadHeaders},body:blob})
+        if(!gcsRes.ok){const t=await gcsRes.text().catch(()=>'');throw new Error(`GCS upload failed for ${fn}: ${gcsRes.status} ${t.slice(0,200)}`)}
         // Step 3: register the uploaded file with JobTread
         const regRes=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},
           body:JSON.stringify({action:'registerFile',jobId:jobInfo.jobId,uploadRequestId,fileName:fn,targetFolder:folder})})
