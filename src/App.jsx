@@ -1189,7 +1189,7 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
       const gap=8
       const perRow=Math.min(Math.max(photos.length,1),2)
       const rawPhotoW=Math.floor((availW-(perRow-1)*gap)/perRow)
-      const photoH=Math.min(Math.round(rawPhotoW*0.75),160) // cap at 160pt tall
+      const photoH=Math.min(Math.round(rawPhotoW*0.75),200) // cap at 200pt tall
       const photoW=Math.round(photoH/0.75)                  // re-derive width from capped height
       const photoRows=photos.length>0?Math.ceil(photos.length/perRow):0
       const photosH=photos.length>0?photoRows*(photoH+gap)+12:0
@@ -1247,11 +1247,19 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
       // ── Render photos (sized to stay on same page, capped height) ─────────
       if(photos.length>0){
         y+=6
-        let px=M,col=0
-        for(const photo of photos){
-          try{ doc.addImage(photo,'JPEG',px,y,photoW,photoH) }catch(e){/* skip */}
-          col++;px+=photoW+gap
-          if(col>=perRow){col=0;px=M;y+=photoH+gap}
+        // Center each row of photos on the page
+        const totalRowW=(n)=>n*photoW+(n-1)*gap
+        let col=0,rowStart=0
+        for(let i=0;i<photos.length;i++){
+          if(col===0){
+            // Calculate how many photos are in this row
+            const inThisRow=Math.min(perRow,photos.length-i)
+            rowStart=M+(availW-totalRowW(inThisRow))/2
+          }
+          const px=rowStart+col*(photoW+gap)
+          try{ doc.addImage(photos[i],'JPEG',px,y,photoW,photoH) }catch(e){/* skip */}
+          col++
+          if(col>=perRow){col=0;y+=photoH+gap}
         }
         if(col>0)y+=photoH+gap
         y+=4
