@@ -1,27 +1,41 @@
 module.exports = async function handler(req, res) {
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
+
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(500).json({ error: 'JOBTREAD_API_KEY not configured in Vercel.' })
+
   const { q } = req.query
   if (!q || q.trim().length < 2) return res.json({ customers: [] })
+
   async function pave(query) {
-    const r = await fetch('https://api.jobtread.com/pave', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ query })
-    })
-    const text = await r.text()
-    try { return JSON.parse(text) } catch { throw new Error(`Pave returned: ${text.slice(0, 300)}`) }
+    const controller = new AbortController()
+    const timeout = setTimeout(() => controller.abort(), 25000)
+    try {
+      const r = await fetch('https://api.jobtread.com/pave', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ query }),
+        signal: controller.signal,
+      })
+      const text = await r.text()
+      try { return JSON.parse(text) } catch { throw new Error(`Pave returned: ${text.slice(0, 300)}`) }
+    } catch (e) {
+      if (e.name === 'AbortError') throw new Error('Search timed out — please try again')
+      throw e
+    } finally {
+      clearTimeout(timeout)
+    }
   }
+
   try {
     const orgRes = await pave({
       '$': { grantKey },
-      currentGrant: {
-        user: { memberships: { nodes: { organization: { id: {}, name: {} } } } }
-      }
+      currentGrant: { user: { memberships: { nodes: { organization: { id: {}, name: {} } } } } }
     })
+
     const orgId = orgRes?.currentGrant?.user?.memberships?.nodes?.[0]?.organization?.id
     if (!orgId) return res.status(400).json({ error: 'Could not get organization ID.' })
+
     const searchRes = await pave({
       '$': { grantKey },
       organization: {
@@ -42,16 +56,22 @@ module.exports = async function handler(req, res) {
         }
       }
     })
+
     if (searchRes?.errors) return res.status(400).json({ error: searchRes.errors[0]?.message || 'Query error' })
+
     const customers = (searchRes?.organization?.accounts?.nodes || []).map(a => ({
-      id: a.id, name: a.name,
+      id: a.id,
+      name: a.name,
       jobs: {
         nodes: (a.jobs?.nodes || []).map(j => ({
-          id: j.id, name: j.name, status: j.status,
+          id: j.id,
+          name: j.name,
+          status: j.status,
           address: j.location?.address ? { street: j.location.address } : null
         }))
       }
     }))
+
     return res.status(200).json({ customers })
   } catch (err) {
     return res.status(500).json({ error: err.message })
