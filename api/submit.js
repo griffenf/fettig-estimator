@@ -1,3 +1,11 @@
+module.exports.config = {
+  api: {
+    bodyParser: {
+      sizeLimit: '50mb',
+    },
+  },
+}
+
 module.exports = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
@@ -57,54 +65,11 @@ module.exports = async function handler(req, res) {
 
   try {
 
-    // ── Action: get a signed GCS upload URL (browser uploads directly) ──────────
-    // This avoids routing large files (PDFs with photos) through the 4.5MB serverless limit
-    if (action === 'getUploadUrl') {
-      if (!jobId || !fileName) return res.status(400).json({ error: 'Missing jobId or fileName' })
-      const { fileSize, fileMimeType } = req.body
-
-      // size + type = direct upload path; JobTread returns a signed GCS PUT URL
-      const uploadReq = await pave({
-        '$': { grantKey },
-        createUploadRequest: {
-          '$': {
-            size: fileSize || 1,
-            type: fileMimeType || { fromName: fileName }
-          },
-          createdUploadRequest: { id: {}, url: {}, method: {} }
-        }
-      })
-
-      const { id: uploadRequestId, url: uploadUrl, method, headers: uploadHeaders } = uploadReq?.createUploadRequest?.createdUploadRequest || {}
-      if (!uploadRequestId || !uploadUrl) throw new Error(`Could not get upload URL for "${fileName}": ${JSON.stringify(uploadReq)}`)
-
-      // Return the required headers — GCS signed URLs may require specific headers (e.g. x-goog-content-length-range)
-      return res.status(200).json({ uploadRequestId, uploadUrl, method: method || 'PUT', uploadHeaders: uploadHeaders || {} })
-    }
-
-    // ── Action: register an already-uploaded file with JobTread ──────────────
-    if (action === 'registerFile') {
-      const { uploadRequestId, fileName: regFileName, targetFolder } = req.body
-      if (!jobId || !uploadRequestId || !regFileName) return res.status(400).json({ error: 'Missing required fields' })
-
-      const fileRes = await pave({
-        '$': { grantKey },
-        createFile: {
-          '$': { name: regFileName, targetId: jobId, targetType: 'job', uploadRequestId, folder: targetFolder || 'Estimate/Measurement Photos' },
-          createdFile: { id: {}, name: {} }
-        }
-      })
-
-      if (!fileRes?.createFile?.createdFile?.id)
-        throw new Error(`createFile failed for "${regFileName}": ${JSON.stringify(fileRes)}`)
-
-      return res.status(200).json({ success: true, fileId: fileRes.createFile.createdFile.id })
-    }
-
-    // ── Action: upload a single file (PDF or photo) — legacy small-file path ──
+    // ── Action: upload a single file (PDF or photo) ───────────────────────────
     if (action === 'uploadFile') {
       if (!jobId || !pdfBase64 || !fileName) return res.status(400).json({ error: 'Missing required fields' })
-      await uploadToJob(jobId, pdfBase64, fileName, mimeType || 'application/pdf', 'Estimate/Measurement Photos')
+      const folder = req.body.folder || 'Estimate/Measurement Photos'
+      await uploadToJob(jobId, pdfBase64, fileName, mimeType || 'application/pdf', folder)
       return res.status(200).json({ success: true })
     }
 
