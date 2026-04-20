@@ -52,13 +52,23 @@ function formatTime(startTime) {
 }
 
 async function pave(grantKey, query) {
-  const res = await fetch('https://api.jobtread.com/pave', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ query: { $: { grantKey }, ...query } }),
-  })
-  if (!res.ok) throw new Error(`JobTread API error: ${res.status}`)
-  return res.json()
+  const controller = new AbortController()
+  const timeout = setTimeout(() => controller.abort(), 25000)
+  try {
+    const res = await fetch('https://api.jobtread.com/pave', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ query: { $: { grantKey }, ...query } }),
+      signal: controller.signal,
+    })
+    if (!res.ok) throw new Error(`JobTread API error: ${res.status}`)
+    return res.json()
+  } catch (e) {
+    if (e.name === 'AbortError') throw new Error('Schedule API timed out — please refresh')
+    throw e
+  } finally {
+    clearTimeout(timeout)
+  }
 }
 
 // Pass 1: fetch lightweight task list for a given task type, paginated
@@ -172,6 +182,8 @@ function extractPhone(job) {
   }
   return null
 }
+
+module.exports.config = { api: { bodyParser: { sizeLimit: '50mb' } } }
 
 module.exports = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
