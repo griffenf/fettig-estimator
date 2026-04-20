@@ -848,7 +848,8 @@ function buildWindowPDFRows(w,orig=null) {
   if(w.configuration) single('Configuration',w.configuration,'configuration')
 
   sec('Measurements')
-  single('Measurement Type',w.measurementType||'Frame Size','measurementType')
+  const mtDisp=w.measurementType||'Frame Size', mtOrigDisp=orig?.measurementType||'Frame Size'
+  R.push({type:'single',l:'Measurement Type',v:mtDisp,changed:orig?mtDisp!==mtOrigDisp:false})
   if(w.numberHigh===2) {
     const ohChanged=chkMeas('overallHeight','overallHeightFrac',w.overallHeight,w.overallHeightFrac)
     const bhChanged=chkMeas('height','heightFrac',w.height,w.heightFrac)
@@ -867,22 +868,42 @@ function buildWindowPDFRows(w,orig=null) {
 
   if(w.numberHigh===2) {
     sec('Top Window')
+    // For 2-high fields: '' and 'Same as bottom' both mean "same as bottom" — treat as equivalent
+    const normSab=(v)=>(!v||v==='Same as bottom')?'same':v.toLowerCase().trim()
+    const chkSab=(key,val)=>orig?normSab(orig[key])!==normSab(val):false
     const ts=w.topWindowWidth===2?`${w.topLeftStyle||'—'} | ${w.topRightStyle||'—'}`:(w.topStyle||'—')
-    pair('Top Style',ts,'Top Facing',w.topFacing||'Same as bottom','topStyle','topFacing')
-    pair('Top Tempered',(w.topTempered&&w.topTempered!==w.tempered)?w.topTempered:'Same as bottom','Top Deco Glass',(w.topDecorativeGlass&&w.topDecorativeGlass!=='Same as bottom')?w.topDecorativeGlass:'Same as bottom','topTempered','topDecorativeGlass')
-    pair('Top Grille Type',(w.topGrilleType&&w.topGrilleType!=='Same as bottom')?w.topGrilleType:'Same as bottom','Top Grille Pattern',(w.topGrillePattern&&w.topGrillePattern!=='Same as bottom')?w.topGrillePattern:(w.topGrilleType==='None'?'N/A':'Same as bottom'),'topGrilleType','topGrillePattern')
+    const origTs=orig?.topWindowWidth===2?`${orig.topLeftStyle||'—'} | ${orig.topRightStyle||'—'}`:(orig?.topStyle||'—')
+    const topStyleChanged=orig?ts!==origTs:false
+    const topFacingDisp=w.topFacing||'Same as bottom'
+    const topFacingChanged=orig?normSab(orig.topFacing)!==normSab(w.topFacing):false
+    R.push({type:'pair',a:{l:'Top Style',v:ts,changed:topStyleChanged},b:{l:'Top Facing',v:topFacingDisp,changed:topFacingChanged}})
+    const topTempDisp=(w.topTempered&&w.topTempered!==w.tempered)?w.topTempered:'Same as bottom'
+    const topDecoDisp=(w.topDecorativeGlass&&w.topDecorativeGlass!=='Same as bottom')?w.topDecorativeGlass:'Same as bottom'
+    R.push({type:'pair',a:{l:'Top Tempered',v:topTempDisp,changed:chkSab('topTempered',w.topTempered)},b:{l:'Top Deco Glass',v:topDecoDisp,changed:chkSab('topDecorativeGlass',w.topDecorativeGlass)}})
+    const topGrilleTypeDisp=(w.topGrilleType&&w.topGrilleType!=='Same as bottom')?w.topGrilleType:'Same as bottom'
+    const topGrillePatDisp=(w.topGrillePattern&&w.topGrillePattern!=='Same as bottom')?w.topGrillePattern:(w.topGrilleType==='None'?'N/A':'Same as bottom')
+    R.push({type:'pair',a:{l:'Top Grille Type',v:topGrilleTypeDisp,changed:chkSab('topGrilleType',w.topGrilleType)},b:{l:'Top Grille Pattern',v:topGrillePatDisp,changed:chkSab('topGrillePattern',w.topGrillePattern)}})
   }
 
   sec('Color & Glass')
-  pair('Exterior Color',w.exteriorColor||'—','Interior Color',w.interiorColor||'—','exteriorColor','interiorColor')
-  pair('Pane',w.pane||'Double','Tempered',w.tempered||'No','pane','tempered')
-  pair('Glass Surface',w.glassSurface||'—','Decorative Glass',(w.decorativeGlass&&w.decorativeGlass!=='None')?w.decorativeGlass:'None','glassSurface','decorativeGlass')
+  const extDisp=w.exteriorColor||'—', extOrigDisp=orig?.exteriorColor||'—'
+  const intDisp=w.interiorColor||'—', intOrigDisp=orig?.interiorColor||'—'
+  R.push({type:'pair',a:{l:'Exterior Color',v:extDisp,changed:orig?extDisp!==extOrigDisp:false},b:{l:'Interior Color',v:intDisp,changed:orig?intDisp!==intOrigDisp:false}})
+  // pane/tempered: compare display values since '' and 'Double'/'No' are equivalent defaults
+  const paneDisp=w.pane||'Double', tempDisp=w.tempered||'No'
+  const paneOrigDisp=orig?.pane||'Double', tempOrigDisp=orig?.tempered||'No'
+  R.push({type:'pair',a:{l:'Pane',v:paneDisp,changed:orig?paneDisp!==paneOrigDisp:false},b:{l:'Tempered',v:tempDisp,changed:orig?tempDisp!==tempOrigDisp:false}})
+  const decoDisp=(w.decorativeGlass&&w.decorativeGlass!=='None')?w.decorativeGlass:'None'
+  const decoOrigDisp=(orig?.decorativeGlass&&orig.decorativeGlass!=='None')?orig.decorativeGlass:'None'
+  R.push({type:'pair',a:{l:'Glass Surface',v:w.glassSurface||'—',changed:chk('glassSurface',w.glassSurface)},b:{l:'Decorative Glass',v:decoDisp,changed:orig?decoDisp!==decoOrigDisp:false}})
 
   if(w.grilleType) {
     sec('Grille')
     const isMP=MULTI_PANE_STYLES.includes(w.style)
     if(isMP) {
-      pair('Grille Type',w.grilleType,'Pane Application',w.grillePaneApplication||'Both Panes','grilleType','grillePaneApplication')
+      const paneAppDisp=w.grillePaneApplication||'Both Panes'
+      const paneAppOrigDisp=orig?.grillePaneApplication||'Both Panes'
+      R.push({type:'pair',a:{l:'Grille Type',v:String(w.grilleType??''),changed:chk('grilleType',w.grilleType)},b:{l:'Pane Application',v:paneAppDisp,changed:orig?paneAppDisp!==paneAppOrigDisp:false}})
       if(w.grillePaneApplication==='Both Panes') pair('Top Pane Pattern',w.topPaneGrillePattern||'—','Bottom Pane Pattern',w.bottomPaneGrillePattern||'—','topPaneGrillePattern','bottomPaneGrillePattern')
       else if(w.grillePattern) single('Grille Pattern',w.grillePattern,'grillePattern')
     } else {
@@ -909,10 +930,18 @@ function buildWindowPDFRows(w,orig=null) {
       // Hardware color: show if window has hardware
       // Screen color: only show if window has interior screen (sc:1) — Double Hung/Slider have exterior screen (sc:0) so no color shown
       if(cfg.hw&&w.hardwareColor) {
-        if(cfg.sc&&w.screenColor) pair('Hardware Color',w.hardwareColor||'—','Screen Color',w.screenColor||'—','hardwareColor','screenColor')
-        else single('Hardware Color',w.hardwareColor,'hardwareColor')
+        const hwDisp=w.hardwareColor||'—', hwOrigDisp=orig?.hardwareColor||'—'
+        if(cfg.sc&&w.screenColor){
+          const scDisp=w.screenColor||'—', scOrigDisp=orig?.screenColor||'—'
+          R.push({type:'pair',a:{l:'Hardware Color',v:hwDisp,changed:orig?hwDisp!==hwOrigDisp:false},b:{l:'Screen Color',v:scDisp,changed:orig?scDisp!==scOrigDisp:false}})
+        } else {
+          R.push({type:'single',l:'Hardware Color',v:hwDisp,changed:orig?hwDisp!==hwOrigDisp:false})
+        }
       }
-      if(showSm) single('Screen Mesh',w.screenMesh,'screenMesh')
+      if(showSm){
+        const smDisp=w.screenMesh||'—', smOrigDisp=orig?.screenMesh||'—'
+        R.push({type:'single',l:'Screen Mesh',v:smDisp,changed:orig?smDisp!==smOrigDisp:false})
+      }
     }
   }
 
@@ -920,13 +949,17 @@ function buildWindowPDFRows(w,orig=null) {
     sec('Extension Jamb & Casing')
     const jdChanged=chkMeas('jambDepth','jambDepthFrac',w.jambDepth,w.jambDepthFrac)
     const cwChanged=chkMeas('casingWidth','casingWidthFrac',w.casingWidth,w.casingWidthFrac)
-    R.push({type:'pair',a:{l:'Jamb Depth',v:w.jambDepth?fmtMeasurement(w.jambDepth,w.jambDepthFrac):'—',changed:jdChanged},b:{l:'Jamb Type',v:w.jambType?(w.jambType==='Other'?w.jambTypeOther||'Other':w.jambType):'—',changed:chk('jambType',w.jambType)}})
-    R.push({type:'pair',a:{l:'Casing Width',v:w.casingWidth?fmtMeasurement(w.casingWidth,w.casingWidthFrac):'—',changed:cwChanged},b:{l:'Casing Type',v:w.casingType?(w.casingType==='Other'?w.casingTypeOther||'Other':w.casingType):'—',changed:chk('casingType',w.casingType)}})
+    const jambTypeDisp=w.jambType?(w.jambType==='Other'?w.jambTypeOther||'Other':w.jambType):'—'
+    const jambTypeOrigDisp=orig?.jambType?(orig.jambType==='Other'?orig.jambTypeOther||'Other':orig.jambType):'—'
+    const casingTypeDisp=w.casingType?(w.casingType==='Other'?w.casingTypeOther||'Other':w.casingType):'—'
+    const casingTypeOrigDisp=orig?.casingType?(orig.casingType==='Other'?orig.casingTypeOther||'Other':orig.casingType):'—'
+    R.push({type:'pair',a:{l:'Jamb Depth',v:w.jambDepth?fmtMeasurement(w.jambDepth,w.jambDepthFrac):'—',changed:jdChanged},b:{l:'Jamb Type',v:jambTypeDisp,changed:orig?jambTypeDisp!==jambTypeOrigDisp:false}})
+    R.push({type:'pair',a:{l:'Casing Width',v:w.casingWidth?fmtMeasurement(w.casingWidth,w.casingWidthFrac):'—',changed:cwChanged},b:{l:'Casing Type',v:casingTypeDisp,changed:orig?casingTypeDisp!==casingTypeOrigDisp:false}})
     if(w.casingStyle||w.lpTrimColor) {
-      // Only flag lpTrimColor as changed if it's actually set in either version
+      const csDisp=w.casingStyle||'—', csOrigDisp=orig?.casingStyle||'—'
       const lpChanged=orig?((w.lpTrimColor||'')!==(orig.lpTrimColor||'')):false
       R.push({type:'pair',
-        a:{l:'Casing Style',v:w.casingStyle||'—',changed:chk('casingStyle',w.casingStyle)},
+        a:{l:'Casing Style',v:csDisp,changed:orig?csDisp!==csOrigDisp:false},
         b:{l:'LP Trim Color',v:w.lpTrimColor||'—',changed:lpChanged&&!!(w.lpTrimColor||orig?.lpTrimColor)}
       })
     }
@@ -994,7 +1027,8 @@ function buildDoorPDFRows(d,orig=null) {
 
   sec('Measurements')
   const mt=d.measurementType||'Call Size'
-  single('Measurement Type',mt,'measurementType')
+  const mtOrigDispD=orig?.measurementType||'Call Size'
+  R.push({type:'single',l:'Measurement Type',v:mt,changed:orig?mt!==mtOrigDispD:false})
   if(mt==='Call Size') {
     const wk=d.bifoldWidthKey||dtc?.widthKey
     const hk=dtc?.heightKey||'h_french'
@@ -1012,9 +1046,17 @@ function buildDoorPDFRows(d,orig=null) {
   }
 
   sec('Color & Glass')
-  pair('Exterior Color',d.exteriorColor||'—','Interior Color',d.interiorColor||'—','exteriorColor','interiorColor')
-  pair('Glass Surface',d.glassSurface||'—','Pane','Double (Tempered)','glassSurface',null)
-  if(d.decorativeGlass&&d.decorativeGlass!=='None') single('Decorative Glass',d.decorativeGlass,'decorativeGlass')
+  const dExtDisp=d.exteriorColor||'—', dExtOrigDisp=orig?.exteriorColor||'—'
+  const dIntDisp=d.interiorColor||'—', dIntOrigDisp=orig?.interiorColor||'—'
+  R.push({type:'pair',a:{l:'Exterior Color',v:dExtDisp,changed:orig?dExtDisp!==dExtOrigDisp:false},b:{l:'Interior Color',v:dIntDisp,changed:orig?dIntDisp!==dIntOrigDisp:false}})
+  const dGlassDisp=d.glassSurface||'—', dGlassOrigDisp=orig?.glassSurface||'—'
+  R.push({type:'pair',a:{l:'Glass Surface',v:dGlassDisp,changed:orig?dGlassDisp!==dGlassOrigDisp:false},b:{l:'Pane',v:'Double (Tempered)',changed:false}})
+  if(d.decorativeGlass&&d.decorativeGlass!=='None'){
+    const ddDecoDisp=d.decorativeGlass, ddDecoOrigDisp=orig?.decorativeGlass||''
+    single('Decorative Glass',d.decorativeGlass,null)
+    // Override changed: only flag if actual values differ
+    if(R.length>0){const last=R[R.length-1];if(last.type==='single')last.changed=orig?ddDecoDisp!==ddDecoOrigDisp:false}
+  }
 
   if(d.grilleType) {
     sec('Grille')
@@ -1055,12 +1097,17 @@ function buildDoorPDFRows(d,orig=null) {
     sec('Extension Jamb & Casing')
     const jdChanged=chkMeas('jambDepth','jambDepthFrac',d.jambDepth,d.jambDepthFrac)
     const cwChanged=chkMeas('casingWidth','casingWidthFrac',d.casingWidth,d.casingWidthFrac)
-    R.push({type:'pair',a:{l:'Jamb Depth',v:d.jambDepth?fmtMeasurement(d.jambDepth,d.jambDepthFrac):'—',changed:jdChanged},b:{l:'Jamb Type',v:d.jambType?(d.jambType==='Other'?d.jambTypeOther||'Other':d.jambType):'—',changed:chk('jambType',d.jambType)}})
-    R.push({type:'pair',a:{l:'Casing Width',v:d.casingWidth?fmtMeasurement(d.casingWidth,d.casingWidthFrac):'—',changed:cwChanged},b:{l:'Casing Type',v:d.casingType?(d.casingType==='Other'?d.casingTypeOther||'Other':d.casingType):'—',changed:chk('casingType',d.casingType)}})
+    const djambTypeDisp=d.jambType?(d.jambType==='Other'?d.jambTypeOther||'Other':d.jambType):'—'
+    const djambTypeOrigDisp=orig?.jambType?(orig.jambType==='Other'?orig.jambTypeOther||'Other':orig.jambType):'—'
+    const dcasingTypeDisp=d.casingType?(d.casingType==='Other'?d.casingTypeOther||'Other':d.casingType):'—'
+    const dcasingTypeOrigDisp=orig?.casingType?(orig.casingType==='Other'?orig.casingTypeOther||'Other':orig.casingType):'—'
+    R.push({type:'pair',a:{l:'Jamb Depth',v:d.jambDepth?fmtMeasurement(d.jambDepth,d.jambDepthFrac):'—',changed:jdChanged},b:{l:'Jamb Type',v:djambTypeDisp,changed:orig?djambTypeDisp!==djambTypeOrigDisp:false}})
+    R.push({type:'pair',a:{l:'Casing Width',v:d.casingWidth?fmtMeasurement(d.casingWidth,d.casingWidthFrac):'—',changed:cwChanged},b:{l:'Casing Type',v:dcasingTypeDisp,changed:orig?dcasingTypeDisp!==dcasingTypeOrigDisp:false}})
     if(d.casingStyle||d.lpTrimColor) {
+      const dcsDisp=d.casingStyle||'—', dcsOrigDisp=orig?.casingStyle||'—'
       const lpChanged=orig?((d.lpTrimColor||'')!==(orig.lpTrimColor||'')):false
       R.push({type:'pair',
-        a:{l:'Casing Style',v:d.casingStyle||'—',changed:chk('casingStyle',d.casingStyle)},
+        a:{l:'Casing Style',v:dcsDisp,changed:orig?dcsDisp!==dcsOrigDisp:false},
         b:{l:'LP Trim Color',v:d.lpTrimColor||'—',changed:lpChanged&&!!(d.lpTrimColor||orig?.lpTrimColor)}
       })
     }
