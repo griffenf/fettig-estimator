@@ -61,12 +61,16 @@ module.exports = async function handler(req, res) {
     // This avoids routing large files (PDFs with photos) through the 4.5MB serverless limit
     if (action === 'getUploadUrl') {
       if (!jobId || !fileName) return res.status(400).json({ error: 'Missing jobId or fileName' })
+      const { fileSize, fileMimeType } = req.body
 
-      // No url param — JobTread returns a signed GCS PUT URL we upload to directly
+      // size + type = direct upload path; JobTread returns a signed GCS PUT URL
       const uploadReq = await pave({
         '$': { grantKey },
         createUploadRequest: {
-          '$': { organizationId: orgId, type: { fromName: fileName } },
+          '$': {
+            size: fileSize || 1,
+            type: fileMimeType || { fromName: fileName }
+          },
           createdUploadRequest: { id: {}, url: {}, method: {} }
         }
       })
