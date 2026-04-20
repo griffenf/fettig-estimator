@@ -2301,8 +2301,10 @@ export default function App() {
         ;(d.estimateData.rooms||[]).forEach(r=>(r.items||[]).forEach(it=>(it.photos||[]).forEach(p=>origPhotos.add(p))))
         setOriginalPhotoUrls(origPhotos)
       }
-    }catch(e){setLoadPreviousError(e.message)}
-    finally{setLoadingPrevious(false)}
+    }catch(e){
+      // Don't block job selection if estimate data load fails — just show a warning
+      setLoadPreviousError(e.message)
+    }finally{setLoadingPrevious(false)}
   }
   const jobValid=jobInfo.customerName.trim().length>0
 
@@ -2327,16 +2329,24 @@ export default function App() {
   const handleDownloadPDF=()=>{const origRooms=isFinalMeasurement?(jobInfo._previousEstimate?.rooms||null):null;const doc=generatePDF(jobInfo,rooms,isFinalMeasurement,origRooms);const prefix=isFinalMeasurement?'Fettig-FinalMeasurement':'Fettig-Estimate';doc.save(`${prefix}-${jobInfo.customerName.replace(/\s+/g,'-')||'Draft'}-${Date.now()}.pdf`)}
 
   const compressPhoto=async(dataUrl,maxPx=1200,quality=0.75)=>new Promise(resolve=>{
-    const img=new Image();img.onload=()=>{
-      const scale=Math.min(1,maxPx/Math.max(img.width,img.height))
-      const canvas=document.createElement('canvas')
-      canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale)
-      canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height)
-      resolve(canvas.toDataURL('image/jpeg',quality))
-    };img.src=dataUrl
+    try{
+      const img=new Image()
+      img.onload=()=>{
+        try{
+          const scale=Math.min(1,maxPx/Math.max(img.width,img.height))
+          const canvas=document.createElement('canvas')
+          canvas.width=Math.round(img.width*scale);canvas.height=Math.round(img.height*scale)
+          canvas.getContext('2d').drawImage(img,0,0,canvas.width,canvas.height)
+          resolve(canvas.toDataURL('image/jpeg',quality))
+        }catch(e){resolve(dataUrl)} // fallback: use original
+      }
+      img.onerror=()=>resolve(dataUrl) // fallback: use original
+      img.src=dataUrl
+    }catch(e){resolve(dataUrl)}
   })
 
   const handleSubmitToJobTread=async()=>{
+    if(!jobInfo.jobId){alert('Please select a job before submitting.');return}
     setSubmitting(true)
     try{
       const upload=async(b64,fn,mt,folder='Estimate/Measurement Photos')=>{
@@ -2359,12 +2369,12 @@ export default function App() {
           // to identify each window visually. Full photos are already on JobTread.
           const compressThumb=async(dataUrl)=>new Promise(resolve=>{
             const img=new Image();img.onload=()=>{
-              // 600px at 85% quality — large enough to see details in lightbox (~30-60KB each)
-              const maxPx=600,scale=Math.min(1,maxPx/Math.max(img.width,img.height))
+              // 120px at 60% quality — small enough for JSON (~3-8KB each)
+              const maxPx=120,scale=Math.min(1,maxPx/Math.max(img.width,img.height))
               const c=document.createElement('canvas')
               c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale)
               c.getContext('2d').drawImage(img,0,0,c.width,c.height)
-              resolve(c.toDataURL('image/jpeg',0.85))
+              resolve(c.toDataURL('image/jpeg',0.6))
             };img.onerror=()=>resolve(null);img.src=dataUrl
           })
           const roomsWithThumbs=await Promise.all(rooms.map(async r=>({
