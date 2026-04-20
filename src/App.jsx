@@ -1187,9 +1187,9 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
       // is at most 120pt tall to keep items compact
       const availW=W-M*2
       const gap=8
-      const perRow=Math.min(Math.max(photos.length,1),3)
+      const perRow=Math.min(Math.max(photos.length,1),2)
       const rawPhotoW=Math.floor((availW-(perRow-1)*gap)/perRow)
-      const photoH=Math.min(Math.round(rawPhotoW*0.75),120) // cap at 120pt tall
+      const photoH=Math.min(Math.round(rawPhotoW*0.75),160) // cap at 160pt tall
       const photoW=Math.round(photoH/0.75)                  // re-derive width from capped height
       const photoRows=photos.length>0?Math.ceil(photos.length/perRow):0
       const photosH=photos.length>0?photoRows*(photoH+gap)+12:0
