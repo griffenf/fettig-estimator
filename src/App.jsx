@@ -2339,17 +2339,28 @@ export default function App() {
   const handleSubmitToJobTread=async()=>{
     setSubmitting(true)
     try{
-      const upload=async(b64,fn,mt)=>{
-        const res=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({action:'uploadFile',jobId:jobInfo.jobId,pdfBase64:b64,fileName:fn,mimeType:mt})})
-        let d
-        try{d=await res.json()}catch{throw new Error(`Server error (${res.status}) uploading ${fn}`)}
-        if(!res.ok)throw new Error(d.error||`Failed to upload ${fn}`)
+      // Upload directly to GCS — bypasses the 4.5MB serverless body limit entirely
+      const uploadDirect=async(blob,fn,mt,folder)=>{
+        // Step 1: get a signed GCS URL from our API
+        const urlRes=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({action:'getUploadUrl',jobId:jobInfo.jobId,fileName:fn,folder})})
+        if(!urlRes.ok){const e=await urlRes.json().catch(()=>({}));throw new Error(e.error||`Failed to get upload URL for ${fn}`)}
+        const {uploadRequestId,uploadUrl}=await urlRes.json()
+        // Step 2: PUT file directly to GCS (no size limit)
+        const gcsRes=await fetch(uploadUrl,{method:'PUT',headers:{'Content-Type':mt},body:blob})
+        if(!gcsRes.ok)throw new Error(`GCS upload failed for ${fn}: ${gcsRes.status}`)
+        // Step 3: register the file with JobTread
+        const regRes=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({action:'registerFile',jobId:jobInfo.jobId,uploadRequestId,fileName:fn,targetFolder:folder})})
+        if(!regRes.ok){const e=await regRes.json().catch(()=>({}));throw new Error(e.error||`Failed to register ${fn}`)}
       }
       const sanitize=n=>n.replace(/[/\\:*?"<>|]/g,'_').trim()
       const pdfName=isFinalMeasurement?'Final Measurement.pdf':'Estimate Notes.pdf'
       const origRooms=isFinalMeasurement?(jobInfo._previousEstimate?.rooms||null):null
       const doc=generatePDF(jobInfo,rooms,isFinalMeasurement,origRooms)
-      await upload(doc.output('datauristring').split(',')[1],pdfName,'application/pdf')
+      // Generate PDF as a Blob for direct upload — no base64 encoding overhead
+      const pdfBlob=doc.output('blob')
+      await uploadDirect(pdfBlob,pdfName,'application/pdf','Fettig Estimator')
       // Save estimate data as JSON for future final measurements
       // Strip photo data (base64) from rooms — photos are already uploaded to JobTread separately
       // and including them would make the JSON too large (Vercel 4.5MB limit)
@@ -2403,7 +2414,12 @@ export default function App() {
             const cnt=rc[rn]
             try{
               const dataUrl=await compressPhoto(rawUrl)
-              await upload(dataUrl.split(',')[1],`${rn}${cnt>1?` ${cnt}`:''}.jpg`,'image/jpeg')
+              // Convert base64 to Blob for direct GCS upload
+              const byteStr=atob(dataUrl.split(',')[1])
+              const arr=new Uint8Array(byteStr.length)
+              for(let i=0;i<byteStr.length;i++)arr[i]=byteStr.charCodeAt(i)
+              const photoBlob=new Blob([arr],{type:'image/jpeg'})
+              await uploadDirect(photoBlob,`${rn}${cnt>1?` ${cnt}`:''}.jpg`,'image/jpeg','Estimate/Measurement Photos')
             }catch(err){photoErrors.push(`${rn} photo ${cnt}: ${err.message}`)}
           }
         }
