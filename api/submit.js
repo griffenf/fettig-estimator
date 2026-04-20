@@ -75,10 +75,11 @@ module.exports = async function handler(req, res) {
         }
       })
 
-      const { id: uploadRequestId, url: uploadUrl, method } = uploadReq?.createUploadRequest?.createdUploadRequest || {}
+      const { id: uploadRequestId, url: uploadUrl, method, headers: uploadHeaders } = uploadReq?.createUploadRequest?.createdUploadRequest || {}
       if (!uploadRequestId || !uploadUrl) throw new Error(`Could not get upload URL for "${fileName}": ${JSON.stringify(uploadReq)}`)
 
-      return res.status(200).json({ uploadRequestId, uploadUrl, method: method || 'PUT' })
+      // Return the required headers — GCS signed URLs may require specific headers (e.g. x-goog-content-length-range)
+      return res.status(200).json({ uploadRequestId, uploadUrl, method: method || 'PUT', uploadHeaders: uploadHeaders || {} })
     }
 
     // ── Action: register an already-uploaded file with JobTread ──────────────
