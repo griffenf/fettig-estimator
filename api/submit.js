@@ -4,7 +4,7 @@ const handler = async function handler(req, res) {
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(500).json({ error: 'JOBTREAD_API_KEY not configured.' })
 
-  const { action, jobId, pdfBase64, fileName, mimeType, estimateData } = req.body || {}
+  const { action, jobId, pdfBase64, fileId, fileName, mimeType, estimateData } = req.body || {}
   const orgId = '22MsEHuFtmri'
   const host = req.headers.host
   const protocol = host.includes('localhost') ? 'http' : 'https'
@@ -29,24 +29,28 @@ const handler = async function handler(req, res) {
     }
   }
 
-  // Shared upload helper — stores file in pdf.js temp store, then uploads to JobTread
+  // Shared upload helper — stores file in pdf.js temp store, then JobTread fetches from it
+  // The file data never flows back through this function's request body — it's already in the store
   async function uploadToJob(targetJobId, base64, name, mime, folder) {
     const fileId = Date.now().toString(36) + Math.random().toString(36).slice(2)
     const publicUrl = `${protocol}://${host}/api/pdf?id=${fileId}`
 
+    // Store in temp store (internal server-to-server call, no size limit issues)
     const putController = new AbortController()
     const putTimeout = setTimeout(() => putController.abort(), 30000)
     try {
-      await fetch(`${protocol}://${host}/api/pdf`, {
+      const putRes = await fetch(`${protocol}://${host}/api/pdf`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ id: fileId, pdfBase64: base64, mimeType: mime }),
         signal: putController.signal,
       })
+      if (!putRes.ok) throw new Error(`Temp store PUT failed: ${putRes.status}`)
     } finally {
       clearTimeout(putTimeout)
     }
 
+    // Tell JobTread to fetch the file from our temp store URL
     const uploadReq = await pave({
       '$': { grantKey },
       createUploadRequest: {
@@ -74,11 +78,24 @@ const handler = async function handler(req, res) {
 
   try {
 
-    // ── Action: upload a single file (PDF or photo) ───────────────────────────
+    // ── Action: upload a single file ────────────────────────────────────────────
+    // Accepts either fileId (pre-stored in pdf.js temp store) or pdfBase64 directly
     if (action === 'uploadFile') {
-      if (!jobId || !pdfBase64 || !fileName) return res.status(400).json({ error: 'Missing required fields' })
+      if (!jobId || !fileName) return res.status(400).json({ error: 'Missing jobId or fileName' })
       const folder = req.body.folder || 'Estimate/Measurement Photos'
-      await uploadToJob(jobId, pdfBase64, fileName, mimeType || 'application/pdf', folder)
+
+      let base64 = pdfBase64
+      if (!base64 && fileId) {
+        // Fetch from our own pdf.js temp store — file was pre-uploaded by browser
+        const fetchUrl = `${protocol}://${host}/api/pdf?id=${fileId}`
+        const storeRes = await fetch(fetchUrl)
+        if (!storeRes.ok) throw new Error(`Could not retrieve stored file (id=${fileId}): ${storeRes.status}`)
+        const buf = await storeRes.arrayBuffer()
+        base64 = Buffer.from(buf).toString('base64')
+      }
+
+      if (!base64) return res.status(400).json({ error: 'Missing file data (fileId or pdfBase64 required)' })
+      await uploadToJob(jobId, base64, fileName, mimeType || 'application/pdf', folder)
       return res.status(200).json({ success: true })
     }
 
