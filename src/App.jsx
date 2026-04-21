@@ -1214,9 +1214,12 @@ async function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=
     return h+(changed?15:13)
   },0)
 
-  rooms.forEach((room,ri)=>{
-    if(!room.items.length)return
-    room.items.forEach((item,itemIdx)=>{
+  for(let ri=0;ri<rooms.length;ri++){
+    const room=rooms[ri]
+    if(!room.items.length)continue
+    for(let itemIdx=0;itemIdx<room.items.length;itemIdx++){
+      const item=room.items[itemIdx]
+      {
       const isDoor=item.itemType==='door'
       const origRoom=originalRooms?.[ri]
       const origItem=origRoom?.items?.[itemIdx]||null
@@ -1340,8 +1343,9 @@ async function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=
       }
 
       y+=10;itemNum++
-    })
-  })
+      } // end item block
+    } // end itemIdx loop
+  } // end room loop
   const allItems=rooms.flatMap(r=>r.items)
   if(allItems.length>0){
     if(y+30>pH-60){addFooter();doc.addPage();y=40}
