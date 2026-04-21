@@ -1,12 +1,4 @@
-module.exports.config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '50mb',
-    },
-  },
-}
-
-module.exports = async function handler(req, res) {
+const handler = async function handler(req, res) {
   if (req.method !== 'POST') return res.status(405).json({ error: 'Method not allowed' })
 
   const grantKey = process.env.JOBTREAD_API_KEY
@@ -160,3 +152,6 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: err.message })
   }
 }
+
+handler.config = { api: { bodyParser: { sizeLimit: '50mb' } } }
+module.exports = handler
