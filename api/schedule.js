@@ -185,7 +185,7 @@ function extractPhone(job) {
 
 module.exports.config = { api: { bodyParser: { sizeLimit: '50mb' } } }
 
-module.exports = async function handler(req, res) {
+const handler = async function handler(req, res) {
   res.setHeader('Access-Control-Allow-Origin', '*')
   if (req.method === 'OPTIONS') return res.status(200).end()
   if (req.method !== 'GET') return res.status(405).json({ error: 'Method not allowed' })
@@ -241,3 +241,6 @@ module.exports = async function handler(req, res) {
     return res.status(500).json({ error: err.message || 'Failed to fetch schedule' })
   }
 }
+
+handler.config = { api: { bodyParser: { sizeLimit: '50mb' } } }
+module.exports = handler
