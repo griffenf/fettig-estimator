@@ -2367,17 +2367,11 @@ export default function App() {
     if(!jobInfo.jobId){alert('Please select a job before submitting.');return}
     setSubmitting(true)
     try{
-      // Upload: browser stores file in pdf.js temp store first,
-      // then submit.js picks it up by ID — PDF data never goes through submit.js body
+      // Upload: send file as base64 through submit.js
+      // Photos are compressed before PDF generation so payload stays manageable
       const upload=async(b64,fn,mt,folder='Estimate/Measurement Photos')=>{
-        const fileId=Date.now().toString(36)+Math.random().toString(36).slice(2)
-        // Step 1: PUT to pdf.js temp store from browser (has 50MB limit, no serverless issue)
-        const putRes=await fetch('/api/pdf',{method:'PUT',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({id:fileId,pdfBase64:b64,mimeType:mt})})
-        if(!putRes.ok)throw new Error(`Failed to store file for upload: ${putRes.status}`)
-        // Step 2: tell submit.js to register it with JobTread using just the small fileId
         const res=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({action:'uploadFile',jobId:jobInfo.jobId,fileId,fileName:fn,mimeType:mt,folder})})
+          body:JSON.stringify({action:'uploadFile',jobId:jobInfo.jobId,pdfBase64:b64,fileName:fn,mimeType:mt,folder})})
         let d;try{d=await res.json()}catch{throw new Error(`Server error (${res.status}) uploading ${fn}`)}
         if(!res.ok)throw new Error(d.error||`Failed to upload ${fn}`)
       }
