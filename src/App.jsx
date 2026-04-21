@@ -2378,7 +2378,7 @@ export default function App() {
       const sanitize=n=>n.replace(/[/\\:*?"<>|]/g,'_').trim()
       const pdfName=isFinalMeasurement?'Final Measurement.pdf':'Estimate Notes.pdf'
       const origRooms=isFinalMeasurement?(jobInfo._previousEstimate?.rooms||null):null
-      const doc=generatePDF(jobInfo,rooms,isFinalMeasurement,origRooms)
+      const doc=await generatePDF(jobInfo,rooms,isFinalMeasurement,origRooms)
       await upload(doc.output('datauristring').split(',')[1],pdfName,'application/pdf','Fettig Estimator')
       // Save estimate data as JSON for future final measurements
       // Strip photo data (base64) from rooms — photos are already uploaded to JobTread separately
