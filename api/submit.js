@@ -4,7 +4,7 @@ const handler = async function handler(req, res) {
   const grantKey = process.env.JOBTREAD_API_KEY
   if (!grantKey) return res.status(500).json({ error: 'JOBTREAD_API_KEY not configured.' })
 
-  const { action, jobId, pdfBase64, fileId, fileName, mimeType, estimateData } = req.body || {}
+  const { action, jobId, pdfBase64, fileName, mimeType, estimateData } = req.body || {}
   const orgId = '22MsEHuFtmri'
   const host = req.headers.host
   const protocol = host.includes('localhost') ? 'http' : 'https'
@@ -79,23 +79,10 @@ const handler = async function handler(req, res) {
   try {
 
     // ── Action: upload a single file ────────────────────────────────────────────
-    // Accepts either fileId (pre-stored in pdf.js temp store) or pdfBase64 directly
     if (action === 'uploadFile') {
-      if (!jobId || !fileName) return res.status(400).json({ error: 'Missing jobId or fileName' })
+      if (!jobId || !pdfBase64 || !fileName) return res.status(400).json({ error: 'Missing required fields' })
       const folder = req.body.folder || 'Estimate/Measurement Photos'
-
-      let base64 = pdfBase64
-      if (!base64 && fileId) {
-        // Fetch from our own pdf.js temp store — file was pre-uploaded by browser
-        const fetchUrl = `${protocol}://${host}/api/pdf?id=${fileId}`
-        const storeRes = await fetch(fetchUrl)
-        if (!storeRes.ok) throw new Error(`Could not retrieve stored file (id=${fileId}): ${storeRes.status}`)
-        const buf = await storeRes.arrayBuffer()
-        base64 = Buffer.from(buf).toString('base64')
-      }
-
-      if (!base64) return res.status(400).json({ error: 'Missing file data (fileId or pdfBase64 required)' })
-      await uploadToJob(jobId, base64, fileName, mimeType || 'application/pdf', folder)
+      await uploadToJob(jobId, pdfBase64, fileName, mimeType || 'application/pdf', folder)
       return res.status(200).json({ success: true })
     }
 
