@@ -1126,7 +1126,7 @@ function buildDoorPDFRows(d,orig=null) {
 
 // ─── PDF Generator ────────────────────────────────────────────────────────────
 
-function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) {
+async function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) {
   const doc=new jsPDF({unit:'pt',format:'letter'})
   const W=doc.internal.pageSize.getWidth(),pH=doc.internal.pageSize.getHeight()
   const M=48; let y=0
@@ -1295,29 +1295,43 @@ function generatePDF(jobInfo,rooms,isFinalMeasurement=false,originalRooms=null) 
       // ── Render photos — always on same page, shrink to fit if needed ────────
       if(photos.length>0){
         y+=6
-        // How much vertical space remains on this page above the footer?
         const remainingY=pH-60-y
         const photoRows=Math.ceil(photos.length/perRow)
-        // Ideal height uses the pre-calculated photoH; shrink if it won't fit
         const idealTotalH=photoRows*(photoH+gap)
         let finalPhotoH=photoH
         let finalPhotoW=photoW
         if(idealTotalH>remainingY&&remainingY>20){
-          // Shrink proportionally so all rows fit in remaining space
           const rowH=Math.max(Math.floor((remainingY-(photoRows-1)*gap)/photoRows),20)
           finalPhotoH=rowH
           finalPhotoW=Math.round(rowH/0.75)
         }
-        // Center each row on the page
+        // Compress each photo to max 800px/70% before embedding in PDF
+        const compressForPDF=(dataUrl)=>new Promise(resolve=>{
+          try{
+            const img=new Image()
+            img.onload=()=>{
+              try{
+                const maxPx=800,scale=Math.min(1,maxPx/Math.max(img.width,img.height))
+                const c=document.createElement('canvas')
+                c.width=Math.round(img.width*scale);c.height=Math.round(img.height*scale)
+                c.getContext('2d').drawImage(img,0,0,c.width,c.height)
+                resolve(c.toDataURL('image/jpeg',0.7))
+              }catch(e){resolve(dataUrl)}
+            }
+            img.onerror=()=>resolve(dataUrl)
+            img.src=dataUrl
+          }catch(e){resolve(dataUrl)}
+        })
+        const compressedPhotos=await Promise.all(photos.map(p=>compressForPDF(p)))
         const totalRowW=(n)=>n*finalPhotoW+(n-1)*gap
         let col=0,rowStart=0
-        for(let i=0;i<photos.length;i++){
+        for(let i=0;i<compressedPhotos.length;i++){
           if(col===0){
-            const inThisRow=Math.min(perRow,photos.length-i)
+            const inThisRow=Math.min(perRow,compressedPhotos.length-i)
             rowStart=M+(availW-totalRowW(inThisRow))/2
           }
           const px=rowStart+col*(finalPhotoW+gap)
-          try{ doc.addImage(photos[i],'JPEG',px,y,finalPhotoW,finalPhotoH) }catch(e){/* skip */}
+          try{ doc.addImage(compressedPhotos[i],'JPEG',px,y,finalPhotoW,finalPhotoH) }catch(e){/* skip */}
           col++
           if(col>=perRow){col=0;y+=finalPhotoH+gap}
         }
@@ -2326,7 +2340,7 @@ export default function App() {
   }
   const removeItem=(roomId,idx)=>setRooms(rs=>rs.map(r=>r.id===roomId?{...r,items:r.items.filter((_,i)=>i!==idx)}:r))
 
-  const handleDownloadPDF=()=>{const origRooms=isFinalMeasurement?(jobInfo._previousEstimate?.rooms||null):null;const doc=generatePDF(jobInfo,rooms,isFinalMeasurement,origRooms);const prefix=isFinalMeasurement?'Fettig-FinalMeasurement':'Fettig-Estimate';doc.save(`${prefix}-${jobInfo.customerName.replace(/\s+/g,'-')||'Draft'}-${Date.now()}.pdf`)}
+  const handleDownloadPDF=async()=>{const origRooms=isFinalMeasurement?(jobInfo._previousEstimate?.rooms||null):null;const doc=await generatePDF(jobInfo,rooms,isFinalMeasurement,origRooms);const prefix=isFinalMeasurement?'Fettig-FinalMeasurement':'Fettig-Estimate';doc.save(`${prefix}-${jobInfo.customerName.replace(/\s+/g,'-')||'Draft'}-${Date.now()}.pdf`)}
 
   const compressPhoto=async(dataUrl,maxPx=1200,quality=0.75)=>new Promise(resolve=>{
     try{
@@ -2349,9 +2363,17 @@ export default function App() {
     if(!jobInfo.jobId){alert('Please select a job before submitting.');return}
     setSubmitting(true)
     try{
+      // Upload: browser stores file in pdf.js temp store first,
+      // then submit.js picks it up by ID — PDF data never goes through submit.js body
       const upload=async(b64,fn,mt,folder='Estimate/Measurement Photos')=>{
+        const fileId=Date.now().toString(36)+Math.random().toString(36).slice(2)
+        // Step 1: PUT to pdf.js temp store from browser (has 50MB limit, no serverless issue)
+        const putRes=await fetch('/api/pdf',{method:'PUT',headers:{'Content-Type':'application/json'},
+          body:JSON.stringify({id:fileId,pdfBase64:b64,mimeType:mt})})
+        if(!putRes.ok)throw new Error(`Failed to store file for upload: ${putRes.status}`)
+        // Step 2: tell submit.js to register it with JobTread using just the small fileId
         const res=await fetch('/api/submit',{method:'POST',headers:{'Content-Type':'application/json'},
-          body:JSON.stringify({action:'uploadFile',jobId:jobInfo.jobId,pdfBase64:b64,fileName:fn,mimeType:mt,folder})})
+          body:JSON.stringify({action:'uploadFile',jobId:jobInfo.jobId,fileId,fileName:fn,mimeType:mt,folder})})
         let d;try{d=await res.json()}catch{throw new Error(`Server error (${res.status}) uploading ${fn}`)}
         if(!res.ok)throw new Error(d.error||`Failed to upload ${fn}`)
       }
