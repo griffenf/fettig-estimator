@@ -1,11 +1,3 @@
-module.exports.config = {
-  api: {
-    bodyParser: {
-      sizeLimit: '50mb',
-    },
-  },
-}
-
 const store = {}
 
 // Clean up expired entries every 5 minutes
@@ -16,7 +8,7 @@ setInterval(() => {
   }
 }, 5 * 60 * 1000)
 
-module.exports = async function handler(req, res) {
+const handler = async function handler(req, res) {
   if (req.method === 'PUT') {
     const { id, pdfBase64, mimeType } = req.body || {}
     if (!id || !pdfBase64) return res.status(400).json({ error: 'Missing id or pdfBase64' })
@@ -38,3 +30,6 @@ module.exports = async function handler(req, res) {
 
   return res.status(405).json({ error: 'Method not allowed' })
 }
+
+handler.config = { api: { bodyParser: { sizeLimit: '50mb' } } }
+module.exports = handler
