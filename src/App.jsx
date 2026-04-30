@@ -1567,7 +1567,14 @@ function WindowForm({initial,onSave,onCancel,prevOptions}) {
     setForm(f=>({...f,hardwareColor:INT_TO_HW[f.interiorColor]||f.hardwareColor,screenColor:INT_TO_SCREEN[f.interiorColor]||f.screenColor}))
   },[form.interiorColor])
 
-  const handlePhoto=e=>{const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>set('photos',[...(form.photos||[]),ev.target.result]);r.readAsDataURL(file);e.target.value=''}
+  const handlePhoto=e=>{
+    const files=Array.from(e.target.files);
+    if(!files.length)return;
+    Promise.all(files.map(file=>new Promise(resolve=>{
+      const r=new FileReader();r.onload=ev=>resolve(ev.target.result);r.readAsDataURL(file)
+    }))).then(results=>{set('photos',[...(form.photos||[]),...results])});
+    e.target.value='';
+  }
   const removePhoto=i=>set('photos',form.photos.filter((_,j)=>j!==i))
   const getMissing=()=>{
     if(!cfg)return[]
@@ -1749,7 +1756,7 @@ function WindowForm({initial,onSave,onCancel,prevOptions}) {
           <Field label="LP Trim Color"><input placeholder="e.g. White (leave blank if none)" value={form.lpTrimColor} onChange={e=>set('lpTrimColor',e.target.value)}/></Field>
           <SectionHeader>Photos & Notes</SectionHeader>
           <Field label="Photos" col="1/-1">
-            <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handlePhoto}/>
+            <input ref={cameraRef} type="file" accept="image/*" multiple style={{display:'none'}} onChange={handlePhoto}/>
             <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
               <button type="button" className="btn-outline" onClick={()=>cameraRef.current.click()} style={{padding:'8px 16px',fontSize:13}}>📷 Take / Add Photo</button>
               {(form.photos||[]).map((p,i)=>(<div key={i} style={{position:'relative'}}><img src={p} alt="" style={{width:64,height:52,objectFit:'cover',borderRadius:4,border:'1px solid var(--border)'}}/><button onClick={()=>removePhoto(i)} style={{position:'absolute',top:-6,right:-6,background:'#c0392b',border:'none',borderRadius:'50%',color:'#fff',width:18,height:18,fontSize:10,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button></div>))}
@@ -1942,7 +1949,14 @@ function DoorForm({initial,onSave,onCancel,prevOptions}) {
   },[form.interiorColor])
   useEffect(()=>{if(form.jambType&&!form.casingType)set('casingType',form.jambType)},[form.jambType])
 
-  const handlePhoto=e=>{const file=e.target.files[0];if(!file)return;const r=new FileReader();r.onload=ev=>set('photos',[...(form.photos||[]),ev.target.result]);r.readAsDataURL(file);e.target.value=''}
+  const handlePhoto=e=>{
+    const files=Array.from(e.target.files);
+    if(!files.length)return;
+    Promise.all(files.map(file=>new Promise(resolve=>{
+      const r=new FileReader();r.onload=ev=>resolve(ev.target.result);r.readAsDataURL(file)
+    }))).then(results=>{set('photos',[...(form.photos||[]),...results])});
+    e.target.value='';
+  }
   const removePhoto=i=>set('photos',form.photos.filter((_,j)=>j!==i))
 
   const getMissing=()=>{
@@ -2227,7 +2241,7 @@ function DoorForm({initial,onSave,onCancel,prevOptions}) {
 
           <SectionHeader>Photos & Notes</SectionHeader>
           <Field label="Photos" col="1/-1">
-            <input ref={cameraRef} type="file" accept="image/*" capture="environment" style={{display:'none'}} onChange={handlePhoto}/>
+            <input ref={cameraRef} type="file" accept="image/*" multiple style={{display:'none'}} onChange={handlePhoto}/>
             <div style={{display:'flex',gap:8,flexWrap:'wrap',alignItems:'center'}}>
               <button type="button" className="btn-outline" onClick={()=>cameraRef.current.click()} style={{padding:'8px 16px',fontSize:13}}>📷 Take / Add Photo</button>
               {(form.photos||[]).map((p,i)=>(<div key={i} style={{position:'relative'}}><img src={p} alt="" style={{width:64,height:52,objectFit:'cover',borderRadius:4,border:'1px solid var(--border)'}}/><button onClick={()=>removePhoto(i)} style={{position:'absolute',top:-6,right:-6,background:'#c0392b',border:'none',borderRadius:'50%',color:'#fff',width:18,height:18,fontSize:10,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>✕</button></div>))}
