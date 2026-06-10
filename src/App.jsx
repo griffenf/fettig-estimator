@@ -2347,6 +2347,7 @@ export default function App() {
     // Extract carry-over options from the saved item
     const fields = item.itemType==='door' ? DOOR_CARRY_FIELDS : WINDOW_CARRY_FIELDS
     setLastOptions(extractCarryFields(item, fields))
+    setSubmitted(false)
 
     if(editInfo){
       setRooms(rs=>rs.map(r=>r.id===editInfo.roomId?{...r,items:r.items.map((it,i)=>i===editInfo.itemIndex?item:it)}:r))
@@ -2356,7 +2357,7 @@ export default function App() {
       setAddForm(null)
     }
   }
-  const removeItem=(roomId,idx)=>setRooms(rs=>rs.map(r=>r.id===roomId?{...r,items:r.items.filter((_,i)=>i!==idx)}:r))
+  const removeItem=(roomId,idx)=>{setSubmitted(false);setRooms(rs=>rs.map(r=>r.id===roomId?{...r,items:r.items.filter((_,i)=>i!==idx)}:r))}
 
   const handleDownloadPDF=async()=>{const origRooms=isFinalMeasurement?(jobInfo._previousEstimate?.rooms||null):null;const doc=await generatePDF(jobInfo,rooms,isFinalMeasurement,origRooms);const prefix=isFinalMeasurement?'Fettig-FinalMeasurement':'Fettig-Estimate';doc.save(`${prefix}-${jobInfo.customerName.replace(/\s+/g,'-')||'Draft'}-${Date.now()}.pdf`)}
 
@@ -2653,7 +2654,7 @@ export default function App() {
               </div>
             ))}
             <button className="btn-outline" style={{width:'100%',padding:12,fontSize:14,marginBottom:16}} onClick={()=>setRooms(rs=>[...rs,newRoom()])}>+ Add Another Room</button>
-            {allItems.length>0&&<button className="btn-gold" style={{width:'100%',fontSize:16,padding:14}} onClick={()=>setStep('review')}>{isFinalMeasurement?'Review Final Measurement':'Review Estimate'} ({allItems.length} item{allItems.length!==1?'s':''}) →</button>}
+            {(()=>{const formOpen=!!(addForm||editInfo);return allItems.length>0&&<button className="btn-gold" style={{width:'100%',fontSize:16,padding:14,opacity:formOpen?0.45:1,cursor:formOpen?'not-allowed':'pointer'}} onClick={()=>!formOpen&&setStep('review')} title={formOpen?'Save or cancel the open form first':undefined}>{formOpen?'Finish editing item to continue':(isFinalMeasurement?'Review Final Measurement':'Review Estimate')+' ('+allItems.length+' item'+(allItems.length!==1?'s':'')+')'} {formOpen?'':'→'}</button>})()}
           </div>
         )}
 
@@ -2686,17 +2687,18 @@ export default function App() {
             ))})()}
             <div style={{display:'flex',flexDirection:'column',gap:12,marginTop:8}}>
               <button className="btn-outline" style={{width:'100%',fontSize:16,padding:14}} onClick={handleDownloadPDF}>📄 Download PDF</button>
-              {!submitted?(
-                <button className="btn-gold" style={{width:'100%',fontSize:16,padding:14}} onClick={handleSubmitToJobTread} disabled={submitting}>
-                  {submitting?'⏳ Posting to JobTread...':`🔗 ${isFinalMeasurement?'Submit Final Measurement':'Post Estimate'} to ${jobInfo.jobName||'JobTread Job'}`}
-                </button>
-              ):(
-                <div style={{background:'#f0fff4',border:'1.5px solid var(--green)',borderRadius:8,padding:16,textAlign:'center'}}>
-                  <div style={{fontSize:24,marginBottom:6}}>✅</div>
-                  <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:16}}>Sent to JobTread!</div>
-                  <div style={{color:'var(--text-muted)',fontSize:13,marginTop:4}}>{isFinalMeasurement?'Final Measurement.pdf':'Estimate Notes.pdf'} uploaded to <strong>{jobInfo.jobName}</strong>.</div>
+              {submitted&&(
+                <div style={{background:'#f0fff4',border:'1.5px solid var(--green)',borderRadius:8,padding:'10px 16px',display:'flex',alignItems:'center',gap:10,marginBottom:4}}>
+                  <div style={{fontSize:20}}>✅</div>
+                  <div style={{flex:1}}>
+                    <div style={{fontFamily:'var(--font-head)',fontWeight:700,fontSize:14}}>Sent to JobTread!</div>
+                    <div style={{color:'var(--text-muted)',fontSize:12,marginTop:1}}>{isFinalMeasurement?'Final Measurement.pdf':'Estimate Notes.pdf'} uploaded to <strong>{jobInfo.jobName}</strong>.</div>
+                  </div>
                 </div>
               )}
+              <button className="btn-gold" style={{width:'100%',fontSize:16,padding:14}} onClick={handleSubmitToJobTread} disabled={submitting}>
+                {submitting?'⏳ Posting to JobTread...':`🔗 ${submitted?'Resubmit':'Post'} ${isFinalMeasurement?'Final Measurement':'Estimate'} to ${jobInfo.jobName||'JobTread Job'}`}
+              </button>
               <button className="btn-outline" style={{width:'100%',fontSize:14,padding:12}} onClick={()=>{setStep('job');setJobInfo({customerName:'',jobId:'',jobName:'',address:'',estimator:'',notes:''});setRooms([newRoom()]);setSubmitted(false);setLastOptions(null);setIsFinalMeasurement(false);setPrevEstimateDate(null);setLoadPreviousError(null);setOriginalPhotoUrls(new Set())}}>Start New Estimate</button>
             </div>
           </div>
